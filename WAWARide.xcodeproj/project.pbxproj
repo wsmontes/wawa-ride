@@ -1,0 +1,587 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		09AA2F56E91763C28E004BE3 /* RouteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B53E29801FB001F3A9B5A19A /* RouteService.swift */; };
+		120CDD4A854E688153CE9394 /* HazardService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B93D3261D866FC02B556E8D /* HazardService.swift */; };
+		18BA894AED5CAEC555B55885 /* LiveMapViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 778179E3EE09D1A29357FC42 /* LiveMapViewModel.swift */; };
+		1FEE398A23AD3A6CC6970275 /* VoiceAssistant.swift in Sources */ = {isa = PBXBuildFile; fileRef = E08048978005267C47986BD1 /* VoiceAssistant.swift */; };
+		2C359761EC163C8754B34161 /* VoiceCommandListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64CE3B44F7EB1E2F4A22DB6B /* VoiceCommandListener.swift */; };
+		3404A754C40DF4CE01FEF191 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3D444A40FD0F9516E489F9 /* LocationService.swift */; };
+		38791FD39C0B51F8CD96E634 /* Room.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C1C34E382325A4DE9CE6670 /* Room.swift */; };
+		3DF0A5F9760AEEEADF640159 /* HazardMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 855B1C02750D179A6E2B26F6 /* HazardMenuView.swift */; };
+		3E828D4AB0D0E3BAD3F59A1E /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = F5F9991EF84E7FCCC59E34FE /* GRDB */; };
+		480C7C18E0274A13C2B8A902 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E49AF7F8E77CFE7B09CAA24 /* AppState.swift */; };
+		4C5C0271298A78507D2FD236 /* VoiceService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6439D1B01C2E17E3BFA1AC8 /* VoiceService.swift */; };
+		540DD63C16367B93061A381A /* MeshPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55B2C285F25EF284911CD616 /* MeshPayload.swift */; };
+		57A710810E15D3EF4C2B7D3F /* MeshBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD3277E0BD54C01C50FE9E0 /* MeshBrowser.swift */; };
+		58EF19524BE1A3CAA99DCCCC /* RoomListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8119800B881A3AD8E0308316 /* RoomListView.swift */; };
+		700EC0841C84DBAA421E4C37 /* JoinRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC508B9FFEDD22FB83F75C4A /* JoinRideView.swift */; };
+		70F0BA4D006631A95604F65B /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0149EBA0B1D06B8D9030960 /* Route.swift */; };
+		755E44A54BE55272AF1CFA38 /* OpusCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6AD586B29C1E967DB81D0C /* OpusCodec.swift */; };
+		7D707E0C5A90236111AFFB5F /* ConnectivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6542EB848026170261E7BB77 /* ConnectivityMonitor.swift */; };
+		7FD2E7043CF44B04EBFC63EA /* WAWARideApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */; };
+		9033668E219F770C7FD84B3F /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A02283ABE3673EDB9179EC4A /* LocalStore.swift */; };
+		A0D085C142E4914F480B3CD7 /* VoiceAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F8850FA9BCC9D27A9CDAADF /* VoiceAlert.swift */; };
+		B16D7F3A837D8728EDE927C2 /* TransportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27537E07F476017B205D8B51 /* TransportManager.swift */; };
+		B5382A85F27DA4306323B740 /* ProfileSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB7484BA3816E734DB61126 /* ProfileSetupView.swift */; };
+		BABEE66A07F34404E74416E6 /* MeshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF088E27DDA9E78EDBB1489E /* MeshService.swift */; };
+		C08D31DD0872CEC086D99B8F /* HazardAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A3D7B6DF988B0CAC2E26826 /* HazardAlert.swift */; };
+		D01F3E1A437D3DA26B40DC38 /* RoomService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CADA335D9C5D811C95DC89C /* RoomService.swift */; };
+		D6E9C5FF1876DD64C5873A66 /* RiderProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DBCF8C9EEE28CC0C426D7F0 /* RiderProfile.swift */; };
+		DAB7808377BDE79456731267 /* MeshAdvertiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158E4766E4F058DBE3695658 /* MeshAdvertiser.swift */; };
+		F072AA786589004066691C2C /* GPXParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D798071348FAAEAB9D8D4A /* GPXParser.swift */; };
+		F0F199A25194BB82F734B6A9 /* LiveMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E6390DDEB4526E1A75898A /* LiveMapView.swift */; };
+		F2B6F27910864FCDBB5FB48C /* MeshRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = E499C0DB9427A90DDE4F7F31 /* MeshRelay.swift */; };
+		F4FAC86AB0790924237A148E /* RouteCreatorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 289B63192CA701EEA73371F8 /* RouteCreatorView.swift */; };
+		FDB977F4DCC5A3B3BFA56ABD /* Ride.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FC2D46B9B97F295B285D172 /* Ride.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		11D798071348FAAEAB9D8D4A /* GPXParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GPXParser.swift; sourceTree = "<group>"; };
+		158E4766E4F058DBE3695658 /* MeshAdvertiser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshAdvertiser.swift; sourceTree = "<group>"; };
+		181131D2327996FED85F5D37 /* WAWARide.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WAWARide.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1DBCF8C9EEE28CC0C426D7F0 /* RiderProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RiderProfile.swift; sourceTree = "<group>"; };
+		27537E07F476017B205D8B51 /* TransportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransportManager.swift; sourceTree = "<group>"; };
+		289B63192CA701EEA73371F8 /* RouteCreatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteCreatorView.swift; sourceTree = "<group>"; };
+		30D7886496319347E91CD84C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		3EB7484BA3816E734DB61126 /* ProfileSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSetupView.swift; sourceTree = "<group>"; };
+		3FC2D46B9B97F295B285D172 /* Ride.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ride.swift; sourceTree = "<group>"; };
+		4A3D7B6DF988B0CAC2E26826 /* HazardAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HazardAlert.swift; sourceTree = "<group>"; };
+		4E3D444A40FD0F9516E489F9 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
+		55B2C285F25EF284911CD616 /* MeshPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshPayload.swift; sourceTree = "<group>"; };
+		64CE3B44F7EB1E2F4A22DB6B /* VoiceCommandListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCommandListener.swift; sourceTree = "<group>"; };
+		6542EB848026170261E7BB77 /* ConnectivityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectivityMonitor.swift; sourceTree = "<group>"; };
+		6C1C34E382325A4DE9CE6670 /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
+		6E49AF7F8E77CFE7B09CAA24 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		778179E3EE09D1A29357FC42 /* LiveMapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveMapViewModel.swift; sourceTree = "<group>"; };
+		7F6AD586B29C1E967DB81D0C /* OpusCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpusCodec.swift; sourceTree = "<group>"; };
+		7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WAWARideApp.swift; sourceTree = "<group>"; };
+		8119800B881A3AD8E0308316 /* RoomListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomListView.swift; sourceTree = "<group>"; };
+		855B1C02750D179A6E2B26F6 /* HazardMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HazardMenuView.swift; sourceTree = "<group>"; };
+		8B93D3261D866FC02B556E8D /* HazardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HazardService.swift; sourceTree = "<group>"; };
+		8CADA335D9C5D811C95DC89C /* RoomService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomService.swift; sourceTree = "<group>"; };
+		8F8850FA9BCC9D27A9CDAADF /* VoiceAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceAlert.swift; sourceTree = "<group>"; };
+		A0149EBA0B1D06B8D9030960 /* Route.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Route.swift; sourceTree = "<group>"; };
+		A02283ABE3673EDB9179EC4A /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
+		ACD3277E0BD54C01C50FE9E0 /* MeshBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshBrowser.swift; sourceTree = "<group>"; };
+		B13D1C114499361DEA5B3E8B /* WAWARide.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WAWARide.entitlements; sourceTree = "<group>"; };
+		B53E29801FB001F3A9B5A19A /* RouteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteService.swift; sourceTree = "<group>"; };
+		BC508B9FFEDD22FB83F75C4A /* JoinRideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinRideView.swift; sourceTree = "<group>"; };
+		C5E6390DDEB4526E1A75898A /* LiveMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveMapView.swift; sourceTree = "<group>"; };
+		DF088E27DDA9E78EDBB1489E /* MeshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshService.swift; sourceTree = "<group>"; };
+		E08048978005267C47986BD1 /* VoiceAssistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceAssistant.swift; sourceTree = "<group>"; };
+		E499C0DB9427A90DDE4F7F31 /* MeshRelay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshRelay.swift; sourceTree = "<group>"; };
+		F6439D1B01C2E17E3BFA1AC8 /* VoiceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceService.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		457F39CA74AA32853D2DCC7A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3E828D4AB0D0E3BAD3F59A1E /* GRDB in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		10F4468E8248F0046EA5A715 /* Mesh */ = {
+			isa = PBXGroup;
+			children = (
+				158E4766E4F058DBE3695658 /* MeshAdvertiser.swift */,
+				ACD3277E0BD54C01C50FE9E0 /* MeshBrowser.swift */,
+				E499C0DB9427A90DDE4F7F31 /* MeshRelay.swift */,
+				DF088E27DDA9E78EDBB1489E /* MeshService.swift */,
+			);
+			path = Mesh;
+			sourceTree = "<group>";
+		};
+		2B892BED92C3A9FADBDB0620 /* Transport */ = {
+			isa = PBXGroup;
+			children = (
+				6542EB848026170261E7BB77 /* ConnectivityMonitor.swift */,
+				27537E07F476017B205D8B51 /* TransportManager.swift */,
+			);
+			path = Transport;
+			sourceTree = "<group>";
+		};
+		309424743B3BD121B07A5E0A /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				30D7886496319347E91CD84C /* Info.plist */,
+				B13D1C114499361DEA5B3E8B /* WAWARide.entitlements */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		4DDA1B41289A4B262B5A0BF1 /* Route */ = {
+			isa = PBXGroup;
+			children = (
+				11D798071348FAAEAB9D8D4A /* GPXParser.swift */,
+				8B93D3261D866FC02B556E8D /* HazardService.swift */,
+				8CADA335D9C5D811C95DC89C /* RoomService.swift */,
+				B53E29801FB001F3A9B5A19A /* RouteService.swift */,
+			);
+			path = Route;
+			sourceTree = "<group>";
+		};
+		532F787721F0BF0B3DC27772 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				6E49AF7F8E77CFE7B09CAA24 /* AppState.swift */,
+				7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		54E4FEF9804F3A32C917BEC2 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				E51E898986586994974AF042 /* Audio */,
+				F57E188DE2DAB681871017FF /* Location */,
+				10F4468E8248F0046EA5A715 /* Mesh */,
+				4DDA1B41289A4B262B5A0BF1 /* Route */,
+				BD7F645DB8F81FC35B16A89F /* Storage */,
+				2B892BED92C3A9FADBDB0620 /* Transport */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		7E06ACC5AD3D475900C5C221 = {
+			isa = PBXGroup;
+			children = (
+				96EEA14A1B137370C9557424 /* Sources */,
+				814E4153F9895B2C7D777737 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		814E4153F9895B2C7D777737 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				181131D2327996FED85F5D37 /* WAWARide.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8F26B5C17C9E579160331C6E /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				778179E3EE09D1A29357FC42 /* LiveMapViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		96EEA14A1B137370C9557424 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				532F787721F0BF0B3DC27772 /* App */,
+				EAC847DFAEDC33B1B70B7E10 /* Models */,
+				309424743B3BD121B07A5E0A /* Resources */,
+				54E4FEF9804F3A32C917BEC2 /* Services */,
+				8F26B5C17C9E579160331C6E /* ViewModels */,
+				E70211129BF1CCB6B31D2263 /* Views */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		BD7F645DB8F81FC35B16A89F /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				A02283ABE3673EDB9179EC4A /* LocalStore.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		E51E898986586994974AF042 /* Audio */ = {
+			isa = PBXGroup;
+			children = (
+				7F6AD586B29C1E967DB81D0C /* OpusCodec.swift */,
+				E08048978005267C47986BD1 /* VoiceAssistant.swift */,
+				64CE3B44F7EB1E2F4A22DB6B /* VoiceCommandListener.swift */,
+				F6439D1B01C2E17E3BFA1AC8 /* VoiceService.swift */,
+			);
+			path = Audio;
+			sourceTree = "<group>";
+		};
+		E70211129BF1CCB6B31D2263 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				855B1C02750D179A6E2B26F6 /* HazardMenuView.swift */,
+				BC508B9FFEDD22FB83F75C4A /* JoinRideView.swift */,
+				C5E6390DDEB4526E1A75898A /* LiveMapView.swift */,
+				3EB7484BA3816E734DB61126 /* ProfileSetupView.swift */,
+				8119800B881A3AD8E0308316 /* RoomListView.swift */,
+				289B63192CA701EEA73371F8 /* RouteCreatorView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		EAC847DFAEDC33B1B70B7E10 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				4A3D7B6DF988B0CAC2E26826 /* HazardAlert.swift */,
+				55B2C285F25EF284911CD616 /* MeshPayload.swift */,
+				3FC2D46B9B97F295B285D172 /* Ride.swift */,
+				1DBCF8C9EEE28CC0C426D7F0 /* RiderProfile.swift */,
+				6C1C34E382325A4DE9CE6670 /* Room.swift */,
+				A0149EBA0B1D06B8D9030960 /* Route.swift */,
+				8F8850FA9BCC9D27A9CDAADF /* VoiceAlert.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		F57E188DE2DAB681871017FF /* Location */ = {
+			isa = PBXGroup;
+			children = (
+				4E3D444A40FD0F9516E489F9 /* LocationService.swift */,
+			);
+			path = Location;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		43061D48CAE6F9A1C5F0B28D /* WAWARide */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 7B8F69CC4A64253240F5EFF3 /* Build configuration list for PBXNativeTarget "WAWARide" */;
+			buildPhases = (
+				D3D33EF0436D2CDA8DC529BB /* Compile Opus */,
+				92F95C37D42D65B4498BD475 /* Sources */,
+				457F39CA74AA32853D2DCC7A /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WAWARide;
+			packageProductDependencies = (
+				F5F9991EF84E7FCCC59E34FE /* GRDB */,
+			);
+			productName = WAWARide;
+			productReference = 181131D2327996FED85F5D37 /* WAWARide.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		FFEC093283D6ACD0772DEB17 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					43061D48CAE6F9A1C5F0B28D = {
+						DevelopmentTeam = "";
+					};
+				};
+			};
+			buildConfigurationList = DF1289AD8C85C1C24ECCC479 /* Build configuration list for PBXProject "WAWARide" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7E06ACC5AD3D475900C5C221;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				3A87D5897349E39C01A73BED /* XCRemoteSwiftPackageReference "GRDB.swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 814E4153F9895B2C7D777737 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				43061D48CAE6F9A1C5F0B28D /* WAWARide */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		D3D33EF0436D2CDA8DC529BB /* Compile Opus */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Compile Opus";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# libopus will be compiled from Sources/Services/Audio/opus/\n# For initial builds, we use a pre-built XCFramework or\n# compile on-the-fly. Skip if already compiled.\nif [ ! -f \"${BUILT_PRODUCTS_DIR}/libopus.a\" ]; then\n  echo \"Opus needs to be compiled. Run ./scripts/build_opus.sh first.\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		92F95C37D42D65B4498BD475 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				480C7C18E0274A13C2B8A902 /* AppState.swift in Sources */,
+				7D707E0C5A90236111AFFB5F /* ConnectivityMonitor.swift in Sources */,
+				F072AA786589004066691C2C /* GPXParser.swift in Sources */,
+				C08D31DD0872CEC086D99B8F /* HazardAlert.swift in Sources */,
+				3DF0A5F9760AEEEADF640159 /* HazardMenuView.swift in Sources */,
+				120CDD4A854E688153CE9394 /* HazardService.swift in Sources */,
+				700EC0841C84DBAA421E4C37 /* JoinRideView.swift in Sources */,
+				F0F199A25194BB82F734B6A9 /* LiveMapView.swift in Sources */,
+				18BA894AED5CAEC555B55885 /* LiveMapViewModel.swift in Sources */,
+				9033668E219F770C7FD84B3F /* LocalStore.swift in Sources */,
+				3404A754C40DF4CE01FEF191 /* LocationService.swift in Sources */,
+				DAB7808377BDE79456731267 /* MeshAdvertiser.swift in Sources */,
+				57A710810E15D3EF4C2B7D3F /* MeshBrowser.swift in Sources */,
+				540DD63C16367B93061A381A /* MeshPayload.swift in Sources */,
+				F2B6F27910864FCDBB5FB48C /* MeshRelay.swift in Sources */,
+				BABEE66A07F34404E74416E6 /* MeshService.swift in Sources */,
+				755E44A54BE55272AF1CFA38 /* OpusCodec.swift in Sources */,
+				B5382A85F27DA4306323B740 /* ProfileSetupView.swift in Sources */,
+				FDB977F4DCC5A3B3BFA56ABD /* Ride.swift in Sources */,
+				D6E9C5FF1876DD64C5873A66 /* RiderProfile.swift in Sources */,
+				38791FD39C0B51F8CD96E634 /* Room.swift in Sources */,
+				58EF19524BE1A3CAA99DCCCC /* RoomListView.swift in Sources */,
+				D01F3E1A437D3DA26B40DC38 /* RoomService.swift in Sources */,
+				70F0BA4D006631A95604F65B /* Route.swift in Sources */,
+				F4FAC86AB0790924237A148E /* RouteCreatorView.swift in Sources */,
+				09AA2F56E91763C28E004BE3 /* RouteService.swift in Sources */,
+				B16D7F3A837D8728EDE927C2 /* TransportManager.swift in Sources */,
+				A0D085C142E4914F480B3CD7 /* VoiceAlert.swift in Sources */,
+				1FEE398A23AD3A6CC6970275 /* VoiceAssistant.swift in Sources */,
+				2C359761EC163C8754B34161 /* VoiceCommandListener.swift in Sources */,
+				4C5C0271298A78507D2FD236 /* VoiceService.swift in Sources */,
+				7FD2E7043CF44B04EBFC63EA /* WAWARideApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		0359300A59FA4A63D3336D34 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Resources/WAWARide.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = Sources/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wawa.ride;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				UIBackgroundModes = (
+					location,
+					"bluetooth-central",
+					"bluetooth-peripheral",
+					audio,
+				);
+			};
+			name = Release;
+		};
+		090A8FE737C0D3AF4FF7FEF5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		6860CC631208852B601C5806 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+		B7F5CADB8EA29835CD739228 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Resources/WAWARide.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				INFOPLIST_FILE = Sources/Resources/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 0.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.wawa.ride;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 1;
+				UIBackgroundModes = (
+					location,
+					"bluetooth-central",
+					"bluetooth-peripheral",
+					audio,
+				);
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		7B8F69CC4A64253240F5EFF3 /* Build configuration list for PBXNativeTarget "WAWARide" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B7F5CADB8EA29835CD739228 /* Debug */,
+				0359300A59FA4A63D3336D34 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		DF1289AD8C85C1C24ECCC479 /* Build configuration list for PBXProject "WAWARide" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6860CC631208852B601C5806 /* Debug */,
+				090A8FE737C0D3AF4FF7FEF5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		3A87D5897349E39C01A73BED /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/groue/GRDB.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 6.29.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F5F9991EF84E7FCCC59E34FE /* GRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 3A87D5897349E39C01A73BED /* XCRemoteSwiftPackageReference "GRDB.swift" */;
+			productName = GRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = FFEC093283D6ACD0772DEB17 /* Project object */;
+}

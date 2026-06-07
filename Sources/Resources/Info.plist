@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>WAWA Ride mostra sua localização no mapa do passeio, mesmo com o app em segundo plano.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>WAWA Ride mostra sua localização no mapa do passeio.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>WAWA Ride usa o microfone para walkie-talkie, mensagens de voz e comandos de voz.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>WAWA Ride reconhece comandos de voz como "Ok moto, marcar radar" durante o passeio.</string>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>WAWA Ride usa Bluetooth para descobrir riders próximos sem precisar de internet.</string>
+    <key>NSBluetoothPeripheralUsageDescription</key>
+    <string>WAWA Ride anuncia a presença do passeio via Bluetooth para outros riders entrarem.</string>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>location</string>
+        <string>bluetooth-central</string>
+        <string>bluetooth-peripheral</string>
+        <string>audio</string>
+    </array>
+    <key>UIRequiredDeviceCapabilities</key>
+    <array>
+        <string>location-services</string>
+        <string>bluetooth-le</string>
+    </array>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>UIUserInterfaceStyle</key>
+    <string>Dark</string>
+    <key>CFBundleDisplayName</key>
+    <string>WAWA Ride</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+</dict>
+</plist>
