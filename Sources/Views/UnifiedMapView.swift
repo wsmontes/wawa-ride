@@ -233,6 +233,14 @@ struct UnifiedMapView: View {
 
                     VStack(spacing: 12) {
                         Button {
+                            VoiceAssistant.shared.isMuted.toggle()
+                        } label: {
+                            Image(systemName: VoiceAssistant.shared.isMuted ? "speaker.slash" : "speaker.wave.2")
+                                .font(.title3).padding(12)
+                                .background(.ultraThinMaterial).clipShape(Circle()).shadow(radius: 4)
+                                .foregroundColor(VoiceAssistant.shared.isMuted ? .red : .primary)
+                        }
+                        Button {
                             mapVM.cycleMapType()
                         } label: {
                             Image(systemName: mapVM.mapTypeIcon)
@@ -585,6 +593,13 @@ struct NavigationHUD: View {
                     .foregroundColor(.white.opacity(0.8))
                 }
                 Spacer()
+                Button {
+                    VoiceAssistant.shared.isMuted.toggle()
+                } label: {
+                    Image(systemName: VoiceAssistant.shared.isMuted ? "speaker.slash" : "speaker.wave.2")
+                        .font(.caption).padding(6)
+                        .background(Color.white.opacity(0.2)).clipShape(Circle())
+                }
                 Button { onStop?() } label: {
                     Image(systemName: "xmark").font(.caption).padding(6)
                         .background(Color.white.opacity(0.2)).clipShape(Circle())
