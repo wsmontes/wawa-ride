@@ -698,7 +698,24 @@ struct NavigationHUD: View {
     var onStepList: (() -> Void)?
 
     var body: some View {
-        if let instructions = viewModel.currentStepInstructions {
+        if NavigationEngine.shared.isPaused {
+            // Paused state
+            HStack {
+                Image(systemName: "pause.circle.fill").font(.title2).foregroundColor(.yellow)
+                Text("Navegação pausada").font(.subheadline).fontWeight(.semibold)
+                Spacer()
+                Button {
+                    NavigationEngine.shared.resumeNavigation()
+                } label: {
+                    Image(systemName: "play.circle.fill").font(.title2).foregroundColor(.green)
+                }
+                Button { onStop?() } label: {
+                    Image(systemName: "xmark").font(.caption).padding(6)
+                        .background(Color.white.opacity(0.2)).clipShape(Circle())
+                }
+            }
+            .padding(12).background(Color.orange.opacity(0.85)).cornerRadius(12).padding(.horizontal, 8)
+        } else if let instructions = viewModel.currentStepInstructions {
             HStack {
                 Image(systemName: "arrow.turn.up.right").font(.title2)
                 VStack(alignment: .leading, spacing: 2) {

@@ -30,6 +30,7 @@ struct RouteCreatorView: View {
     @State private var editingWaypoint: RouteWaypoint?
     @State private var editName = ""
     @State private var editIsStop = false
+    @State private var roundTrip = false
 
     var body: some View {
         NavigationStack {
@@ -98,6 +99,12 @@ struct RouteCreatorView: View {
                             }
                             .disabled(viewModel.waypoints.isEmpty)
 
+                            Toggle(isOn: $roundTrip) {
+                                Text("Ida e volta").font(.caption)
+                            }
+                            .toggleStyle(.button)
+                            .tint(.orange)
+
                             Button {
                                 showWaypointEditor = true
                             } label: {
@@ -131,7 +138,7 @@ struct RouteCreatorView: View {
             .alert("Nome da Rota", isPresented: $showNamePrompt) {
                 TextField("Nome", text: $routeName)
                 Button("Salvar") {
-                    viewModel.saveRoute(name: routeName)
+                    viewModel.saveRoute(name: routeName, roundTrip: roundTrip)
                     dismiss()
                 }
                 Button("Cancelar", role: .cancel) {}
@@ -484,9 +491,18 @@ final class RouteCreatorViewModel: ObservableObject {
 
     // MARK: - Save
 
-    func saveRoute(name: String) {
+    func saveRoute(name: String, roundTrip: Bool = false) {
         guard waypoints.count >= 2 else { return }
-        _ = RouteService.shared.createDrawnRoute(name: name, waypoints: waypoints)
+        var finalWaypoints = waypoints
+        if roundTrip, let first = waypoints.first {
+            var returnPoint = first
+            returnPoint.order = finalWaypoints.count
+            returnPoint.name = "Retorno"
+            returnPoint.isStop = false
+            returnPoint.type = .waypoint
+            finalWaypoints.append(returnPoint)
+        }
+        _ = RouteService.shared.createDrawnRoute(name: name, waypoints: finalWaypoints)
     }
 }
 

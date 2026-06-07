@@ -13,6 +13,7 @@ final class NavigationEngine: ObservableObject {
     static let shared = NavigationEngine()
 
     @Published var isNavigating = false
+    @Published var isPaused = false
     @Published var currentStepIndex = 0
     @Published var activeRoute: MKRoute?
     @Published var distanceToNextStep: CLLocationDistance = 0
@@ -20,6 +21,11 @@ final class NavigationEngine: ObservableObject {
     @Published var estimatedTimeRemaining: TimeInterval = 0
     @Published var offRouteDistance: CLLocationDistance = 0
     @Published var isOffRoute = false
+
+    // Auto-pause
+    private var lowSpeedStart: Date?
+    private let autoPauseThreshold: TimeInterval = 30  // seconds
+    private let autoPauseSpeed: Double = 3  // km/h
     private var routePolyline: MKPolyline?
     private var stepPolylinePoints: [[CLLocationCoordinate2D]] = []
     private var lastAnnouncedStepIndex = -1
@@ -50,12 +56,26 @@ final class NavigationEngine: ObservableObject {
         announceNextStep()
     }
 
+    func pauseNavigation() {
+        guard isNavigating, !isPaused else { return }
+        isPaused = true
+        lowSpeedStart = nil
+    }
+
+    func resumeNavigation() {
+        guard isNavigating, isPaused else { return }
+        isPaused = false
+        lowSpeedStart = nil
+    }
+
     func stopNavigation() {
         isNavigating = false
+        isPaused = false
         activeRoute = nil
         routePolyline = nil
         stepPolylinePoints = []
         currentStepIndex = 0
+        lowSpeedStart = nil
     }
 
     // MARK: - Position Update
@@ -63,7 +83,30 @@ final class NavigationEngine: ObservableObject {
     func updatePosition(_ location: CLLocation) {
         guard isNavigating, let route = activeRoute else { return }
 
-        // Find current step based on closest point
+        // Auto-pause: if speed is very low for threshold duration
+        let speedKmh = location.speed * 3.6
+        if speedKmh < autoPauseSpeed && !isPaused {
+            if lowSpeedStart == nil { lowSpeedStart = Date() }
+            if let start = lowSpeedStart, Date().timeIntervalSince(start) >= autoPauseThreshold {
+                pauseNavigation()
+                VoiceAssistant.shared.speak(VoiceAlert(
+                    text: "Navegação pausada automaticamente.",
+                    priority: .normal, dedupKey: "autopause"
+                ))
+            }
+        } else if speedKmh >= autoPauseSpeed {
+            lowSpeedStart = nil
+            if isPaused {
+                resumeNavigation()
+                VoiceAssistant.shared.speak(VoiceAlert(
+                    text: "Navegação retomada.",
+                    priority: .normal, dedupKey: "autoresume"
+                ))
+            }
+        }
+
+        // Don't process navigation updates while paused
+        guard !isPaused else { return }
         let closest = findClosestPointOnRoute(from: location.coordinate)
 
         // Update step index
