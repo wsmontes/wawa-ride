@@ -37,6 +37,7 @@
 		7D707E0C5A90236111AFFB5F /* ConnectivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6542EB848026170261E7BB77 /* ConnectivityMonitor.swift */; };
 		7F8FEF785E28A4F14D224727 /* FeatureFlags.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28088164B49D439A96DB83AA /* FeatureFlags.swift */; };
 		7FD2E7043CF44B04EBFC63EA /* WAWARideApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */; };
+		85E40D92589B6B4E440BF70D /* InternetRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = C06EC22AC171B6168325CCA0 /* InternetRelay.swift */; };
 		9033668E219F770C7FD84B3F /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A02283ABE3673EDB9179EC4A /* LocalStore.swift */; };
 		9A7D699220935CA28E330435 /* RidesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39548E96785DF06078F85345 /* RidesListView.swift */; };
 		A0D085C142E4914F480B3CD7 /* VoiceAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F8850FA9BCC9D27A9CDAADF /* VoiceAlert.swift */; };
@@ -105,6 +106,7 @@
 		B13D1C114499361DEA5B3E8B /* WAWARide.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WAWARide.entitlements; sourceTree = "<group>"; };
 		B53E29801FB001F3A9B5A19A /* RouteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteService.swift; sourceTree = "<group>"; };
 		BC508B9FFEDD22FB83F75C4A /* JoinRideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinRideView.swift; sourceTree = "<group>"; };
+		C06EC22AC171B6168325CCA0 /* InternetRelay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InternetRelay.swift; sourceTree = "<group>"; };
 		C5E6390DDEB4526E1A75898A /* LiveMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveMapView.swift; sourceTree = "<group>"; };
 		DF088E27DDA9E78EDBB1489E /* MeshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshService.swift; sourceTree = "<group>"; };
 		E08048978005267C47986BD1 /* VoiceAssistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceAssistant.swift; sourceTree = "<group>"; };
@@ -129,6 +131,7 @@
 		10F4468E8248F0046EA5A715 /* Mesh */ = {
 			isa = PBXGroup;
 			children = (
+				C06EC22AC171B6168325CCA0 /* InternetRelay.swift */,
 				158E4766E4F058DBE3695658 /* MeshAdvertiser.swift */,
 				ACD3277E0BD54C01C50FE9E0 /* MeshBrowser.swift */,
 				E499C0DB9427A90DDE4F7F31 /* MeshRelay.swift */,
@@ -409,6 +412,7 @@
 				C08D31DD0872CEC086D99B8F /* HazardAlert.swift in Sources */,
 				3DF0A5F9760AEEEADF640159 /* HazardMenuView.swift in Sources */,
 				120CDD4A854E688153CE9394 /* HazardService.swift in Sources */,
+				85E40D92589B6B4E440BF70D /* InternetRelay.swift in Sources */,
 				700EC0841C84DBAA421E4C37 /* JoinRideView.swift in Sources */,
 				F012D00671A7564043057BB7 /* KMLParser.swift in Sources */,
 				F0F199A25194BB82F734B6A9 /* LiveMapView.swift in Sources */,
