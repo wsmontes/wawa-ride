@@ -347,6 +347,7 @@ struct UnifiedMapView: View {
     private func startSoloRide() {
         AppState.shared.currentRideId = "solo-\(UUID().uuidString.prefix(8))"
         AppState.shared.currentRideName = "Navegação"
+        AppState.shared.rideStartedAt = Date()
         setupRideSession()
     }
 
@@ -508,18 +509,58 @@ struct UnifiedMapView: View {
         MeshService.shared.leaveMesh()
         LocationService.shared.stopTracking()
         NavigationEngine.shared.stopNavigation()
-        RouteService.shared.stopRecording()
+
+        // Calculate real ride stats
+        let routeService = RouteService.shared
+        let trackPoints = routeService.trackPoints
+        let startedAt = AppState.shared.rideStartedAt ?? Date()
+        let finishedAt = Date()
+        let duration = finishedAt.timeIntervalSince(startedAt)
+
+        // Distance from track if recording, else from current route
+        let distance = routeService.isRecording ? routeService.recordingDistance : (routeService.currentRoute?.totalDistance)
+
+        // Average speed
+        let avgSpeed = duration > 0 ? (distance ?? 0) / duration * 3.6 : nil
+
+        // Max altitude from track points
+        let maxAlt = trackPoints.compactMap(\.altitude).max()
+
+        // Stop count from route waypoints
+        let stops = routeService.currentRoute?.waypoints.filter(\.isStop).count
+
+        // Save if recording
+        if routeService.isRecording {
+            routeService.stopRecording()
+        }
+
         let summary = RideSummary(
-            rideId: AppState.shared.currentRideId ?? "", rideName: AppState.shared.currentRideName ?? "",
-            startedAt: Date().addingTimeInterval(-3600), finishedAt: Date(),
-            totalDistance: RouteService.shared.currentRoute?.totalDistance,
-            totalDuration: 3600, maxAltitude: nil, avgSpeed: nil,
-            riderCount: AppState.shared.participants.count, stopCount: 0,
-            alertCount: HazardService.shared.activeAlerts.count, routeId: nil
+            rideId: AppState.shared.currentRideId ?? "",
+            rideName: AppState.shared.currentRideName ?? "Passeio",
+            startedAt: startedAt,
+            finishedAt: finishedAt,
+            totalDistance: distance,
+            totalDuration: duration,
+            maxAltitude: maxAlt,
+            avgSpeed: avgSpeed,
+            riderCount: max(AppState.shared.participants.count, 1),
+            stopCount: stops ?? 0,
+            alertCount: HazardService.shared.activeAlerts.count,
+            routeId: routeService.currentRoute?.id
         )
         try? LocalStore.shared.saveRideSummary(summary)
         AppState.shared.reset()
         NotificationCenter.default.post(name: .rideEnded, object: nil)
+
+        // Show post-ride summary card
+        endNavDistance = distance ?? 0
+        endNavDuration = duration
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            showEndNavSummary = true
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
+            withAnimation { showEndNavSummary = false }
+        }
     }
 }
 

@@ -12,6 +12,7 @@ final class AppState: ObservableObject {
     @Published var currentRideId: String?
     @Published var currentRideName: String?
     @Published var currentRoomId: String?
+    @Published var rideStartedAt: Date?
 
     // Participants
     @Published var participants: [RideParticipant] = []

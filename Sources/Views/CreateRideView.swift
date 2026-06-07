@@ -91,6 +91,7 @@ final class CreateRideViewModel: ObservableObject {
         let rideId = UUID().uuidString
         AppState.shared.currentRideId = rideId
         AppState.shared.currentRideName = rideName
+        AppState.shared.rideStartedAt = Date()
 
         // Start advertising via BLE
         MeshService.shared.startAdvertising(
