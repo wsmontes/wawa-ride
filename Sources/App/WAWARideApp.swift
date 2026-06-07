@@ -7,434 +7,198 @@ import CoreLocation
 @main
 struct WAWARideApp: App {
     @StateObject private var appState = AppState.shared
-    @State private var showProfile = false
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .onAppear {
-                    setupApp()
-                }
+                .onAppear { setupApp() }
                 .preferredColorScheme(.dark)
-                .onOpenURL { url in
-                    handleOpenURL(url)
-                }
+                .onOpenURL { handleOpenURL($0) }
         }
     }
 
     private func setupApp() {
-        // Check if profile exists
-        if !LocalStore.shared.profileExists() {
-            showProfile = true
-        }
-
-        // Configure audio session
         VoiceAssistant.shared.setupAudioSession()
-
-        // Start connectivity monitoring
         ConnectivityMonitor.shared.start()
-
-        // Request location permission
         LocationService.shared.requestPermission()
     }
 
     private func handleOpenURL(_ url: URL) {
-        // Handle .GPX file import
         guard url.pathExtension.lowercased() == "gpx" else { return }
-
         if let route = RouteService.shared.importGPX(from: url) {
             VoiceAssistant.shared.speak(VoiceAssistant.routeImported(name: route.name, waypoints: route.waypoints.count))
         }
     }
 }
 
-// MARK: - Content View (Root)
+// MARK: - Content View (Root — TabView)
 
 struct ContentView: View {
     @StateObject private var appState = AppState.shared
-    @State private var hasProfile = LocalStore.shared.profileExists()
+    @State private var selectedTab = 0
+    @State private var showCreateRide = false
+    @State private var showOnboarding = !LocalStore.shared.profileExists()
 
     var body: some View {
-        Group {
-            if !hasProfile {
-                ProfileSetupView()
-                    .onDisappear {
-                        hasProfile = LocalStore.shared.profileExists()
-                    }
-            } else if appState.currentRideId == nil {
-                JoinRideView()
-            } else {
+        ZStack {
+            // Normal tab navigation
+            TabView(selection: $selectedTab) {
+                ExploreMapView(selectedTab: $selectedTab)
+                    .tabItem { Label("Mapa", systemImage: "map") }
+                    .tag(0)
+
+                RoutesLibraryView()
+                    .tabItem { Label("Rotas", systemImage: "point.topleft.down.curvedto.point.bottomright.up") }
+                    .tag(1)
+
+                RidesListView(showCreateRide: $showCreateRide)
+                    .tabItem { Label("Passeios", systemImage: "motorcycle") }
+                    .tag(2)
+
+                ProfileTabView()
+                    .tabItem { Label("Perfil", systemImage: "person.circle") }
+                    .tag(3)
+            }
+
+            // Active ride overlay (full screen)
+            if appState.currentRideId != nil {
                 RideActiveView()
+                    .transition(.move(edge: .bottom))
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .rideEnded)) { _ in
-            appState.currentRideId = nil
-            appState.currentRideName = nil
+            withAnimation {
+                appState.currentRideId = nil
+                appState.currentRideName = nil
+            }
+        }
+        .sheet(isPresented: $showOnboarding) {
+            QuickOnboardingView(isPresented: $showOnboarding)
+        }
+        .sheet(isPresented: $showCreateRide) {
+            CreateRideView()
         }
     }
 }
 
-// MARK: - Ride Active View (Map + Controls)
+// MARK: - Quick Onboarding (non-blocking)
 
-struct RideActiveView: View {
-    @StateObject private var viewModel = LiveMapViewModel()
-    @State private var showRooms = false
-    @State private var showHazardMenu = false
-    @State private var showRouteCreator = false
-    @State private var isPTTActive = false
-    @State private var isRecordingMessage = false
+struct QuickOnboardingView: View {
+    @Binding var isPresented: Bool
+    @State private var name = ""
+    @State private var defaultRole: RideRole = .rider
 
     var body: some View {
-        ZStack {
-            // Map (full screen)
-            LiveMapView(viewModel: viewModel)
-                .ignoresSafeArea()
-
-            // Top bar
-            VStack {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(viewModel.titleBarText)
-                            .font(.headline)
-                            .foregroundColor(.white)
-
-                        Text("\(viewModel.connectedCount) de \(viewModel.totalCount) online")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-
-                    Spacer()
-
-                    // Rooms button
-                    Button {
-                        showRooms = true
-                    } label: {
-                        Image(systemName: AppState.shared.hasUnreadMessages ? "message.badge" : "message")
-                            .font(.title2)
-                            .padding(8)
-                            .background(Color.black.opacity(0.6))
-                            .clipShape(Circle())
-                    }
-                }
-                .padding(.horizontal)
-                .padding(.top, 48)
-                .background(
-                    LinearGradient(
-                        colors: [.black.opacity(0.7), .clear],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-
+        NavigationStack {
+            VStack(spacing: 24) {
                 Spacer()
 
-                // Bottom status bar
-                VStack(spacing: 12) {
-                    // Status text
-                    Text(viewModel.statusText)
-                        .font(.system(.body, design: .monospaced))
+                Image(systemName: "motorcycle")
+                    .font(.system(size: 64))
+                    .foregroundColor(.orange)
+
+                Text("Bem-vindo ao\nWAWA Ride")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .multilineTextAlignment(.center)
+
+                Text("Configure rapidamente para começar")
+                    .foregroundColor(.secondary)
+
+                VStack(spacing: 16) {
+                    TextField("Seu nome ou apelido", text: $name)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.body)
+                        .padding(.horizontal)
+
+                    Picker("Você é:", selection: $defaultRole) {
+                        Text("🏍️ Líder (cria passeios)").tag(RideRole.leader)
+                        Text("🏍️ Rider (entra nos passeios)").tag(RideRole.rider)
+                        Text("🛡️ Varredor (último da fila)").tag(RideRole.sweeper)
+                    }
+                    .pickerStyle(.menu)
+                    .padding(.horizontal)
+                }
+
+                Button {
+                    saveAndDismiss()
+                } label: {
+                    Text(name.count >= 2 ? "COMEÇAR" : "PULAR")
+                        .font(.headline)
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.black.opacity(0.6))
-                        .cornerRadius(8)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(name.count >= 2 ? Color.orange : Color.gray)
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal)
 
-                    // Off-route indicator
-                    if viewModel.offRouteDistance > 20 {
-                        HStack(spacing: 8) {
-                            Circle()
-                                .fill(viewModel.offRouteDistance > 50 ? Color.red : Color.yellow)
-                                .frame(width: 10, height: 10)
-                            Text("\(Int(viewModel.offRouteDistance))m da rota")
-                                .font(.caption)
-                                .foregroundColor(.white)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(Color.black.opacity(0.6))
-                        .cornerRadius(8)
-                    }
+                Spacer()
+            }
+        }
+    }
 
-                    // Action buttons
-                    HStack(spacing: 16) {
-                        // Hazard button
+    private func saveAndDismiss() {
+        if name.count >= 2 {
+            let profile = RiderProfile(name: name, defaultRole: defaultRole)
+            LocalStore.shared.saveProfile(profile)
+        }
+        isPresented = false
+    }
+}
+
+// MARK: - Profile Tab (non-blocking)
+
+struct ProfileTabView: View {
+    @StateObject private var viewModel = ProfileViewModel()
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Piloto") {
+                    HStack {
+                        Spacer()
                         Button {
-                            showHazardMenu = true
+                            viewModel.showPhotoPicker = true
                         } label: {
-                            VStack(spacing: 4) {
-                                Image(systemName: "exclamationmark.triangle")
-                                    .font(.title2)
-                                Text("Perigo")
-                                    .font(.caption2)
-                            }
-                            .frame(width: 70, height: 70)
-                            .background(Color.black.opacity(0.7))
-                            .cornerRadius(35)
-                        }
+                            ZStack {
+                                Circle()
+                                    .fill(Color.orange.opacity(0.2))
+                                    .frame(width: 80, height: 80)
 
-                        // PTT Button
-                        Button {
-                            // Hold gesture handled via LongPressGesture
-                        } label: {
-                            VStack(spacing: 4) {
-                                Image(systemName: isPTTActive ? "mic.fill" : "mic")
+                                Text(viewModel.initials)
                                     .font(.title)
-                                Text(isPTTActive ? "FALANDO" : "FALAR")
-                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.orange)
                             }
-                            .frame(width: isPTTActive ? 100 : 80, height: isPTTActive ? 100 : 80)
-                            .background(isPTTActive ? Color.green : Color.black.opacity(0.7))
-                            .cornerRadius(isPTTActive ? 50 : 40)
                         }
-                        .simultaneousGesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { _ in
-                                    if !isPTTActive {
-                                        startPTT()
-                                    }
-                                }
-                                .onEnded { _ in
-                                    stopPTT()
-                                }
-                        )
+                        Spacer()
+                    }
+                    .listRowBackground(Color.clear)
 
-                        // Route button
-                        Button {
-                            if RouteService.shared.isRecording {
-                                RouteService.shared.stopRecording()
-                            } else {
-                                showRouteCreator = true
-                            }
-                        } label: {
-                            VStack(spacing: 4) {
-                                Image(systemName: RouteService.shared.isRecording ? "stop.circle" : "point.topleft.down.curvedto.point.bottomright.up")
-                                    .font(.title2)
-                                Text(RouteService.shared.isRecording ? "Parar" : "Rota")
-                                    .font(.caption2)
-                            }
-                            .frame(width: 70, height: 70)
-                            .background(Color.black.opacity(0.7))
-                            .cornerRadius(35)
+                    TextField("Nome ou apelido", text: $viewModel.name)
+                    TextField("Moto (opcional)", text: $viewModel.bikeModel)
+                }
+
+                Section("Função padrão") {
+                    Picker("Função", selection: $viewModel.defaultRole) {
+                        ForEach(RideRole.allCases, id: \.self) { role in
+                            Text(role.displayName).tag(role)
                         }
                     }
-                    .padding(.bottom, 24)
-                }
-            }
-        }
-        .edgesIgnoringSafeArea(.all)
-        .sheet(isPresented: $showRooms) {
-            RoomListView()
-        }
-        .sheet(isPresented: $showHazardMenu) {
-            HazardMenuView { hazardType in
-                if let location = LocationService.shared.currentLocation {
-                    HazardService.shared.markHazard(type: hazardType, at: location.coordinate)
-                }
-                showHazardMenu = false
-            }
-        }
-        .sheet(isPresented: $showRouteCreator) {
-            RouteCreatorView()
-        }
-        .onAppear {
-            setupRideSession()
-        }
-    }
-
-    private func startPTT() {
-        isPTTActive = true
-        let roomId = AppState.shared.currentRoomId ?? AppState.shared.activeRooms.first?.id ?? "general"
-        VoiceService.shared.startPTT(roomId: roomId)
-    }
-
-    private func stopPTT() {
-        isPTTActive = false
-        VoiceService.shared.stopPTT()
-    }
-
-    private func setupRideSession() {
-        // Subscribe to location updates
-        LocationService.shared.onLocationUpdate = { payload in
-            Task { @MainActor in
-                viewModel.updateLocation(speed: payload.speed, heading: payload.heading)
-
-                // Add track point if recording
-                if RouteService.shared.isRecording {
-                    RouteService.shared.addTrackPoint(
-                        latitude: payload.lat,
-                        longitude: payload.lng,
-                        speed: payload.speed,
-                        altitude: payload.altitude
-                    )
                 }
 
-                // Update navigation (via NavigationEngine)
-                let location = CLLocation(latitude: payload.lat, longitude: payload.lng)
-                NavigationEngine.shared.updatePosition(location)
-
-                // Send location via mesh
-                sendLocationUpdate(payload)
-            }
-        }
-
-        // Subscribe to mesh payloads
-        MeshService.shared.onPayloadReceived = { payload in
-            Task { @MainActor in
-                handleMeshPayload(payload)
-            }
-        }
-
-        // Subscribe to mesh state
-        MeshService.shared.onPeerConnected = { _ in
-            Task { @MainActor in
-                TransportManager.shared.onConnectivityRestored()
-                viewModel.meshState = .connected
-            }
-        }
-
-        // Start tracking
-        LocationService.shared.startTracking()
-
-        // Periodic UI updates
-        startPeriodicUpdates()
-    }
-
-    private func sendLocationUpdate(_ payload: LocationPayload) {
-        guard let encoded = try? JSONEncoder().encode(payload) else { return }
-        let meshPayload = MeshPayload(
-            type: .locationUpdate,
-            senderId: UserDefaults.standard.string(forKey: "riderProfileId") ?? "",
-            senderName: UserDefaults.standard.string(forKey: "riderProfileName") ?? "",
-            rideId: AppState.shared.currentRideId ?? "",
-            ttl: 3,
-            priority: .normal,
-            payload: encoded
-        )
-        TransportManager.shared.send(meshPayload)
-    }
-
-    private func handleMeshPayload(_ payload: MeshPayload) {
-        switch payload.type {
-        case .locationUpdate:
-            if let loc = try? JSONDecoder().decode(LocationPayload.self, from: payload.payload) {
-                // Update participant position
-                AppState.shared.updateParticipant(senderId: payload.senderId, senderName: payload.senderName, location: loc)
-                viewModel.updateParticipants(AppState.shared.participants)
-            }
-
-        case .hazardAlert:
-            if let hazardPayload = try? JSONDecoder().decode(HazardAlertPayload.self, from: payload.payload) {
-                HazardService.shared.handleIncomingAlert(hazardPayload.alert)
-                viewModel.updateAlerts(HazardService.shared.activeAlerts)
-            }
-
-        case .hazardConfirm:
-            if let action = try? JSONDecoder().decode(HazardActionPayload.self, from: payload.payload) {
-                HazardService.shared.handleConfirmAction(alertId: action.alertId, riderName: action.riderName)
-                viewModel.updateAlerts(HazardService.shared.activeAlerts)
-            }
-
-        case .hazardClear:
-            if let action = try? JSONDecoder().decode(HazardActionPayload.self, from: payload.payload) {
-                HazardService.shared.handleClearAction(alertId: action.alertId, riderName: action.riderName)
-                viewModel.updateAlerts(HazardService.shared.activeAlerts)
-            }
-
-        case .voiceLive:
-            if let voicePayload = try? JSONDecoder().decode(VoiceLivePayload.self, from: payload.payload) {
-                VoiceService.shared.handleVoiceLivePayload(voicePayload)
-            }
-
-        case .voiceMessage:
-            if let msgPayload = try? JSONDecoder().decode(VoiceMessagePayload.self, from: payload.payload) {
-                VoiceService.shared.handleVoiceMessagePayload(msgPayload)
-            }
-
-        case .voiceMessageAck:
-            // Handle ack (update delivery status)
-            break
-
-        case .roomCreated:
-            if let roomPayload = try? JSONDecoder().decode(RoomPayload.self, from: payload.payload) {
-                RoomService.shared.handleIncomingRoom(roomPayload.room)
-            }
-
-        case .roomClosed:
-            if let roomPayload = try? JSONDecoder().decode(RoomMembershipPayload.self, from: payload.payload) {
-                RoomService.shared.handleRoomClosed(roomPayload.roomId)
-            }
-
-        case .roomJoin:
-            if let membership = try? JSONDecoder().decode(RoomMembershipPayload.self, from: payload.payload) {
-                RoomService.shared.handleMembershipChange(
-                    roomId: membership.roomId, riderId: membership.riderId,
-                    riderName: membership.riderName, action: .join
-                )
-            }
-
-        case .roomLeave:
-            if let membership = try? JSONDecoder().decode(RoomMembershipPayload.self, from: payload.payload) {
-                RoomService.shared.handleMembershipChange(
-                    roomId: membership.roomId, riderId: membership.riderId,
-                    riderName: membership.riderName, action: .leave
-                )
-            }
-
-        case .routeCreated, .routeShared:
-            if let routePayload = try? JSONDecoder().decode(RoutePayload.self, from: payload.payload) {
-                try? LocalStore.shared.saveRoute(routePayload.route)
-                if routePayload.route.createdBy == AppState.shared.currentRideId {
-                    viewModel.setTrackPolyline(trackPoints: routePayload.route.simplifiedTrack ?? [])
+                Section {
+                    Button("Salvar alterações") {
+                        viewModel.save()
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundColor(.orange)
+                    .disabled(!viewModel.canSave)
                 }
             }
-
-        case .routeBatch:
-            if let batch = try? JSONDecoder().decode(RouteBatchPayload.self, from: payload.payload) {
-                // Append track points to route
-                viewModel.setTrackPolyline(trackPoints: batch.points)
-            }
-
-        case .statusChange:
-            if let status = try? JSONDecoder().decode(StatusPayload.self, from: payload.payload) {
-                if status.status == "need_help" {
-                    VoiceAssistant.shared.speak(VoiceAlert(
-                        text: "\(payload.senderName) está parado e precisa de ajuda.",
-                        priority: .high, canInterrupt: true, dedupKey: "help_\(payload.senderId)"
-                    ))
-                }
-            }
-
-        case .sosAlert:
-            if let sos = try? JSONDecoder().decode(SOSPayload.self, from: payload.payload) {
-                VoiceAssistant.shared.speak(VoiceAssistant.sosReceived(name: payload.senderName, reason: sos.reason))
-            }
-
-        case .fullState:
-            if let state = try? JSONDecoder().decode(FullStatePayload.self, from: payload.payload) {
-                viewModel.updateParticipants(state.participants)
-                if let route = state.activeRoute {
-                    viewModel.setTrackPolyline(trackPoints: route.simplifiedTrack ?? [])
-                }
-                viewModel.updateAlerts(state.activeAlerts)
-            }
-
-        case .rideEnded:
-            AppState.shared.currentRideId = nil
-            NotificationCenter.default.post(name: .rideEnded, object: nil)
-
-        default:
-            break
-        }
-    }
-
-    private func startPeriodicUpdates() {
-        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
-            Task { @MainActor in
-                viewModel.updateParticipants(AppState.shared.participants)
-                viewModel.updateAlerts(HazardService.shared.activeAlerts)
-                viewModel.offRouteDistance = NavigationEngine.shared.offRouteDistance
-                viewModel.updateNavigationFromEngine()
-            }
+            .navigationTitle("Perfil")
         }
     }
 }

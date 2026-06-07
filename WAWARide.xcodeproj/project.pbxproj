@@ -23,14 +23,19 @@
 		540DD63C16367B93061A381A /* MeshPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55B2C285F25EF284911CD616 /* MeshPayload.swift */; };
 		57A710810E15D3EF4C2B7D3F /* MeshBrowser.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACD3277E0BD54C01C50FE9E0 /* MeshBrowser.swift */; };
 		58EF19524BE1A3CAA99DCCCC /* RoomListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8119800B881A3AD8E0308316 /* RoomListView.swift */; };
+		61E1B6199623F7CE81087573 /* ExploreMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C79220AE225D5A4E8DB1902 /* ExploreMapView.swift */; };
+		6A10400C98D558692194C63D /* RoutesLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB79495B1659156E18CD67E /* RoutesLibraryView.swift */; };
 		700EC0841C84DBAA421E4C37 /* JoinRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC508B9FFEDD22FB83F75C4A /* JoinRideView.swift */; };
+		70CEF53277BEEE13AB788C03 /* CreateRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80D068F7547E2F56557911C1 /* CreateRideView.swift */; };
 		70F0BA4D006631A95604F65B /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0149EBA0B1D06B8D9030960 /* Route.swift */; };
 		755E44A54BE55272AF1CFA38 /* OpusCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6AD586B29C1E967DB81D0C /* OpusCodec.swift */; };
 		7D707E0C5A90236111AFFB5F /* ConnectivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6542EB848026170261E7BB77 /* ConnectivityMonitor.swift */; };
 		7FD2E7043CF44B04EBFC63EA /* WAWARideApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */; };
 		9033668E219F770C7FD84B3F /* LocalStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = A02283ABE3673EDB9179EC4A /* LocalStore.swift */; };
+		9A7D699220935CA28E330435 /* RidesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39548E96785DF06078F85345 /* RidesListView.swift */; };
 		A0D085C142E4914F480B3CD7 /* VoiceAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F8850FA9BCC9D27A9CDAADF /* VoiceAlert.swift */; };
 		B16D7F3A837D8728EDE927C2 /* TransportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27537E07F476017B205D8B51 /* TransportManager.swift */; };
+		B491DD3173B19F26A6EEA36C /* RideActiveView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3A763EA0871C4DE8FC91A11 /* RideActiveView.swift */; };
 		B5382A85F27DA4306323B740 /* ProfileSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3EB7484BA3816E734DB61126 /* ProfileSetupView.swift */; };
 		BABEE66A07F34404E74416E6 /* MeshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF088E27DDA9E78EDBB1489E /* MeshService.swift */; };
 		C08D31DD0872CEC086D99B8F /* HazardAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A3D7B6DF988B0CAC2E26826 /* HazardAlert.swift */; };
@@ -55,6 +60,7 @@
 		2863710F7063254B545DD016 /* NavigationEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationEngine.swift; sourceTree = "<group>"; };
 		289B63192CA701EEA73371F8 /* RouteCreatorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteCreatorView.swift; sourceTree = "<group>"; };
 		30D7886496319347E91CD84C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		39548E96785DF06078F85345 /* RidesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RidesListView.swift; sourceTree = "<group>"; };
 		3EB7484BA3816E734DB61126 /* ProfileSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileSetupView.swift; sourceTree = "<group>"; };
 		3FC2D46B9B97F295B285D172 /* Ride.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Ride.swift; sourceTree = "<group>"; };
 		4A3D7B6DF988B0CAC2E26826 /* HazardAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HazardAlert.swift; sourceTree = "<group>"; };
@@ -64,11 +70,14 @@
 		64CE3B44F7EB1E2F4A22DB6B /* VoiceCommandListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceCommandListener.swift; sourceTree = "<group>"; };
 		64DFEED427065907C748CF93 /* SearchBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchBarView.swift; sourceTree = "<group>"; };
 		6542EB848026170261E7BB77 /* ConnectivityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectivityMonitor.swift; sourceTree = "<group>"; };
+		6BB79495B1659156E18CD67E /* RoutesLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoutesLibraryView.swift; sourceTree = "<group>"; };
 		6C1C34E382325A4DE9CE6670 /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
 		6E49AF7F8E77CFE7B09CAA24 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		778179E3EE09D1A29357FC42 /* LiveMapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveMapViewModel.swift; sourceTree = "<group>"; };
+		7C79220AE225D5A4E8DB1902 /* ExploreMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapView.swift; sourceTree = "<group>"; };
 		7F6AD586B29C1E967DB81D0C /* OpusCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpusCodec.swift; sourceTree = "<group>"; };
 		7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WAWARideApp.swift; sourceTree = "<group>"; };
+		80D068F7547E2F56557911C1 /* CreateRideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateRideView.swift; sourceTree = "<group>"; };
 		8119800B881A3AD8E0308316 /* RoomListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomListView.swift; sourceTree = "<group>"; };
 		855B1C02750D179A6E2B26F6 /* HazardMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HazardMenuView.swift; sourceTree = "<group>"; };
 		8B93D3261D866FC02B556E8D /* HazardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HazardService.swift; sourceTree = "<group>"; };
@@ -84,6 +93,7 @@
 		DF088E27DDA9E78EDBB1489E /* MeshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshService.swift; sourceTree = "<group>"; };
 		E08048978005267C47986BD1 /* VoiceAssistant.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceAssistant.swift; sourceTree = "<group>"; };
 		E499C0DB9427A90DDE4F7F31 /* MeshRelay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshRelay.swift; sourceTree = "<group>"; };
+		F3A763EA0871C4DE8FC91A11 /* RideActiveView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideActiveView.swift; sourceTree = "<group>"; };
 		F6439D1B01C2E17E3BFA1AC8 /* VoiceService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceService.swift; sourceTree = "<group>"; };
 		F7F467253E8B98944A306C15 /* DirectionsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectionsService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -232,12 +242,17 @@
 		E70211129BF1CCB6B31D2263 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				80D068F7547E2F56557911C1 /* CreateRideView.swift */,
+				7C79220AE225D5A4E8DB1902 /* ExploreMapView.swift */,
 				855B1C02750D179A6E2B26F6 /* HazardMenuView.swift */,
 				BC508B9FFEDD22FB83F75C4A /* JoinRideView.swift */,
 				C5E6390DDEB4526E1A75898A /* LiveMapView.swift */,
 				3EB7484BA3816E734DB61126 /* ProfileSetupView.swift */,
+				F3A763EA0871C4DE8FC91A11 /* RideActiveView.swift */,
+				39548E96785DF06078F85345 /* RidesListView.swift */,
 				8119800B881A3AD8E0308316 /* RoomListView.swift */,
 				289B63192CA701EEA73371F8 /* RouteCreatorView.swift */,
+				6BB79495B1659156E18CD67E /* RoutesLibraryView.swift */,
 				64DFEED427065907C748CF93 /* SearchBarView.swift */,
 			);
 			path = Views;
@@ -352,7 +367,9 @@
 			files = (
 				480C7C18E0274A13C2B8A902 /* AppState.swift in Sources */,
 				7D707E0C5A90236111AFFB5F /* ConnectivityMonitor.swift in Sources */,
+				70CEF53277BEEE13AB788C03 /* CreateRideView.swift in Sources */,
 				267ECDC2744AC75FBA4A7C35 /* DirectionsService.swift in Sources */,
+				61E1B6199623F7CE81087573 /* ExploreMapView.swift in Sources */,
 				F072AA786589004066691C2C /* GPXParser.swift in Sources */,
 				C08D31DD0872CEC086D99B8F /* HazardAlert.swift in Sources */,
 				3DF0A5F9760AEEEADF640159 /* HazardMenuView.swift in Sources */,
@@ -371,13 +388,16 @@
 				755E44A54BE55272AF1CFA38 /* OpusCodec.swift in Sources */,
 				B5382A85F27DA4306323B740 /* ProfileSetupView.swift in Sources */,
 				FDB977F4DCC5A3B3BFA56ABD /* Ride.swift in Sources */,
+				B491DD3173B19F26A6EEA36C /* RideActiveView.swift in Sources */,
 				D6E9C5FF1876DD64C5873A66 /* RiderProfile.swift in Sources */,
+				9A7D699220935CA28E330435 /* RidesListView.swift in Sources */,
 				38791FD39C0B51F8CD96E634 /* Room.swift in Sources */,
 				58EF19524BE1A3CAA99DCCCC /* RoomListView.swift in Sources */,
 				D01F3E1A437D3DA26B40DC38 /* RoomService.swift in Sources */,
 				70F0BA4D006631A95604F65B /* Route.swift in Sources */,
 				F4FAC86AB0790924237A148E /* RouteCreatorView.swift in Sources */,
 				09AA2F56E91763C28E004BE3 /* RouteService.swift in Sources */,
+				6A10400C98D558692194C63D /* RoutesLibraryView.swift in Sources */,
 				CE451470662818B60A2CB08D /* SearchBarView.swift in Sources */,
 				E3ED73410F6AE247958989BA /* SearchService.swift in Sources */,
 				B16D7F3A837D8728EDE927C2 /* TransportManager.swift in Sources */,
