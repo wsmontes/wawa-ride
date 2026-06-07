@@ -2,6 +2,7 @@ import SwiftUI
 import AVFoundation
 import CoreLocation
 import MapKit
+import PhotosUI
 
 // MARK: - App Entry Point
 
@@ -162,6 +163,7 @@ struct QuickOnboardingView: View {
 
 struct ProfileTabView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @State private var selectedPhotoItem: PhotosPickerItem?
 
     var body: some View {
         NavigationStack {
@@ -169,18 +171,36 @@ struct ProfileTabView: View {
                 Section("Piloto") {
                     HStack {
                         Spacer()
-                        Button {
-                            viewModel.showPhotoPicker = true
-                        } label: {
-                            ZStack {
-                                Circle()
-                                    .fill(Color.orange.opacity(0.2))
-                                    .frame(width: 80, height: 80)
-
-                                Text(viewModel.initials)
-                                    .font(.title)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.orange)
+                        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
+                            if let photoData = viewModel.photoData, let uiImage = UIImage(data: photoData) {
+                                Image(uiImage: uiImage)
+                                    .resizable().scaledToFill()
+                                    .frame(width: 80, height: 80).clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.orange, lineWidth: 3))
+                            } else {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.orange.opacity(0.2))
+                                        .frame(width: 80, height: 80)
+                                    Text(viewModel.initials)
+                                        .font(.title).fontWeight(.bold).foregroundColor(.orange)
+                                }
+                                .overlay(Circle().stroke(Color.orange, lineWidth: 3))
+                            }
+                        }
+                        .onChange(of: selectedPhotoItem) { _, item in
+                            Task {
+                                if let data = try? await item?.loadTransferable(type: Data.self) {
+                                    // Compress to max 200KB
+                                    if let image = UIImage(data: data),
+                                       let compressed = image.jpegData(compressionQuality: 0.5) {
+                                        viewModel.photoData = compressed.prefix(200_000).count > 200_000
+                                            ? image.jpegData(compressionQuality: 0.2) : compressed
+                                    } else {
+                                        viewModel.photoData = data
+                                    }
+                                    viewModel.save()
+                                }
                             }
                         }
                         Spacer()
