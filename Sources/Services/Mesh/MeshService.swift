@@ -28,6 +28,10 @@ final class MeshService: NSObject, ObservableObject {
     private var currentRideId: String?
     private var currentRiderName: String = ""
 
+    // Auto-presence (always-on discovery)
+    private var isAutoPresenceActive = false
+    let presenceId: String
+
     // Callbacks
     var onPayloadReceived: ((MeshPayload) -> Void)?
     var onPeerConnected: ((MCPeerID) -> Void)?
@@ -64,11 +68,53 @@ final class MeshService: NSObject, ObservableObject {
         browser = MeshBrowser(peerID: myPeerID, serviceType: Self.serviceType)
         relay = MeshRelay()
 
+        // Unique presence ID (persists across app launches)
+        if let saved = UserDefaults.standard.string(forKey: "presenceId") {
+            presenceId = saved
+        } else {
+            presenceId = UUID().uuidString
+            UserDefaults.standard.set(presenceId, forKey: "presenceId")
+        }
+
         super.init()
 
         session.delegate = self
         advertiser.delegate = self
         browser.delegate = self
+    }
+
+    // MARK: - Auto-Presence (always-on discovery)
+
+    /// Start advertising AND browsing simultaneously.
+    /// Any two devices with the app open will discover each other automatically.
+    func startAutoPresence(name: String) {
+        guard !isAutoPresenceActive else { return }
+        isAutoPresenceActive = true
+        currentRiderName = name
+
+        let info = MeshDiscoveryInfo(
+            rideId: presenceId,
+            rideName: name,
+            leaderName: name,
+            riderCount: "1",
+            rideStatus: "presence",
+            roomCount: "0",
+            version: "2"
+        )
+
+        advertiser.start(with: info)
+        browser.start()
+        meshState = .browsing
+    }
+
+    func stopAutoPresence() {
+        isAutoPresenceActive = false
+        advertiser.stop()
+        browser.stop()
+    }
+
+    var hasNearbyPeers: Bool {
+        !connectedPeers.isEmpty
     }
 
     // MARK: - Lifecycle
@@ -197,10 +243,12 @@ extension MeshService: MCSessionDelegate {
                 }
                 self.meshState = .connected
                 self.onPeerConnected?(peerID)
+                NotificationCenter.default.post(name: .meshPeerConnected, object: peerID)
 
             case .notConnected:
                 self.connectedPeers.removeAll { $0.displayName == peerID.displayName }
                 self.onPeerDisconnected?(peerID)
+                NotificationCenter.default.post(name: .meshPeerDisconnected, object: peerID)
 
             case .connecting:
                 break
@@ -250,8 +298,13 @@ extension MeshService: MeshBrowserDelegate {
     func browser(_ browser: MeshBrowser, didFind peerID: MCPeerID, with discoveryInfo: [String: String]?) {
         guard let info = MeshDiscoveryInfo.from(discoveryInfo) else { return }
 
-        // Don't show own ride
-        if info.rideId == currentRideId { return }
+        // Don't connect to self
+        if info.rideId == presenceId || info.rideId == currentRideId { return }
+
+        // Auto-invite: connect immediately when we find another presence
+        if isAutoPresenceActive && !connectedPeers.contains(where: { $0.displayName == peerID.displayName }) {
+            browser.invite(peerID, to: session)
+        }
 
         let ride = DiscoveredRide(
             id: info.rideId,
@@ -277,6 +330,8 @@ extension MeshService: MeshBrowserDelegate {
 
 extension Notification.Name {
     static let meshVoiceStreamReceived = Notification.Name("meshVoiceStreamReceived")
+    static let meshPeerConnected = Notification.Name("meshPeerConnected")
+    static let meshPeerDisconnected = Notification.Name("meshPeerDisconnected")
 }
 
 // MARK: - Discovery Info Helper

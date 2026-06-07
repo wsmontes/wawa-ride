@@ -1,6 +1,7 @@
 import SwiftUI
 import MapKit
 import AVFoundation
+import MultipeerConnectivity
 
 // MARK: - Unified Map View
 
@@ -396,11 +397,34 @@ struct UnifiedMapView: View {
                 sheetState = .place(PlaceCardItem(coordinate: coord, name: name))
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .meshPeerConnected)) { notif in
+            if let peerID = notif.object as? MCPeerID {
+                mapVM.nearbyPeers.append(peerID.displayName)
+                // Save to persistent memory
+                let myName = UserDefaults.standard.string(forKey: "riderProfileName") ?? "Rider"
+                try? LocalStore.shared.saveKnownPeer(
+                    peerId: peerID.displayName,
+                    peerName: peerID.displayName,
+                    presenceId: MeshService.shared.presenceId
+                )
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .meshPeerDisconnected)) { notif in
+            if let peerID = notif.object as? MCPeerID {
+                mapVM.nearbyPeers.removeAll { $0 == peerID.displayName }
+            }
+        }
         .onAppear {
+            // Start auto-presence immediately — be discoverable and discover others
+            let name = UserDefaults.standard.string(forKey: "riderProfileName") ?? "Rider"
+            MeshService.shared.startAutoPresence(name: name)
             mapVM.startBrowsing()
             if isInRide { setupRideSession() }
         }
-        .onDisappear { mapVM.stopBrowsing() }
+        .onDisappear {
+            mapVM.stopBrowsing()
+            if !isInRide { MeshService.shared.stopAutoPresence() }
+        }
     }
 
     // MARK: - Nearby Rides Banner

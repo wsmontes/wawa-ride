@@ -115,6 +115,17 @@ final class LocalStore: @unchecked Sendable {
                 t.column("received_at", .double).notNull()
             }
 
+            // Peer memory (known nearby riders)
+            try db.create(table: "known_peers", ifNotExists: true) { t in
+                t.column("peer_id", .text).notNull()
+                t.column("peer_name", .text).notNull()
+                t.column("presence_id", .text).notNull()
+                t.column("first_seen", .double).notNull()
+                t.column("last_seen", .double).notNull()
+                t.column("times_connected", .integer).notNull().defaults(to: 1)
+                t.primaryKey(["peer_id", "presence_id"])
+            }
+
             // Ride summaries
             try db.create(table: "ride_summaries", ifNotExists: true) { t in
                 t.column("ride_id", .text).primaryKey()
@@ -486,6 +497,44 @@ final class LocalStore: @unchecked Sendable {
             try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM mesh_dedup WHERE message_id = ?", arguments: [id])
         }) ?? 0 > 0
     }
+
+    // MARK: - Peer Memory
+
+    func saveKnownPeer(peerId: String, peerName: String, presenceId: String) throws {
+        try dbQueue.write { db in
+            try db.execute(
+                sql: """
+                    INSERT OR REPLACE INTO known_peers (peer_id, peer_name, presence_id, first_seen, last_seen, times_connected)
+                    VALUES (?, ?, ?, ?, ?, COALESCE((SELECT times_connected + 1 FROM known_peers WHERE peer_id = ? AND presence_id = ?), 1))
+                """,
+                arguments: [peerId, peerName, presenceId, Date().timeIntervalSinceReferenceDate, Date().timeIntervalSinceReferenceDate, peerId, presenceId]
+            )
+        }
+    }
+
+    func updatePeerLastSeen(peerId: String, presenceId: String) throws {
+        try dbQueue.write { db in
+            try db.execute(
+                sql: "UPDATE known_peers SET last_seen = ? WHERE peer_id = ? AND presence_id = ?",
+                arguments: [Date().timeIntervalSinceReferenceDate, peerId, presenceId]
+            )
+        }
+    }
+
+    func loadKnownPeers() -> [(peerId: String, peerName: String, presenceId: String, lastSeen: Date)] {
+        (try? dbQueue.read { db in
+            try Row.fetchAll(db, sql: "SELECT * FROM known_peers ORDER BY last_seen DESC")
+        })?.compactMap { row in
+            guard let peerId: String = row["peer_id"],
+                  let peerName: String = row["peer_name"],
+                  let presenceId: String = row["presence_id"],
+                  let lastSeen: Double = row["last_seen"]
+            else { return nil }
+            return (peerId, peerName, presenceId, Date(timeIntervalSinceReferenceDate: lastSeen))
+        } ?? []
+    }
+
+    // MARK: - Mesh Dedup
 
     func insertMeshDedup(_ id: String) {
         try? dbQueue.write { db in

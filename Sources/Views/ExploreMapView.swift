@@ -346,6 +346,7 @@ final class ExploreMapViewModel: ObservableObject {
     @Published var completions: [MKLocalSearchCompletion] = []
     @Published var isSearching = false
     @Published var nearbyRides: [MeshService.DiscoveredRide] = []
+    @Published var nearbyPeers: [String] = []
     @Published var pins: [ExplorePin] = []
     @Published var shouldZoomToPins = false
     @Published var currentRegion: MKCoordinateRegion?
