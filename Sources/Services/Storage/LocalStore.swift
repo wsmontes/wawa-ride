@@ -246,6 +246,30 @@ final class LocalStore: @unchecked Sendable {
         }
     }
 
+    func deleteRoute(_ id: String) throws {
+        try dbQueue.write { db in
+            try db.execute(sql: "DELETE FROM routes WHERE id = ?", arguments: [id])
+        }
+    }
+
+    func renameRoute(_ id: String, newName: String) throws {
+        try dbQueue.write { db in
+            try db.execute(sql: "UPDATE routes SET name = ? WHERE id = ?", arguments: [newName, id])
+        }
+    }
+
+    func duplicateRoute(_ source: Route) throws -> Route? {
+        var copy = source
+        copy = Route(id: UUID().uuidString, name: "\(source.name) (cópia)", createdBy: source.createdBy, source: source.source, waypoints: source.waypoints)
+        copy.simplifiedTrack = source.simplifiedTrack
+        copy.totalDistance = source.totalDistance
+        copy.estimatedDuration = source.estimatedDuration
+        copy.elevationGain = source.elevationGain
+        copy.tags = source.tags
+        try saveRoute(copy)
+        return copy
+    }
+
     func loadAllRoutes() -> [Route] {
         (try? dbQueue.read { db in
             try Row.fetchAll(db, sql: "SELECT * FROM routes ORDER BY created_at DESC")

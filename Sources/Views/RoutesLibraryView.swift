@@ -9,6 +9,9 @@ struct RoutesLibraryView: View {
     @State private var showCreator = false
     @State private var showImporter = false
     @State private var selectedRoute: Route?
+    @State private var showDeleteConfirm: Route?
+    @State private var showRename: Route?
+    @State private var renameText = ""
 
     var body: some View {
         NavigationStack {
@@ -16,56 +19,38 @@ struct RoutesLibraryView: View {
                 if viewModel.routes.isEmpty {
                     VStack(spacing: 16) {
                         Image(systemName: "point.topleft.down.curvedto.point.bottomright.up")
-                            .font(.system(size: 48))
-                            .foregroundColor(.secondary)
-
-                        Text("Nenhuma rota salva")
-                            .font(.headline)
-                            .foregroundColor(.secondary)
-
+                            .font(.system(size: 48)).foregroundColor(.secondary)
+                        Text("Nenhuma rota salva").font(.headline).foregroundColor(.secondary)
                         Text("Crie rotas no mapa ou importe arquivos .GPX de outros apps como Rever, Calimoto e Scenic.")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 40)
-
+                            .font(.subheadline).foregroundColor(.secondary)
+                            .multilineTextAlignment(.center).padding(.horizontal, 40)
                         HStack(spacing: 16) {
-                            Button {
-                                showCreator = true
-                            } label: {
-                                Label("Criar Rota", systemImage: "plus")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 12)
-                                    .background(Color.orange)
-                                    .cornerRadius(10)
+                            Button { showCreator = true } label: {
+                                Label("Criar Rota", systemImage: "plus").font(.headline).foregroundColor(.white)
+                                    .padding(.horizontal, 24).padding(.vertical, 12)
+                                    .background(Color.orange).cornerRadius(10)
                             }
-
-                            Button {
-                                showImporter = true
-                            } label: {
-                                Label("Importar .GPX", systemImage: "square.and.arrow.down")
-                                    .font(.headline)
-                                    .foregroundColor(.orange)
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 12)
-                                    .background(Color.orange.opacity(0.15))
-                                    .cornerRadius(10)
+                            Button { showImporter = true } label: {
+                                Label("Importar", systemImage: "square.and.arrow.down").font(.headline)
+                                    .foregroundColor(.orange).padding(.horizontal, 24).padding(.vertical, 12)
+                                    .background(Color.orange.opacity(0.15)).cornerRadius(10)
                             }
                         }
                     }
                 } else {
                     List {
                         ForEach(viewModel.routes) { route in
-                            Button {
-                                selectedRoute = route
-                            } label: {
+                            Button { selectedRoute = route } label: {
                                 RouteRow(route: route)
                             }
-                        }
-                        .onDelete { indexSet in
-                            // Delete route (future: confirmation)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) { showDeleteConfirm = route } label: {
+                                    Label("Apagar", systemImage: "trash")
+                                }
+                                Button { showRename = route; renameText = route.name } label: {
+                                    Label("Renomear", systemImage: "pencil")
+                                }.tint(.orange)
+                            }
                         }
                     }
                 }
@@ -74,44 +59,57 @@ struct RoutesLibraryView: View {
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
                     Menu {
-                        Button {
-                            showCreator = true
-                        } label: {
+                        Button { showCreator = true } label: {
                             Label("Criar no mapa", systemImage: "map")
                         }
-                        Button {
-                            showImporter = true
-                        } label: {
-                            Label("Importar .GPX", systemImage: "doc")
+                        Button { showImporter = true } label: {
+                            Label("Importar .GPX ou .KML", systemImage: "doc")
+                        }
+                        Divider()
+                        Menu("Ordenar por") {
+                            Button { viewModel.sortBy = .date } label: {
+                                Label("Data", systemImage: viewModel.sortBy == .date ? "checkmark" : "")
+                            }
+                            Button { viewModel.sortBy = .name } label: {
+                                Label("Nome", systemImage: viewModel.sortBy == .name ? "checkmark" : "")
+                            }
+                            Button { viewModel.sortBy = .distance } label: {
+                                Label("Distância", systemImage: viewModel.sortBy == .distance ? "checkmark" : "")
+                            }
                         }
                     } label: {
                         Image(systemName: "plus")
                     }
                 }
             }
-            .sheet(isPresented: $showCreator) {
-                RouteCreatorView()
-            }
-            .sheet(item: $selectedRoute) { route in
-                RouteDetailView(route: route)
-            }
-            .fileImporter(
-                isPresented: $showImporter,
-                allowedContentTypes: [
-                    .xml,
-                    .init(filenameExtension: "gpx")!,
-                    .init(filenameExtension: "kml")!
-                ],
-                allowsMultipleSelection: false
-            ) { result in
+            .sheet(isPresented: $showCreator) { RouteCreatorView() }
+            .sheet(item: $selectedRoute) { route in RouteDetailView(route: route, onUpdate: { viewModel.reload() }) }
+            .fileImporter(isPresented: $showImporter, allowedContentTypes: [
+                .xml, .init(filenameExtension: "gpx")!, .init(filenameExtension: "kml")!
+            ], allowsMultipleSelection: false) { result in
                 if case .success(let urls) = result, let url = urls.first {
                     _ = RouteService.shared.importGPX(from: url)
                     viewModel.reload()
                 }
             }
-            .onAppear {
-                viewModel.reload()
+            .confirmationDialog("Apagar rota?", isPresented: Binding(get: { showDeleteConfirm != nil }, set: { if !$0 { showDeleteConfirm = nil } })) {
+                Button("Apagar", role: .destructive) {
+                    if let route = showDeleteConfirm { viewModel.delete(route) }
+                    showDeleteConfirm = nil
+                }
+                Button("Cancelar", role: .cancel) { showDeleteConfirm = nil }
+            } message: {
+                Text("\"\(showDeleteConfirm?.name ?? "")\" será removida permanentemente.")
             }
+            .alert("Renomear rota", isPresented: Binding(get: { showRename != nil }, set: { if !$0 { showRename = nil } })) {
+                TextField("Nome", text: $renameText)
+                Button("Salvar") {
+                    if let route = showRename { viewModel.rename(route, to: renameText) }
+                    showRename = nil
+                }
+                Button("Cancelar", role: .cancel) { showRename = nil }
+            }
+            .onAppear { viewModel.reload() }
         }
     }
 }
@@ -177,6 +175,7 @@ struct RouteRow: View {
 
 struct RouteDetailView: View {
     let route: Route
+    var onUpdate: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @State private var showShare = false
 
@@ -240,6 +239,14 @@ struct RouteDetailView: View {
 
                 Section {
                     Button {
+                        _ = try? LocalStore.shared.duplicateRoute(route)
+                        onUpdate?()
+                        dismiss()
+                    } label: {
+                        Label("Duplicar rota", systemImage: "doc.on.doc")
+                    }
+
+                    Button {
                         showShare = true
                     } label: {
                         Label("Compartilhar .GPX", systemImage: "square.and.arrow.up")
@@ -285,8 +292,34 @@ struct ShareSheet: UIViewControllerRepresentable {
 @MainActor
 final class RoutesLibraryViewModel: ObservableObject {
     @Published var routes: [Route] = []
+    @Published var sortBy: SortBy = .date { didSet { reload() } }
+
+    enum SortBy { case date, name, distance }
 
     func reload() {
-        routes = LocalStore.shared.loadAllRoutes()
+        var result = LocalStore.shared.loadAllRoutes()
+        switch sortBy {
+        case .date: result.sort { $0.createdAt > $1.createdAt }
+        case .name: result.sort { $0.name.localizedCompare($1.name) == .orderedAscending }
+        case .distance: result.sort { ($0.totalDistance ?? 0) > ($1.totalDistance ?? 0) }
+        }
+        routes = result
+    }
+
+    func delete(_ route: Route) {
+        try? LocalStore.shared.deleteRoute(route.id)
+        reload()
+    }
+
+    func rename(_ route: Route, to newName: String) {
+        let trimmed = newName.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+        try? LocalStore.shared.renameRoute(route.id, newName: trimmed)
+        reload()
+    }
+
+    func duplicate(_ route: Route) {
+        _ = try? LocalStore.shared.duplicateRoute(route)
+        reload()
     }
 }
