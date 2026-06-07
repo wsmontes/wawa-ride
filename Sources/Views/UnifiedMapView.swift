@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import AVFoundation
 
 // MARK: - Unified Map View
 
@@ -20,8 +21,18 @@ struct UnifiedMapView: View {
     @State private var endNavDuration: TimeInterval = 0
     @State private var showSaveTrackAlert = false
     @State private var trackNameInput = ""
+    @State private var showMicDeniedAlert = false
 
     let isInRide: Bool
+
+    // Permission states
+    private var gpsDenied: Bool {
+        let status = LocationService.shared.authorizationStatus
+        return status == .denied || status == .restricted
+    }
+    private var micDenied: Bool {
+        AVAudioSession.sharedInstance().recordPermission == .denied
+    }
 
     enum SheetState: Identifiable {
         case place(PlaceCardItem)
@@ -49,6 +60,30 @@ struct UnifiedMapView: View {
                 }
             )
             .ignoresSafeArea(.all)
+
+            // ---- PERMISSION BANNERS ----
+
+            if gpsDenied {
+                VStack {
+                    HStack {
+                        Image(systemName: "location.slash").foregroundColor(.red)
+                        Text("GPS desativado").font(.subheadline).fontWeight(.medium)
+                        Spacer()
+                        Button("Ajustes") {
+                            if let url = URL(string: UIApplication.openSettingsURLString) {
+                                UIApplication.shared.open(url)
+                            }
+                        }
+                        .font(.caption).padding(.horizontal, 12).padding(.vertical, 6)
+                        .background(Color.orange).cornerRadius(12)
+                    }
+                    .padding(10)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(10)
+                    .padding(.horizontal).padding(.top, 48)
+                    Spacer()
+                }
+            }
 
             // ---- OVERLAYS (priority: nav > search > BLE) ----
 
@@ -133,6 +168,7 @@ struct UnifiedMapView: View {
                         showHazardMenu: $showHazardMenu,
                         showRooms: $showRooms,
                         onEndRide: { endRide() },
+                        onPTTBlocked: { showMicDeniedAlert = true },
                         speed: rideVM.speed,
                         connectedCount: rideVM.connectedCount,
                         totalCount: rideVM.totalCount
@@ -303,6 +339,16 @@ struct UnifiedMapView: View {
             }
         }
         .sheet(isPresented: $showRooms) { RoomListView() }
+        .alert("Microfone necessário", isPresented: $showMicDeniedAlert) {
+            Button("Abrir Ajustes") {
+                if let url = URL(string: UIApplication.openSettingsURLString) {
+                    UIApplication.shared.open(url)
+                }
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("O walkie-talkie precisa de acesso ao microfone. Autorize nos Ajustes.")
+        }
         .alert("Salvar Track", isPresented: $showSaveTrackAlert) {
             TextField("Nome", text: $trackNameInput)
             Button("Salvar") {
@@ -618,6 +664,7 @@ struct RiderHUD: View {
     @Binding var showHazardMenu: Bool
     @Binding var showRooms: Bool
     var onEndRide: () -> Void
+    var onPTTBlocked: (() -> Void)?
     var speed: Double = 0
     var connectedCount: Int = 0
     var totalCount: Int = 0
@@ -651,7 +698,15 @@ struct RiderHUD: View {
                 }
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 0)
-                        .onChanged { _ in if !isPTTActive { startPTT() } }
+                        .onChanged { _ in
+                            if !isPTTActive {
+                                if AVAudioSession.sharedInstance().recordPermission == .denied {
+                                    onPTTBlocked?()
+                                } else {
+                                    startPTT()
+                                }
+                            }
+                        }
                         .onEnded { _ in stopPTT() }
                 )
 
