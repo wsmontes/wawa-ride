@@ -420,6 +420,8 @@ struct UnifiedMapView: View {
             MeshService.shared.startAutoPresence(name: name)
             mapVM.startBrowsing()
             if isInRide { setupRideSession() }
+            // Always share location when peers are connected (even without a ride)
+            setupAutoLocationSharing()
         }
         .onDisappear {
             mapVM.stopBrowsing()
@@ -456,6 +458,56 @@ struct UnifiedMapView: View {
 
     // MARK: - Ride Session
 
+    /// Share location with connected peers even without an active ride
+    private func setupAutoLocationSharing() {
+        LocationService.shared.onLocationUpdate = { payload in
+            Task { @MainActor in
+                rideVM.updateLocation(speed: payload.speed, heading: payload.heading)
+
+                // Always send location when peers are connected (auto-presence)
+                if MeshService.shared.hasNearbyPeers {
+                    sendAutoPresenceLocation(payload)
+                }
+
+                // If in ride mode, also do ride-specific updates
+                if isInRide {
+                    if RouteService.shared.isRecording {
+                        RouteService.shared.addTrackPoint(latitude: payload.lat, longitude: payload.lng, speed: payload.speed, altitude: payload.altitude)
+                    }
+                    NavigationEngine.shared.updatePosition(CLLocation(latitude: payload.lat, longitude: payload.lng))
+                    sendLocationUpdate(payload)
+                }
+            }
+        }
+
+        // Process incoming payloads
+        MeshService.shared.onPayloadReceived = { payload in
+            Task { @MainActor in handleMeshPayload(payload) }
+        }
+
+        MeshService.shared.onPeerConnected = { _ in
+            Task { @MainActor in
+                TransportManager.shared.onConnectivityRestored()
+                rideVM.meshState = .connected
+            }
+        }
+
+        LocationService.shared.startTracking()
+        startPeriodicUpdates()
+    }
+
+    private func sendAutoPresenceLocation(_ payload: LocationPayload) {
+        guard let encoded = try? JSONEncoder().encode(payload) else { return }
+        let meshPayload = MeshPayload(
+            type: .locationUpdate,
+            senderId: UserDefaults.standard.string(forKey: "riderProfileId") ?? "",
+            senderName: UserDefaults.standard.string(forKey: "riderProfileName") ?? "Rider",
+            rideId: MeshService.shared.presenceId,
+            ttl: 3, priority: .normal, payload: encoded
+        )
+        TransportManager.shared.send(meshPayload)
+    }
+
     private func startSoloRide() {
         AppState.shared.currentRideId = "solo-\(UUID().uuidString.prefix(8))"
         AppState.shared.currentRideName = "Navegação"
@@ -464,25 +516,8 @@ struct UnifiedMapView: View {
     }
 
     private func setupRideSession() {
-        LocationService.shared.onLocationUpdate = { payload in
-            Task { @MainActor in
-                rideVM.updateLocation(speed: payload.speed, heading: payload.heading)
-                if RouteService.shared.isRecording {
-                    RouteService.shared.addTrackPoint(latitude: payload.lat, longitude: payload.lng, speed: payload.speed, altitude: payload.altitude)
-                }
-                NavigationEngine.shared.updatePosition(CLLocation(latitude: payload.lat, longitude: payload.lng))
-                sendLocationUpdate(payload)
-            }
-        }
-        MeshService.shared.onPayloadReceived = { payload in
-            Task { @MainActor in handleMeshPayload(payload) }
-        }
-        MeshService.shared.onPeerConnected = { _ in
-            Task { @MainActor in
-                TransportManager.shared.onConnectivityRestored()
-                rideVM.meshState = .connected
-            }
-        }
+        // Don't overwrite — auto location sharing already set up in setupAutoLocationSharing
+        // Just ensure tracking + periodic updates are running
         LocationService.shared.startTracking()
         startPeriodicUpdates()
     }
@@ -502,6 +537,11 @@ struct UnifiedMapView: View {
             if let loc = try? JSONDecoder().decode(LocationPayload.self, from: payload.payload) {
                 AppState.shared.updateParticipant(senderId: payload.senderId, senderName: payload.senderName, location: loc)
                 rideVM.updateParticipants(AppState.shared.participants)
+                // Also update auto-presence peers list
+                let name = payload.senderName
+                if !mapVM.nearbyPeers.contains(name) {
+                    mapVM.nearbyPeers.append(name)
+                }
             }
         case .hazardAlert:
             if let hp = try? JSONDecoder().decode(HazardAlertPayload.self, from: payload.payload) {
