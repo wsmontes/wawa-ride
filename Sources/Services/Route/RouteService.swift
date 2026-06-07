@@ -13,9 +13,16 @@ final class RouteService: ObservableObject {
     static let shared = RouteService()
 
     @Published var isRecording = false
+    @Published var isPaused = false
     @Published var currentRoute: Route?
     @Published var trackPoints: [RoutePoint] = []
     @Published var activeWaypoints: [RouteWaypoint] = []
+    @Published var recordingDistance: Double = 0
+    @Published var recordingElapsed: TimeInterval = 0
+    @Published var recordingAvgSpeed: Double = 0
+    private var recordingStartTime: Date?
+    private var pausedDuration: TimeInterval = 0
+    private var pauseStartTime: Date?
 
     private init() {}
 
@@ -26,10 +33,31 @@ final class RouteService: ObservableObject {
         currentRoute = Route(name: name, createdBy: myId, source: .recorded)
         trackPoints = []
         isRecording = true
+        isPaused = false
+        recordingStartTime = Date()
+        pausedDuration = 0
+        recordingDistance = 0
+        recordingElapsed = 0
+        recordingAvgSpeed = 0
+    }
+
+    func pauseRecording() {
+        guard isRecording, !isPaused else { return }
+        isPaused = true
+        pauseStartTime = Date()
+    }
+
+    func resumeRecording() {
+        guard isRecording, isPaused else { return }
+        isPaused = false
+        if let pauseStart = pauseStartTime {
+            pausedDuration += Date().timeIntervalSince(pauseStart)
+        }
+        pauseStartTime = nil
     }
 
     func addTrackPoint(latitude: Double, longitude: Double, speed: Double, altitude: Double?) {
-        guard isRecording else { return }
+        guard isRecording, !isPaused else { return }
 
         let point = RoutePoint(
             latitude: latitude,
@@ -41,19 +69,39 @@ final class RouteService: ObservableObject {
         )
         trackPoints.append(point)
 
+        // Update live stats
+        updateRecordingStats()
+
         // Send to mesh periodically (batch every 10 points)
         if trackPoints.count % 10 == 0 {
             sendRouteBatchToMesh()
         }
     }
 
-    func stopRecording() {
+    private func updateRecordingStats() {
+        recordingDistance = calculateTotalDistance(trackPoints)
+        if let start = recordingStartTime {
+            let now = Date()
+            let totalPaused = pausedDuration + (pauseStartTime.map { now.timeIntervalSince($0) } ?? 0)
+            recordingElapsed = now.timeIntervalSince(start) - totalPaused
+            recordingAvgSpeed = recordingElapsed > 0 ? (recordingDistance / recordingElapsed) * 3.6 : 0
+        }
+    }
+
+    func stopRecording(name: String? = nil) {
         guard isRecording else { return }
         isRecording = false
+        isPaused = false
 
         if !trackPoints.isEmpty {
             currentRoute?.simplifiedTrack = trackPoints
-            currentRoute?.totalDistance = calculateTotalDistance(trackPoints)
+            currentRoute?.totalDistance = recordingDistance
+        }
+
+        if let routeName = name {
+            currentRoute = Route(name: routeName, createdBy: currentRoute?.createdBy ?? "", source: .recorded)
+            currentRoute?.simplifiedTrack = trackPoints
+            currentRoute?.totalDistance = recordingDistance
         }
 
         // Save locally
@@ -63,6 +111,24 @@ final class RouteService: ObservableObject {
 
         // Send complete route via mesh
         sendFullRouteToMesh()
+    }
+
+    var recordingStatusText: String {
+        if isPaused {
+            return "Gravação pausada"
+        }
+        return "\(formatDistance(recordingDistance)) • \(formatDuration(recordingElapsed)) • \(Int(recordingAvgSpeed)) km/h"
+    }
+
+    private func formatDistance(_ meters: Double) -> String {
+        if meters > 1000 { return String(format: "%.1f km", meters / 1000) }
+        return "\(Int(meters)) m"
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let m = Int(seconds / 60)
+        let s = Int(seconds.truncatingRemainder(dividingBy: 60))
+        return "\(m):\(String(format: "%02d", s))"
     }
 
     // MARK: - Drawn Routes (Waypoints)

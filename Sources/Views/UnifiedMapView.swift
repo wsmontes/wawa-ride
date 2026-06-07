@@ -18,6 +18,8 @@ struct UnifiedMapView: View {
     @State private var showEndNavSummary = false
     @State private var endNavDistance: Double = 0
     @State private var endNavDuration: TimeInterval = 0
+    @State private var showSaveTrackAlert = false
+    @State private var trackNameInput = ""
 
     let isInRide: Bool
 
@@ -162,11 +164,73 @@ struct UnifiedMapView: View {
                 }
             }
 
+            // Recording stats overlay
+            if RouteService.shared.isRecording {
+                VStack {
+                    Spacer().frame(height: 48)
+                    HStack {
+                        Image(systemName: "record.circle")
+                            .font(.title2)
+                            .foregroundColor(.red)
+                            .symbolEffect(.pulse, isActive: !RouteService.shared.isPaused)
+
+                        Text(RouteService.shared.recordingStatusText)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.white)
+
+                        Spacer()
+
+                        Button {
+                            if RouteService.shared.isPaused {
+                                RouteService.shared.resumeRecording()
+                            } else {
+                                RouteService.shared.pauseRecording()
+                            }
+                        } label: {
+                            Image(systemName: RouteService.shared.isPaused ? "play.circle.fill" : "pause.circle.fill")
+                                .font(.title2)
+                        }
+
+                        Button {
+                            showSaveTrackAlert = true
+                        } label: {
+                            Image(systemName: "stop.circle.fill")
+                                .font(.title2)
+                                .foregroundColor(.red)
+                        }
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(12)
+                    .padding(.horizontal, 8)
+                }
+            }
+
             // Map controls (always visible)
             VStack {
                 Spacer()
                 HStack {
+                    // Record button (left side)
+                    if !RouteService.shared.isRecording {
+                        VStack(spacing: 12) {
+                            Button {
+                                let dateFormatter = DateFormatter()
+                                dateFormatter.dateFormat = "dd/MM HH:mm"
+                                let name = "Track \(dateFormatter.string(from: Date()))"
+                                RouteService.shared.startRecording(name: name)
+                            } label: {
+                                Image(systemName: "record.circle")
+                                    .font(.title2).padding(12)
+                                    .background(.ultraThinMaterial).clipShape(Circle()).shadow(radius: 4)
+                                    .foregroundColor(.red)
+                            }
+                        }
+                        .padding(.leading, 12)
+                        .padding(.bottom, isInRide ? 180 : 100)
+                    }
+
                     Spacer()
+
                     VStack(spacing: 12) {
                         Button {
                             mapVM.cycleMapType()
@@ -231,6 +295,19 @@ struct UnifiedMapView: View {
             }
         }
         .sheet(isPresented: $showRooms) { RoomListView() }
+        .alert("Salvar Track", isPresented: $showSaveTrackAlert) {
+            TextField("Nome", text: $trackNameInput)
+            Button("Salvar") {
+                RouteService.shared.stopRecording(name: trackNameInput.isEmpty ? nil : trackNameInput)
+                trackNameInput = ""
+            }
+            Button("Descartar", role: .destructive) {
+                RouteService.shared.stopRecording()
+            }
+            Button("Cancelar", role: .cancel) { showSaveTrackAlert = false }
+        } message: {
+            Text("Dê um nome para o track gravado ou descarte.")
+        }
         .onAppear {
             mapVM.startBrowsing()
             if isInRide { setupRideSession() }
