@@ -26,6 +26,10 @@ struct RouteCreatorView: View {
     @State private var routeName = ""
     @State private var showNamePrompt = false
     @State private var showAlternatives = false
+    @State private var showWaypointEditor = false
+    @State private var editingWaypoint: RouteWaypoint?
+    @State private var editName = ""
+    @State private var editIsStop = false
 
     var body: some View {
         NavigationStack {
@@ -94,11 +98,16 @@ struct RouteCreatorView: View {
                             }
                             .disabled(viewModel.waypoints.isEmpty)
 
-                            Spacer()
-
-                            Text("\(viewModel.waypoints.count) pontos")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
+                            Button {
+                                showWaypointEditor = true
+                            } label: {
+                                Label("Editar", systemImage: "pencil")
+                                    .font(.subheadline)
+                                    .padding(12)
+                                    .background(Color.black.opacity(0.7))
+                                    .cornerRadius(8)
+                            }
+                            .disabled(viewModel.waypoints.isEmpty)
 
                             Spacer()
 
@@ -136,6 +145,45 @@ struct RouteCreatorView: View {
                         showAlternatives = false
                     }
                 )
+                .presentationDetents([.medium])
+            }
+            .sheet(isPresented: $showWaypointEditor) {
+                WaypointEditorView(
+                    waypoints: $viewModel.waypoints,
+                    onDelete: { index in viewModel.deleteWaypoint(at: index) },
+                    onReorder: { from, to in viewModel.moveWaypoint(from: from, to: to) },
+                    onEdit: { index in
+                        editingWaypoint = viewModel.waypoints[index]
+                        editName = editingWaypoint?.name ?? "Ponto \(index + 1)"
+                        editIsStop = editingWaypoint?.isStop ?? false
+                    }
+                )
+                .presentationDetents([.medium, .large])
+            }
+            .sheet(item: $editingWaypoint) { wp in
+                NavigationStack {
+                    Form {
+                        Section("Nome") {
+                            TextField("Nome do ponto", text: $editName)
+                        }
+                        Section("Tipo") {
+                            Toggle("Parada (posto, descanso)", isOn: $editIsStop)
+                        }
+                    }
+                    .navigationTitle("Editar Ponto")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancelar") { editingWaypoint = nil }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Salvar") {
+                                viewModel.editWaypoint(wp, name: editName, isStop: editIsStop)
+                                editingWaypoint = nil
+                            }
+                        }
+                    }
+                }
                 .presentationDetents([.medium])
             }
         }
@@ -328,13 +376,36 @@ final class RouteCreatorViewModel: ObservableObject {
     func undoLastWaypoint() {
         guard !waypoints.isEmpty else { return }
         waypoints.removeLast()
+        reindexWaypoints()
+        if waypoints.count >= 2 { updateRoutePreview() }
+        else { previewRoute = nil; previewPolyline = nil }
+    }
 
-        if waypoints.count >= 2 {
-            updateRoutePreview()
-        } else {
-            previewRoute = nil
-            previewPolyline = nil
-        }
+    func deleteWaypoint(at index: Int) {
+        guard index < waypoints.count else { return }
+        waypoints.remove(at: index)
+        reindexWaypoints()
+        if waypoints.count >= 2 { updateRoutePreview() }
+        else { previewRoute = nil; previewPolyline = nil }
+    }
+
+    func moveWaypoint(from source: Int, to destination: Int) {
+        guard source < waypoints.count, destination < waypoints.count else { return }
+        let item = waypoints.remove(at: source)
+        waypoints.insert(item, at: destination)
+        reindexWaypoints()
+        if waypoints.count >= 2 { updateRoutePreview() }
+    }
+
+    func editWaypoint(_ wp: RouteWaypoint, name: String, isStop: Bool) {
+        guard let index = waypoints.firstIndex(where: { $0.id == wp.id }) else { return }
+        waypoints[index].name = name.trimmingCharacters(in: .whitespaces).isEmpty ? nil : name.trimmingCharacters(in: .whitespaces)
+        waypoints[index].isStop = isStop
+        waypoints[index].type = isStop ? .stop : .waypoint
+    }
+
+    private func reindexWaypoints() {
+        for i in waypoints.indices { waypoints[i].order = i }
     }
 
     // MARK: - Route Preview via MKDirections
@@ -424,5 +495,53 @@ final class RouteCreatorViewModel: ObservableObject {
 extension MKMapItem {
     var location: CLLocation? {
         placemark.location
+    }
+}
+
+// MARK: - Waypoint Editor View
+
+struct WaypointEditorView: View {
+    @Binding var waypoints: [RouteWaypoint]
+    var onDelete: (Int) -> Void
+    var onReorder: (Int, Int) -> Void
+    var onEdit: (Int) -> Void
+
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(Array(waypoints.enumerated()), id: \.element.id) { index, wp in
+                    HStack(spacing: 12) {
+                        Image(systemName: wp.isStop ? "stop.circle" : "mappin")
+                            .foregroundColor(wp.isStop ? .orange : .blue)
+                            .font(.title3)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(wp.name ?? "Ponto \(index + 1)")
+                                .font(.subheadline)
+                            Text(wp.isStop ? "Parada" : "Passagem")
+                                .font(.caption).foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        Button { onEdit(index) } label: {
+                            Image(systemName: "pencil.circle").font(.title3)
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                .onDelete { indexSet in
+                    if let idx = indexSet.first { onDelete(idx) }
+                }
+                .onMove { from, to in
+                    onReorder(from.first!, to)
+                }
+            }
+            .navigationTitle("Editar Pontos")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                EditButton()
+            }
+        }
     }
 }

@@ -47,7 +47,7 @@ struct RouteWaypoint: Codable, Identifiable {
     let id: String
     let latitude: Double
     let longitude: Double
-    let order: Int
+    var order: Int
     var name: String?
     var type: WaypointType
     var isStop: Bool
