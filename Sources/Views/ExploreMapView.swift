@@ -6,25 +6,36 @@ import MapKit
 struct ExploreMapView: View {
     @Binding var selectedTab: Int
     @StateObject private var viewModel = ExploreMapViewModel()
+    @State private var sheetState: SheetState?
 
-    @State private var selectedPlace: PlaceCardItem?
-    @State private var showPlaceCard = false
-    @State private var showDirections = false
-    @State private var directionsDestination: CLLocationCoordinate2D?
-    @State private var directionsName = ""
+    enum SheetState: Identifiable {
+        case place(PlaceCardItem)
+        case directions(source: CLLocationCoordinate2D, destination: CLLocationCoordinate2D, name: String)
+
+        var id: String {
+            switch self {
+            case .place(let item): return "place-\(item.id)"
+            case .directions(let s, let d, let n): return "directions-\(s.latitude)-\(s.longitude)-\(d.latitude)-\(d.longitude)-\(n)"
+            }
+        }
+    }
 
     var body: some View {
         ZStack {
-            ExploreMapUIKit(viewModel: viewModel, onPlaceSelected: { item in
-                selectedPlace = item
-                showPlaceCard = true
-            }, onMapTap: {
-                showPlaceCard = false
-            })
+            ExploreMapUIKit(
+                viewModel: viewModel,
+                onPlaceSelected: { item in
+                    sheetState = .place(item)
+                },
+                onMapTap: {
+                    if sheetState != nil {
+                        sheetState = nil
+                    }
+                }
+            )
             .ignoresSafeArea(.all)
 
             VStack(spacing: 0) {
-                // Search bar
                 SearchBarView(
                     searchText: $viewModel.searchQuery,
                     completions: viewModel.completions,
@@ -32,28 +43,24 @@ struct ExploreMapView: View {
                     mapRegion: viewModel.currentRegion,
                     onSelectCompletion: { completion in
                         viewModel.selectSearchCompletion(completion) { item in
-                            selectedPlace = item
-                            showPlaceCard = true
+                            sheetState = .place(item)
                         }
                     },
                     onSubmit: {
                         viewModel.searchAddress { item in
-                            selectedPlace = item
-                            showPlaceCard = true
+                            sheetState = .place(item)
                         }
                     }
                 )
                 .padding(.top, 48)
 
-                // BLE Ride banner
                 if !viewModel.nearbyRides.isEmpty {
                     nearbyRidesBanner
                 }
 
                 Spacer()
 
-                // Bottom quick actions (only when no sheet is open)
-                if !showPlaceCard && !showDirections {
+                if sheetState == nil {
                     HStack(spacing: 16) {
                         Button {
                             selectedTab = 2
@@ -71,35 +78,49 @@ struct ExploreMapView: View {
                 }
             }
         }
-        .sheet(isPresented: $showPlaceCard) {
-            if let place = selectedPlace {
-                PlaceCardView(
-                    item: place,
-                    onDirections: {
-                        showPlaceCard = false
-                        directionsDestination = place.coordinate
-                        directionsName = place.name
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                            showDirections = true
-                        }
-                    },
-                    onDismiss: { showPlaceCard = false }
-                )
-            }
-        }
-        .sheet(isPresented: $showDirections) {
-            if let dest = directionsDestination, let source = LocationService.shared.currentLocation?.coordinate {
-                DirectionsPreviewView(
-                    source: source,
-                    destination: dest,
-                    destinationName: directionsName
-                ) { route in
-                    viewModel.startNavigation(with: route)
-                }
-            }
+        .sheet(item: $sheetState) { state in
+            sheetContent(for: state)
         }
         .onAppear { viewModel.startBrowsing() }
         .onDisappear { viewModel.stopBrowsing() }
+    }
+
+    // MARK: - Sheet Content (single sheet, content switches internally)
+
+    @ViewBuilder
+    func sheetContent(for state: SheetState) -> some View {
+        switch state {
+        case .place(let item):
+            PlaceCardView(
+                item: item,
+                onDirections: {
+                    let source = LocationService.shared.currentLocation?.coordinate
+                        ?? viewModel.currentRegion?.center
+                        ?? CLLocationCoordinate2D(latitude: 0, longitude: 0)
+
+                    // Transition to directions within the same sheet — no flicker
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        sheetState = .directions(source: source, destination: item.coordinate, name: item.name)
+                    }
+                },
+                onDismiss: { sheetState = nil }
+            )
+
+        case .directions(let source, let destination, let name):
+            DirectionsPreviewView(
+                source: source,
+                destination: destination,
+                destinationName: name,
+                onRouteSelected: { route in
+                    // Update map polyline in real time as user selects routes
+                    viewModel.previewPolyline = route.polyline
+                },
+                onStartNavigation: { route in
+                    sheetState = nil
+                    viewModel.startNavigation(with: route)
+                }
+            )
+        }
     }
 
     // MARK: - Nearby Rides Banner
@@ -117,8 +138,7 @@ struct ExploreMapView: View {
                             Text("Líder: \(ride.leaderName) • \(ride.riderCount) riders").font(.caption)
                         }
                         Spacer()
-                        Text("ENTRAR")
-                            .font(.caption).fontWeight(.bold).foregroundColor(.white)
+                        Text("ENTRAR").font(.caption).fontWeight(.bold).foregroundColor(.white)
                             .padding(.horizontal, 16).padding(.vertical, 8)
                             .background(Color.green).cornerRadius(16)
                     }
@@ -150,7 +170,8 @@ struct ExploreMapUIKit: UIViewRepresentable {
         map.showsTraffic = true
         map.isPitchEnabled = true
         map.isRotateEnabled = true
-        map.mapType = .mutedStandard
+        map.mapType = .standard
+        map.showsPointsOfInterest = true
         map.overrideUserInterfaceStyle = .dark
 
         let longPress = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.handleLongPress(_:)))
@@ -166,6 +187,7 @@ struct ExploreMapUIKit: UIViewRepresentable {
 
     func updateUIView(_ map: MKMapView, context: Context) {
         context.coordinator.updateAnnotations(map: map, viewModel: viewModel)
+        context.coordinator.updatePreviewRouteOverlay(map: map, viewModel: viewModel)
     }
 
     func makeCoordinator() -> Coordinator {
@@ -176,6 +198,7 @@ struct ExploreMapUIKit: UIViewRepresentable {
         let viewModel: ExploreMapViewModel
         let onPlaceSelected: (PlaceCardItem) -> Void
         let onMapTap: () -> Void
+        private var previewOverlay: MKPolyline?
 
         init(viewModel: ExploreMapViewModel, onPlaceSelected: @escaping (PlaceCardItem) -> Void, onMapTap: @escaping () -> Void) {
             self.viewModel = viewModel
@@ -187,25 +210,18 @@ struct ExploreMapUIKit: UIViewRepresentable {
             guard gesture.state == .began else { return }
             guard let mapView = gesture.view as? MKMapView else { return }
             let coord = mapView.convert(gesture.location(in: mapView), toCoordinateFrom: mapView)
-            viewModel.addDroppedPin(at: coord) { item in
-                self.onPlaceSelected(item)
-            }
+            viewModel.addDroppedPin(at: coord) { item in self.onPlaceSelected(item) }
         }
 
         @objc func handleMapTap(_ gesture: UITapGestureRecognizer) {
             guard gesture.state == .ended else { return }
             guard let mapView = gesture.view as? MKMapView else { return }
             let point = gesture.location(in: mapView)
-            // Check if tapped on an annotation
             let tappedAnnotations = mapView.annotations.filter { ann in
-                if let view = mapView.view(for: ann) {
-                    return view.frame.contains(point)
-                }
+                if let view = mapView.view(for: ann) { return view.frame.contains(point) }
                 return false
             }
-            if tappedAnnotations.isEmpty {
-                onMapTap()
-            }
+            if tappedAnnotations.isEmpty { onMapTap() }
         }
 
         func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool { true }
@@ -213,31 +229,29 @@ struct ExploreMapUIKit: UIViewRepresentable {
         func updateAnnotations(map mapView: MKMapView, viewModel: ExploreMapViewModel) {
             let existing = Set(mapView.annotations.compactMap { $0 as? MKPointAnnotation }.map { $0.title ?? "" })
             let wanted = Set(viewModel.pins.map { $0.title })
-
-            // Only remove if completely different set
             if existing != wanted {
                 mapView.removeAnnotations(mapView.annotations.filter { !($0 is MKUserLocation) })
                 for pin in viewModel.pins {
                     let ann = MKPointAnnotation()
-                    ann.coordinate = pin.coordinate
-                    ann.title = pin.title
-                    ann.subtitle = pin.subtitle
+                    ann.coordinate = pin.coordinate; ann.title = pin.title; ann.subtitle = pin.subtitle
                     mapView.addAnnotation(ann)
                 }
             }
-
-            // Zoom to show all pins if new ones were added
             if !viewModel.pins.isEmpty && viewModel.shouldZoomToPins {
                 mapView.showAnnotations(mapView.annotations.filter { !($0 is MKUserLocation) }, animated: true)
                 viewModel.shouldZoomToPins = false
             }
         }
 
-        func mapView(_ mapView: MKMapView, didSelect annotation: MKAnnotation) {
-            guard !(annotation is MKUserLocation) else { return }
-            // Find the place item for this annotation
-            if let pin = viewModel.pins.first(where: { $0.coordinate.latitude == annotation.coordinate.latitude && $0.coordinate.longitude == annotation.coordinate.longitude }) {
-                onPlaceSelected(PlaceCardItem(coordinate: pin.coordinate, name: pin.title, address: pin.subtitle))
+        func updatePreviewRouteOverlay(map mapView: MKMapView, viewModel: ExploreMapViewModel) {
+            // Remove old preview overlay
+            if let old = previewOverlay { mapView.removeOverlay(old) }
+            // Add new preview polyline
+            if let polyline = viewModel.previewPolyline {
+                previewOverlay = polyline
+                mapView.addOverlay(polyline)
+            } else {
+                previewOverlay = nil
             }
         }
 
@@ -245,13 +259,38 @@ struct ExploreMapUIKit: UIViewRepresentable {
             viewModel.currentRegion = mapView.region
         }
 
+        func mapView(_ mapView: MKMapView, didSelect annotation: MKAnnotation) {
+            guard !(annotation is MKUserLocation) else { return }
+            if let pin = viewModel.pins.first(where: { $0.coordinate.latitude == annotation.coordinate.latitude && $0.coordinate.longitude == annotation.coordinate.longitude }) {
+                onPlaceSelected(PlaceCardItem(coordinate: pin.coordinate, name: pin.title, address: pin.subtitle))
+            }
+        }
+
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
             guard !(annotation is MKUserLocation) else { return nil }
             let view = mapView.dequeueReusableAnnotationView(withIdentifier: "pin") as? MKMarkerAnnotationView ?? MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: "pin")
-            view.canShowCallout = false  // We handle selection with our own sheet
+            view.canShowCallout = false
             view.markerTintColor = .systemOrange
             view.animatesWhenAdded = true
             return view
+        }
+
+        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            if let polyline = overlay as? MKPolyline {
+                let renderer = MKPolylineRenderer(polyline: polyline)
+                if overlay === previewOverlay {
+                    // Preview route: blue, dashed
+                    renderer.strokeColor = UIColor.systemBlue
+                    renderer.lineWidth = 4
+                    renderer.lineDashPattern = [8, 4]
+                } else {
+                    renderer.strokeColor = UIColor.systemPurple
+                    renderer.lineWidth = 3
+                }
+                renderer.lineCap = .round
+                return renderer
+            }
+            return MKOverlayRenderer(overlay: overlay)
         }
     }
 }
@@ -267,6 +306,7 @@ final class ExploreMapViewModel: ObservableObject {
     @Published var pins: [ExplorePin] = []
     @Published var shouldZoomToPins = false
     @Published var currentRegion: MKCoordinateRegion?
+    @Published var previewPolyline: MKPolyline?
 
     private let searchService = SearchService.shared
     private let mesh = MeshService.shared
@@ -281,8 +321,6 @@ final class ExploreMapViewModel: ObservableObject {
 
     func startBrowsing() { mesh.startBrowsing() }
     func stopBrowsing() { mesh.stopBrowsing() }
-
-    // MARK: - Search
 
     func searchAddress(onResult: @escaping (PlaceCardItem) -> Void) {
         guard !searchQuery.isEmpty else { return }
@@ -330,8 +368,7 @@ final class ExploreMapViewModel: ObservableObject {
 
     func addDroppedPin(at coordinate: CLLocationCoordinate2D, onResult: @escaping (PlaceCardItem) -> Void) {
         pins.removeAll()
-        let pin = ExplorePin(coordinate: coordinate, title: "Pino marcado", subtitle: "Toque para ver opções", mapItem: nil)
-        pins.append(pin)
+        pins.append(ExplorePin(coordinate: coordinate, title: "Pino marcado", subtitle: "Toque para ver opções", mapItem: nil))
         shouldZoomToPins = false
         onResult(PlaceCardItem(coordinate: coordinate, name: "Pino marcado", address: "\(String(format: "%.5f", coordinate.latitude)), \(String(format: "%.5f", coordinate.longitude))"))
     }
@@ -342,11 +379,7 @@ final class ExploreMapViewModel: ObservableObject {
         AppState.shared.currentRideName = ride.rideName
     }
 
-    // MARK: - Navigation
-
     func startNavigation(with route: MKRoute) {
-        // Navigation is started from RideActiveView
-        // Store the route and switch to ride mode
         AppState.shared.pendingNavigationRoute = route
         NotificationCenter.default.post(name: .startSoloNavigation, object: route)
     }

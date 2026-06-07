@@ -4,19 +4,13 @@ import UIKit
 
 // MARK: - Place Card View (Bottom Sheet)
 
-/// Bottom sheet showing place details — mimics Apple Maps place card.
-/// Appears when user taps a pin or search result on the map.
-
 struct PlaceCardView: View {
     let item: PlaceCardItem
     var onDirections: () -> Void
     var onDismiss: () -> Void
 
-    @State private var detent: PresentationDetent = .medium
-
     var body: some View {
         VStack(spacing: 0) {
-            // Drag handle
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color.secondary.opacity(0.5))
                 .frame(width: 36, height: 5)
@@ -26,54 +20,82 @@ struct PlaceCardView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Place name
                     Text(item.name)
-                        .font(.title3)
-                        .fontWeight(.bold)
+                        .font(.title3).fontWeight(.bold)
                         .padding(.top, 12)
 
                     // Address
                     if let address = item.address {
                         Label(address, systemImage: "mappin.and.ellipse")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .font(.subheadline).foregroundColor(.secondary)
                     }
 
-                    // Distance from current location
+                    // Distance
                     if let distance = item.distance {
                         Label("\(String(format: "%.1f", distance / 1000)) km de você", systemImage: "location")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                            .font(.subheadline).foregroundColor(.secondary)
                     }
 
                     Divider()
 
-                    // Actions
+                    // Primary action: Directions
                     Button(action: onDirections) {
                         HStack {
-                            Image(systemName: "car.fill")
-                                .font(.title3)
-                            Text("Traçar Rota")
-                                .font(.headline)
+                            Image(systemName: "car.fill").font(.title3)
+                            Text("Traçar Rota").font(.headline)
                             Spacer()
                             if let eta = item.estimatedTime {
-                                Text("~\(eta) min")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
+                                Text("~\(Int(eta)) min").font(.subheadline).foregroundColor(.secondary)
                             }
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.secondary)
+                            Image(systemName: "chevron.right").foregroundColor(.secondary)
                         }
                         .padding()
                         .background(Color.orange.opacity(0.15))
                         .cornerRadius(12)
                     }
 
-                    // Coordinates
+                    // Contact actions
+                    if item.phoneNumber != nil || item.url != nil {
+                        HStack(spacing: 12) {
+                            if let phone = item.phoneNumber {
+                                Button {
+                                    if let url = URL(string: "tel://\(phone.filter { $0.isNumber || $0 == "+" })") {
+                                        UIApplication.shared.open(url)
+                                    }
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: "phone.fill").font(.title3)
+                                        Text("Ligar").font(.caption)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color(.systemGray5))
+                                    .cornerRadius(10)
+                                }
+                            }
+
+                            if let url = item.url {
+                                Button {
+                                    UIApplication.shared.open(url)
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: "safari").font(.title3)
+                                        Text("Site").font(.caption)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 12)
+                                    .background(Color(.systemGray5))
+                                    .cornerRadius(10)
+                                }
+                            }
+                        }
+                    }
+
+                    // Coordinates & Open in Maps
                     HStack(spacing: 16) {
                         Button {
                             UIPasteboard.general.string = "\(item.coordinate.latitude), \(item.coordinate.longitude)"
                         } label: {
-                            Label("Copiar", systemImage: "doc.on.doc")
-                                .font(.subheadline)
+                            Label("Copiar", systemImage: "doc.on.doc").font(.subheadline)
                         }
 
                         Button {
@@ -81,8 +103,7 @@ struct PlaceCardView: View {
                             mapItem.name = item.name
                             mapItem.openInMaps()
                         } label: {
-                            Label("Abrir no Maps", systemImage: "arrow.turn.up.forward.iphone")
-                                .font(.subheadline)
+                            Label("Abrir no Maps", systemImage: "arrow.turn.up.forward.iphone").font(.subheadline)
                         }
                     }
                     .foregroundColor(.secondary)
@@ -99,7 +120,7 @@ struct PlaceCardView: View {
 
 // MARK: - Place Card Item
 
-struct PlaceCardItem: Identifiable {
+struct PlaceCardItem: Identifiable, Equatable {
     let id = UUID()
     let name: String
     let address: String?
@@ -108,6 +129,8 @@ struct PlaceCardItem: Identifiable {
     let estimatedTime: TimeInterval?
     let phoneNumber: String?
     let url: URL?
+
+    static func == (lhs: PlaceCardItem, rhs: PlaceCardItem) -> Bool { lhs.id == rhs.id }
 
     init(mapItem: MKMapItem, currentLocation: CLLocation? = nil) {
         self.name = mapItem.name ?? "Local"
@@ -120,7 +143,7 @@ struct PlaceCardItem: Identifiable {
             self.distance = location.distance(from: CLLocation(
                 latitude: coordinate.latitude, longitude: coordinate.longitude
             ))
-            self.estimatedTime = (self.distance ?? 0) / (60.0 * 1000 / 60) // rough: 60km/h
+            self.estimatedTime = (self.distance ?? 0) / (60.0 * 1000 / 60)
         } else {
             self.distance = nil
             self.estimatedTime = nil

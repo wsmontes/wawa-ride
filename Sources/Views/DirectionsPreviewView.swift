@@ -1,55 +1,43 @@
 import SwiftUI
 import MapKit
 
-// MARK: - Directions Preview View
-
-/// Shows route preview with ETA, distance, alternatives, and GO button.
-/// Bottom sheet that appears after "Directions" is tapped from PlaceCard.
+// MARK: - Directions Preview View 2.0
 
 struct DirectionsPreviewView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel: DirectionsPreviewViewModel
-
+    var onRouteSelected: ((MKRoute) -> Void)?
     var onStartNavigation: ((MKRoute) -> Void)?
 
-    init(source: CLLocationCoordinate2D, destination: CLLocationCoordinate2D, destinationName: String, onStartNavigation: ((MKRoute) -> Void)? = nil) {
+    @State private var showAllSteps = false
+
+    init(source: CLLocationCoordinate2D, destination: CLLocationCoordinate2D, destinationName: String, onRouteSelected: ((MKRoute) -> Void)? = nil, onStartNavigation: ((MKRoute) -> Void)? = nil) {
         _viewModel = StateObject(wrappedValue: DirectionsPreviewViewModel(
-            source: source,
-            destination: destination,
-            destinationName: destinationName
+            source: source, destination: destination, destinationName: destinationName
         ))
+        self.onRouteSelected = onRouteSelected
         self.onStartNavigation = onStartNavigation
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Drag handle
             RoundedRectangle(cornerRadius: 3)
                 .fill(Color.secondary.opacity(0.5))
                 .frame(width: 36, height: 5)
                 .padding(.top, 8)
 
-            // Header
             HStack {
                 VStack(alignment: .leading) {
-                    Text(viewModel.destinationName)
-                        .font(.headline)
-                    Text("De: Localização atual")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    Text(viewModel.destinationName).font(.headline)
+                    Text("De: Localização atual").font(.caption).foregroundColor(.secondary)
                 }
                 Spacer()
-                Button {
-                    dismiss()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark.circle.fill").font(.title2).foregroundColor(.secondary)
                 }
             }
             .padding()
 
-            // Loading or Routes
             if viewModel.isLoading {
                 Spacer()
                 ProgressView("Calculando rota...")
@@ -57,21 +45,15 @@ struct DirectionsPreviewView: View {
             } else if let error = viewModel.error {
                 Spacer()
                 VStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.orange)
-                    Text(error)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    Button("Tentar novamente") {
-                        Task { await viewModel.calculate() }
-                    }
+                    Image(systemName: "exclamationmark.triangle").font(.largeTitle).foregroundColor(.orange)
+                    Text(error).font(.subheadline).foregroundColor(.secondary)
+                    Button("Tentar novamente") { Task { await viewModel.calculate() } }
                 }
                 Spacer()
             } else if !viewModel.routes.isEmpty {
-                // Route list
                 ScrollView {
                     VStack(spacing: 12) {
+                        // Route options
                         ForEach(Array(viewModel.routes.enumerated()), id: \.offset) { index, route in
                             RouteOptionCard(
                                 route: route,
@@ -79,6 +61,56 @@ struct DirectionsPreviewView: View {
                                 index: index
                             ) {
                                 viewModel.selectRoute(index)
+                                onRouteSelected?(route)
+                            }
+                        }
+
+                        // Step list preview
+                        if let selected = viewModel.selectedRoute {
+                            VStack(alignment: .leading, spacing: 0) {
+                                HStack {
+                                    Text("Passos")
+                                        .font(.headline)
+                                    Spacer()
+                                    if selected.steps.count > 3 {
+                                        Button(showAllSteps ? "Mostrar menos" : "Ver todos (\(selected.steps.count))") {
+                                            withAnimation { showAllSteps.toggle() }
+                                        }
+                                        .font(.subheadline)
+                                    }
+                                }
+                                .padding(.horizontal)
+                                .padding(.top, 8)
+
+                                let steps = showAllSteps ? selected.steps : Array(selected.steps.prefix(3))
+                                ForEach(Array(steps.enumerated()), id: \.offset) { stepIndex, step in
+                                    HStack(spacing: 12) {
+                                        ZStack {
+                                            Circle()
+                                                .fill(stepIndex == 0 ? Color.green : Color.secondary.opacity(0.3))
+                                                .frame(width: 24, height: 24)
+                                            Text("\(stepIndex + 1)")
+                                                .font(.caption2).fontWeight(.bold)
+                                                .foregroundColor(stepIndex == 0 ? .white : .primary)
+                                        }
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(step.instructions)
+                                                .font(.subheadline)
+                                                .lineLimit(2)
+                                            if step.distance > 0 {
+                                                Text(formatDistance(step.distance))
+                                                    .font(.caption).foregroundColor(.secondary)
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                    .padding(.vertical, 6)
+
+                                    if stepIndex < steps.count - 1 {
+                                        Divider().padding(.leading, 48)
+                                    }
+                                }
                             }
                         }
                     }
@@ -87,21 +119,17 @@ struct DirectionsPreviewView: View {
 
                 // GO button
                 Button {
-                    let route = viewModel.selectedRoute
-                    onStartNavigation?(route)
+                    if let route = viewModel.selectedRoute {
+                        onStartNavigation?(route)
+                    }
                     dismiss()
                 } label: {
                     HStack {
-                        Text("IR")
-                            .font(.title2)
-                            .fontWeight(.heavy)
+                        Text("IR").font(.title2).fontWeight(.heavy)
                         Image(systemName: "arrow.right")
                     }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.green)
-                    .cornerRadius(16)
+                    .foregroundColor(.white).frame(maxWidth: .infinity)
+                    .padding(.vertical, 16).background(Color.green).cornerRadius(16)
                     .padding()
                 }
             }
@@ -109,9 +137,13 @@ struct DirectionsPreviewView: View {
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .presentationBackground(.regularMaterial)
-        .task {
-            await viewModel.calculate()
-        }
+        .task { await viewModel.calculate() }
+    }
+
+    private func formatDistance(_ meters: CLLocationDistance) -> String {
+        if meters > 1000 { return String(format: "%.1f km", meters / 1000) }
+        if meters > 0 { return "\(Int(meters)) m" }
+        return ""
     }
 }
 
@@ -128,54 +160,37 @@ struct RouteOptionCard: View {
             HStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(route.name.isEmpty ? "Rota \(index + 1)" : route.name)
-                        .font(.headline)
-                        .foregroundColor(.primary)
-
+                        .font(.headline).foregroundColor(.primary)
                     HStack(spacing: 12) {
                         Label(formatDistance(route.distance), systemImage: "arrow.triangle.turn.up.right.diamond")
                         Label(formatDuration(route.expectedTravelTime), systemImage: "clock")
                     }
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
+                    .font(.caption).foregroundColor(.secondary)
                 }
-
                 Spacer()
-
                 if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.title2)
-                        .foregroundColor(.green)
+                    Image(systemName: "checkmark.circle.fill").font(.title2).foregroundColor(.green)
                 }
             }
             .padding()
             .background(isSelected ? Color.green.opacity(0.1) : Color(.systemGray6))
             .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? Color.green : Color.clear, lineWidth: 2)
-            )
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(isSelected ? Color.green : Color.clear, lineWidth: 2))
         }
         .buttonStyle(.plain)
     }
 
     private func formatDistance(_ meters: CLLocationDistance) -> String {
-        if meters > 1000 {
-            return String(format: "%.1f km", meters / 1000)
-        }
-        return "\(Int(meters)) m"
+        meters > 1000 ? String(format: "%.1f km", meters / 1000) : "\(Int(meters)) m"
     }
 
     private func formatDuration(_ seconds: TimeInterval) -> String {
         let minutes = Int(seconds / 60)
-        if minutes >= 60 {
-            return "\(minutes / 60)h \(minutes % 60)min"
-        }
-        return "\(minutes) min"
+        return minutes >= 60 ? "\(minutes / 60)h \(minutes % 60)min" : "\(minutes) min"
     }
 }
 
-// MARK: - Directions Preview ViewModel
+// MARK: - ViewModel
 
 @MainActor
 final class DirectionsPreviewViewModel: ObservableObject {
@@ -190,8 +205,9 @@ final class DirectionsPreviewViewModel: ObservableObject {
 
     private let directionsService = DirectionsService.shared
 
-    var selectedRoute: MKRoute {
-        routes[selectedIndex]
+    var selectedRoute: MKRoute? {
+        guard selectedIndex < routes.count else { return nil }
+        return routes[selectedIndex]
     }
 
     init(source: CLLocationCoordinate2D, destination: CLLocationCoordinate2D, destinationName: String) {
@@ -201,20 +217,12 @@ final class DirectionsPreviewViewModel: ObservableObject {
     }
 
     func calculate() async {
-        isLoading = true
-        error = nil
+        isLoading = true; error = nil
         do {
-            routes = try await directionsService.calculateRoute(
-                from: source,
-                to: destination,
-                alternateRoutes: true
-            )
-            if routes.isEmpty {
-                error = "Nenhuma rota encontrada"
-            }
+            routes = try await directionsService.calculateRoute(from: source, to: destination, alternateRoutes: true)
+            if routes.isEmpty { error = "Nenhuma rota encontrada" }
         } catch {
             self.error = "Erro ao calcular rota: \(error.localizedDescription)"
-            print("🧭 Directions error: \(error)")
         }
         isLoading = false
     }
