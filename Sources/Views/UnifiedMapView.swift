@@ -38,7 +38,10 @@ struct UnifiedMapView: View {
                 rideVM: rideVM,
                 isInRide: isInRide,
                 onPlaceSelected: { sheetState = .place($0) },
-                onMapTap: { if sheetState != nil { sheetState = nil } }
+                onMapTap: {
+                    // Only dismiss place cards on map tap, never directions
+                    if case .place = sheetState { sheetState = nil }
+                }
             )
             .ignoresSafeArea(.all)
 
@@ -137,6 +140,7 @@ struct UnifiedMapView: View {
             case .place(let item):
                 PlaceCardView(item: item, onDirections: {
                     let source = LocationService.shared.currentLocation?.coordinate ?? mapVM.currentRegion?.center ?? CLLocationCoordinate2D()
+                    mapVM.pendingZoomToRoute = true
                     withAnimation(.easeInOut(duration: 0.3)) {
                         sheetState = .directions(source: source, destination: item.coordinate, name: item.name)
                     }
@@ -145,12 +149,21 @@ struct UnifiedMapView: View {
             case .directions(let source, let dest, let name):
                 DirectionsPreviewView(
                     source: source, destination: dest, destinationName: name,
-                    onRouteSelected: { mapVM.previewPolyline = $0.polyline },
+                    onRouteSelected: { route in
+                        mapVM.previewPolyline = route.polyline
+                        mapVM.pendingZoomToRoute = true
+                    },
                     onStartNavigation: { route in
+                        // Smooth GO transition:
+                        // 1. Close sheet
                         sheetState = nil
-                        rideVM.startNavigation(with: route)
-                        if !isInRide {
-                            startSoloRide()
+                        // 2. Show full route on map
+                        mapVM.previewPolyline = route.polyline
+                        mapVM.pendingZoomToRoute = true
+                        // 3. Brief pause, then start navigation
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            rideVM.startNavigation(with: route)
+                            if !isInRide { startSoloRide() }
                         }
                     }
                 )
@@ -507,6 +520,13 @@ struct UnifiedMapUIKit: UIViewRepresentable {
             // Map type
             if mapView.mapType != mapVM.currentMapType { mapView.mapType = mapVM.currentMapType }
             if mapVM.shouldRecenter { mapView.setUserTrackingMode(.follow, animated: true); mapVM.shouldRecenter = false }
+
+            // Zoom to show route with bottom padding (sheet is open)
+            if mapVM.pendingZoomToRoute, let poly = mapVM.previewPolyline {
+                let insets = UIEdgeInsets(top: 80, left: 40, bottom: 400, right: 40)
+                mapView.setVisibleMapRect(poly.boundingMapRect, edgePadding: insets, animated: true)
+                mapVM.pendingZoomToRoute = false
+            }
         }
 
         @objc func handleLongPress(_ g: UILongPressGestureRecognizer) {
