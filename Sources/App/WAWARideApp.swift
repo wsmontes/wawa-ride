@@ -26,14 +26,15 @@ struct WAWARideApp: App {
     }
 
     private func handleOpenURL(_ url: URL) {
-        // Handle geo: URIs
-        if url.scheme == "geo", let coords = parseGeoURI(url) {
+        // Handle geo: URIs (if feature flag enabled)
+        if FeatureFlags.shared.geoURI, url.scheme == "geo", let coords = parseGeoURI(url) {
             NotificationCenter.default.post(name: .openGeoCoordinate, object: coords)
             return
         }
-        // Handle GPX/KML files
+        // Handle GPX/KML files (KML only if feature flag enabled)
         let ext = url.pathExtension.lowercased()
-        guard ext == "gpx" || ext == "kml" else { return }
+        let allowedExts = FeatureFlags.shared.kmlImport ? ["gpx", "kml"] : ["gpx"]
+        guard allowedExts.contains(ext) else { return }
         if let route = RouteService.shared.importGPX(from: url) {
             VoiceAssistant.shared.speak(VoiceAssistant.routeImported(name: route.name, waypoints: route.waypoints.count))
         }
@@ -253,6 +254,14 @@ struct ProfileTabView: View {
                     .frame(maxWidth: .infinity)
                     .foregroundColor(.orange)
                     .disabled(!viewModel.canSave)
+                }
+
+                if FeatureFlags.shared.showDiagnostics {
+                    Section {
+                        NavigationLink("Diagnóstico") {
+                            DiagnosticView()
+                        }
+                    }
                 }
             }
             .navigationTitle("Perfil")

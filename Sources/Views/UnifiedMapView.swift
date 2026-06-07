@@ -26,6 +26,9 @@ struct UnifiedMapView: View {
 
     let isInRide: Bool
 
+    // Riding mode detection
+    private var isRiding: Bool { rideVM.speed > 10 }
+
     // Permission states
     private var gpsDenied: Bool {
         let status = LocationService.shared.authorizationStatus
@@ -125,8 +128,8 @@ struct UnifiedMapView: View {
                 }
             }
 
-            // Search bar (during nav: only if expanded; otherwise: always)
-            if rideVM.isNavigating && mapVM.showSearchDuringNav {
+            // Search bar (hidden during riding or active navigation)
+            if !isRiding && rideVM.isNavigating && mapVM.showSearchDuringNav {
                 VStack {
                     SearchBarView(
                         searchText: $mapVM.searchQuery,
@@ -139,7 +142,7 @@ struct UnifiedMapView: View {
                     .padding(.top, 100)
                     Spacer()
                 }
-            } else if !rideVM.isNavigating {
+            } else if !isRiding && !rideVM.isNavigating {
                 VStack {
                     SearchBarView(
                         searchText: $mapVM.searchQuery,
@@ -163,7 +166,7 @@ struct UnifiedMapView: View {
                 }
             }
 
-            // Rider HUD (PTT, hazards, rooms — only during a ride)
+            // Rider HUD (PTT, hazards — always. Rooms only if feature flag enabled)
             if isInRide {
                 VStack {
                     Spacer()
@@ -247,14 +250,15 @@ struct UnifiedMapView: View {
                 }
             }
 
-            // Map controls (always visible)
-            VStack {
-                Spacer()
-                HStack {
-                    // Record button (left side)
-                    if !RouteService.shared.isRecording {
-                        VStack(spacing: 12) {
-                            Button {
+            // Map controls (hidden during riding, except recenter)
+            if !isRiding {
+                VStack {
+                    Spacer()
+                    HStack {
+                        // Record button (left side)
+                        if !RouteService.shared.isRecording {
+                            VStack(spacing: 12) {
+                                Button {
                                 let dateFormatter = DateFormatter()
                                 dateFormatter.dateFormat = "dd/MM HH:mm"
                                 let name = "Track \(dateFormatter.string(from: Date()))"
@@ -303,8 +307,12 @@ struct UnifiedMapView: View {
                     .padding(.bottom, isInRide ? 180 : 100)
                 }
             }
+            } // end if !isRiding
         }
-        .sheet(item: $sheetState) { state in
+        .sheet(item: Binding(
+            get: { isRiding ? nil : sheetState },
+            set: { sheetState = $0 }
+        )) { state in
             switch state {
             case .place(let item):
                 PlaceCardView(item: item, onDirections: {
@@ -835,12 +843,14 @@ struct RiderHUD: View {
                         .onEnded { _ in stopPTT() }
                 )
 
-                Button { showRooms = true } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: "message").font(.title2)
-                        Text("Salas").font(.caption2)
+                if FeatureFlags.shared.rooms {
+                    Button { showRooms = true } label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: "message").font(.title2)
+                            Text("Salas").font(.caption2)
+                        }
+                        .frame(width: 80, height: 80).background(Color.black.opacity(0.7)).cornerRadius(40)
                     }
-                    .frame(width: 80, height: 80).background(Color.black.opacity(0.7)).cornerRadius(40)
                 }
             }
 
