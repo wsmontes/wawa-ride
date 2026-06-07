@@ -40,6 +40,7 @@ struct RouteCreatorView: View {
                         searchText: $viewModel.searchQuery,
                         completions: viewModel.completions,
                         isSearching: viewModel.isSearching,
+                        mapRegion: nil,
                         onSelectCompletion: { completion in
                             viewModel.selectSearchCompletion(completion)
                         },

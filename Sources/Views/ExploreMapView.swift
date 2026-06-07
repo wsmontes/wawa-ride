@@ -29,6 +29,7 @@ struct ExploreMapView: View {
                     searchText: $viewModel.searchQuery,
                     completions: viewModel.completions,
                     isSearching: viewModel.isSearching,
+                    mapRegion: viewModel.currentRegion,
                     onSelectCompletion: { completion in
                         viewModel.selectSearchCompletion(completion) { item in
                             selectedPlace = item
@@ -240,6 +241,10 @@ struct ExploreMapUIKit: UIViewRepresentable {
             }
         }
 
+        func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            viewModel.currentRegion = mapView.region
+        }
+
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
             guard !(annotation is MKUserLocation) else { return nil }
             let view = mapView.dequeueReusableAnnotationView(withIdentifier: "pin") as? MKMarkerAnnotationView ?? MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: "pin")
@@ -261,6 +266,7 @@ final class ExploreMapViewModel: ObservableObject {
     @Published var nearbyRides: [MeshService.DiscoveredRide] = []
     @Published var pins: [ExplorePin] = []
     @Published var shouldZoomToPins = false
+    @Published var currentRegion: MKCoordinateRegion?
 
     private let searchService = SearchService.shared
     private let mesh = MeshService.shared
