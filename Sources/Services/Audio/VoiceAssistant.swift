@@ -202,6 +202,11 @@ extension VoiceAssistant {
                    dedupKey: "ride_end")
     }
 
+    static func routeImported(name: String, waypoints: Int) -> VoiceAlert {
+        VoiceAlert(text: "Rota \(name) importada com \(waypoints) pontos.",
+                   priority: .normal, dedupKey: "route_imported")
+    }
+
     static func riderJoined(_ name: String) -> VoiceAlert {
         VoiceAlert(text: "\(name) entrou no passeio.", priority: .background,
                    dedupKey: "join_\(name)")

@@ -13,7 +13,7 @@ settings:
 packages:
   GRDB:
     url: https://github.com/groue/GRDB.swift
-    from: 6.29.0
+    branch: master
 
 targets:
   WAWARide:
@@ -27,7 +27,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.wawa.ride
         MARKETING_VERSION: 0.1.0
         CURRENT_PROJECT_VERSION: 1
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "955573A4YH"
         TARGETED_DEVICE_FAMILY: 1
         UIBackgroundModes:
           - location

@@ -328,7 +328,7 @@ final class VoiceService: NSObject, ObservableObject {
         // Notify
         if AppState.shared.currentRoomId != message.roomId {
             let roomName = AppState.shared.roomName(for: message.roomId)
-            VoiceAssistant.shared.speak(.newMessage(from: message.fromRiderName, room: roomName))
+            VoiceAssistant.shared.speak(VoiceAssistant.newMessage(from: message.fromRiderName, room: roomName))
         }
 
         NotificationCenter.default.post(name: .newVoiceMessage, object: message)
@@ -499,21 +499,6 @@ extension VoiceService: StreamDelegate {
 extension VoiceService: AVAudioPlayerDelegate {
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         isPlaying = false
-    }
-}
-
-// MARK: - App State (minimal)
-
-@MainActor
-final class AppState: ObservableObject {
-    static let shared = AppState()
-
-    @Published var currentRideId: String?
-    @Published var currentRoomId: String?
-    @Published var activeRooms: [Room] = []
-
-    func roomName(for roomId: String) -> String {
-        activeRooms.first { $0.id == roomId }?.name ?? "Sala"
     }
 }
 

@@ -35,7 +35,7 @@ final class HazardService: ObservableObject {
         sendHazardToMesh(alert)
 
         // TTS confirmation
-        VoiceAssistant.shared.speak(.hazardMarked(type: type))
+        VoiceAssistant.shared.speak(VoiceAssistant.hazardMarked(type: type))
     }
 
     // MARK: - Confirm / Clear
@@ -75,7 +75,7 @@ final class HazardService: ObservableObject {
         if let myLocation = LocationService.shared.currentLocation {
             let distance = myLocation.coordinate.distance(from: alert.coordinate)
             if distance < 500 {
-                VoiceAssistant.shared.speak(.hazardNearby(type: alert.type, distance: Int(distance)))
+                VoiceAssistant.shared.speak(VoiceAssistant.hazardNearby(type: alert.type, distance: Int(distance)))
             }
         }
     }

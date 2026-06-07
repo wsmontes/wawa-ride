@@ -1,5 +1,6 @@
 import SwiftUI
 import AVFoundation
+import CoreLocation
 
 // MARK: - App Entry Point
 
@@ -42,7 +43,7 @@ struct WAWARideApp: App {
         guard url.pathExtension.lowercased() == "gpx" else { return }
 
         if let route = RouteService.shared.importGPX(from: url) {
-            VoiceAssistant.shared.speak(.routeImported(name: route.name, waypoints: route.waypoints.count))
+            VoiceAssistant.shared.speak(VoiceAssistant.routeImported(name: route.name, waypoints: route.waypoints.count))
         }
     }
 }
@@ -409,7 +410,7 @@ struct RideActiveView: View {
 
         case .sosAlert:
             if let sos = try? JSONDecoder().decode(SOSPayload.self, from: payload.payload) {
-                VoiceAssistant.shared.speak(.sosReceived(name: payload.senderName, reason: sos.reason))
+                VoiceAssistant.shared.speak(VoiceAssistant.sosReceived(name: payload.senderName, reason: sos.reason))
             }
 
         case .fullState:

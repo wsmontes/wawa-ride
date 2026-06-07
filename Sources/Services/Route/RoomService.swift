@@ -14,7 +14,7 @@ final class RoomService: ObservableObject {
     // Voice messages by room
     @Published var messagesByRoom: [String: [VoiceMessage]] = [:]
 
-    private override init() {}
+    private init() {}
 
     // MARK: - Room Creation
 
@@ -145,7 +145,7 @@ final class RoomService: ObservableObject {
         try? LocalStore.shared.saveRoom(room)
 
         // TTS notification
-        VoiceAssistant.shared.speak(.roomCreated(name: room.name, by: room.creatorName))
+        VoiceAssistant.shared.speak(VoiceAssistant.roomCreated(name: room.name, by: room.creatorName))
     }
 
     func handleRoomClosed(_ roomId: String) {

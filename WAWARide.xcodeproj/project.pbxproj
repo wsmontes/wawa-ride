@@ -278,7 +278,7 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					43061D48CAE6F9A1C5F0B28D = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = 955573A4YH;
 					};
 				};
 			};
@@ -375,7 +375,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/Resources/WAWARide.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 955573A4YH;
 				INFOPLIST_FILE = Sources/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -522,7 +522,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/Resources/WAWARide.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 955573A4YH;
 				INFOPLIST_FILE = Sources/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -569,8 +569,8 @@
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/groue/GRDB.swift";
 			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 6.29.0;
+				branch = master;
+				kind = branch;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */

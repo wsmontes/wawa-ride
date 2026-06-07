@@ -184,10 +184,6 @@ final class RiderAnnotation: NSObject, MKAnnotation {
     }
 }
 
-extension RiderAnnotation {
-    override var hashValue: Int { id.hashValue }
-    func hash(into hasher: inout Hasher) { hasher.combine(id) }
-}
 
 // MARK: - Rider Annotation View
 

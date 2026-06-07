@@ -83,6 +83,7 @@ struct RideParticipant: Codable, Identifiable {
 // MARK: - Ride Summary
 
 struct RideSummary: Codable, Identifiable {
+    var id: String { rideId }
     let rideId: String
     let rideName: String
     let startedAt: Date

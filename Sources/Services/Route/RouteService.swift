@@ -24,7 +24,7 @@ final class RouteService: ObservableObject {
     // Simplification
     private let simplifier = RouteSimplifier()
 
-    private override init() {}
+    private init() {}
 
     // MARK: - Recording
 
