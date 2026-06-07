@@ -1,125 +1,111 @@
-# WAWA Ride — Estratégia de Conectividade
+# WAWA Ride — Estratégia de Conectividade (v2)
 
-## 1. O problema fundamental
+> **Zero servidor. Tudo é P2P. Internet é acelerador, não requisito.**
 
-Motos andam em lugares sem sinal. Ponto. Qualquer app de navegação em grupo que dependa exclusivamente de 4G vai falhar nos momentos mais importantes (serra, montanha, estrada rural).
-
-A estratégia de conectividade do WAWA Ride é uma **escada de degradação controlada**:
+## 1. Escada de degradação (v2)
 
 ```
-TODAS AS CAMADAS DISPONÍVEIS:
-  4G + Mesh + Queue   →  melhor experiência (redundante, baixa latência)
+NÍVEL 1 — FULL MESH (todos conectados via WiFi Direct ou BLE):
+  ✅ Posições: < 1s
+  ✅ Voz ao vivo: < 200ms
+  ✅ Mensagens assíncronas: < 1s
+  ✅ Rotas, salas, alertas: < 1s
+  Experiência: PERFEITA. App funciona 100%.
 
-UMA CAMADA CAI:
-  4G + Queue          →  4G voltou, drenando fila acumulada
-  Mesh + Queue        →  sem 4G, P2P funcionando
+NÍVEL 2 — MESH PARCIAL (alguns peers via BLE, outros via relay):
+  ✅ Posições: 1-5s (depende de saltos de relay)
+  ✅ Voz ao vivo: < 2s (relay)
+  ✅ Mensagens assíncronas: 1-10s
+  ✅ Tudo funciona, só mais lento.
+  Experiência: BOA. Relay store-and-forward no fundo.
 
-TUDO OFFLINE:
-  Queue               →  acumulando, nada transmite
-                           Rider vê: últimos dados (opacidade reduzida)
-                           TTS: "Sem sinal há 2 minutos"
-                           Quando reconectar → drena fila por prioridade
+NÍVEL 3 — INTERNET DISPONÍVEL (WiFi infra relay do MC):
+  ✅ MultipeerConnectivity automaticamente usa a internet como relay
+  ✅ Se ambos têm internet: performance similar ao Full Mesh
+  ✅ Se apenas um tem: conexão pode ser estabelecida via infra
+  ✅ App NÃO precisa saber disso. MC resolve.
+  Experiência: PERFEITA (transparente pro app).
 
-RECONEXÃO:
-  Queue drena         →  critical primeiro, depois high, normal, low
-  Firebase sync       →  sobrescreve com dados mais recentes
-  Conflito            →  timestamp mais recente ganha (last-write-wins)
+NÍVEL 4 — TOTALMENTE OFFLINE (sem mesh, sem internet):
+  ❌ Sem comunicação com outros riders
+  ✅ GPS continua funcionando (localização própria)
+  ✅ OfflineQueue acumula mensagens
+  ✅ Rota continua sendo gravada localmente
+  ✅ TTS e comandos de voz locais continuam
+  Experiência: DEGRADADA. Mas o app não crasha. Retoma sozinho.
+
+NÍVEL 5 — RECONEXÃO:
+  ✅ OfflineQueue drena (prioridade: critical → high → normal → low)
+  ✅ Estado completo é sincronizado
+  ✅ TTS: "Conexão restaurada. 5 mensagens pendentes."
 ```
 
 ---
 
-## 2. TransportManager — o cérebro
+## 2. TransportManager (v2)
 
 ```swift
 class TransportManager {
     static let shared = TransportManager()
-
-    let cloud: RideSyncService       // Firestore
-    let mesh: MeshService            // MultipeerConnectivity
+    let mesh: MeshService            // ÚNICO transporte
     let queue: OfflineQueue          // SQLite
-    let connectivity: ConnectivityMonitor  // NWPathMonitor
+    let connectivity: ConnectivityMonitor
 
-    func send(location: LocationPayload) {
-        let payload = MeshPayload(
-            type: .locationUpdate,
-            priority: .normal,
-            ttl: 3,
-            payload: location
-        )
+    // Como NÃO tem Firebase, o mesh É o transporte.
+    // Internet acelera o mesh automaticamente (MC WiFi infra).
 
-        send(payload, via: bestTransport(for: .normal))
-    }
+    func send(_ payload: MeshPayload) {
+        let strategy = bestStrategy(for: payload.priority)
 
-    func send(hazard: HazardAlertPayload) {
-        let payload = MeshPayload(
-            type: .hazardAlert,
-            priority: .critical,
-            ttl: 10,
-            payload: hazard
-        )
-
-        // Crítico: tenta TODOS os canais simultaneamente
-        send(payload, via: .all)
-        queue.enqueue(payload)  // Garantia extra: escreve no disco
-    }
-
-    func send(_ payload: MeshPayload, via strategy: TransportStrategy) {
         switch strategy {
-        case .cloudOnly:
-            cloud.send(payload)
-
-        case .meshOnly:
+        case .meshDirect:
+            // Envia diretamente pros peers conectados
             mesh.send(payload)
 
-        case .cloudPreferred:
-            if connectivity.hasInternet {
-                cloud.send(payload)
-            } else {
-                mesh.send(payload)
-                queue.enqueue(payload)
-            }
+        case .meshWithQueue:
+            // Envia + persiste pra garantir
+            mesh.send(payload)
+            queue.enqueue(payload)
 
-        case .meshPreferred:
-            // Mesh tem latência menor quando disponível
-            if mesh.hasConnectedPeers {
-                mesh.send(payload)
-                cloud.send(payload)  // Backup assíncrono
-            } else if connectivity.hasInternet {
-                cloud.send(payload)
-            } else {
-                queue.enqueue(payload)
-            }
-
-        case .all:
-            // Crítico: dispara em todos os canais
-            if connectivity.hasInternet { cloud.send(payload) }
-            if mesh.hasConnectedPeers { mesh.send(payload) }
-            queue.enqueue(payload)  // Sempre persiste crítico
+        case .queueOnly:
+            // Só persiste (offline total)
+            queue.enqueue(payload)
         }
     }
 
-    func bestTransport(for priority: MeshPriority) -> TransportStrategy {
+    func bestStrategy(for priority: MeshPriority) -> TransportStrategy {
+        let hasPeers = mesh.hasConnectedPeers
+
         switch priority {
-        case .critical:  return .all
-        case .high:      return connectivity.hasInternet ? .cloudPreferred : .meshPreferred
-        case .normal:    return connectivity.hasInternet ? .cloudOnly : .meshOnly
-        case .low:       return .cloudOnly  // Só transmite se tiver 4G
+        case .critical:
+            // Crítico: mesh + fila sempre (redundância)
+            return hasPeers ? .meshWithQueue : .queueOnly
+
+        case .high:
+            return hasPeers ? .meshWithQueue : .queueOnly
+
+        case .normal:
+            return hasPeers ? .meshDirect : .queueOnly
+
+        case .low:
+            // Baixa prioridade: só mesh direto, sem fila
+            // (dados que envelhecem rápido, como posição antiga)
+            return hasPeers ? .meshDirect : .none
         }
     }
 }
 
 enum TransportStrategy {
-    case cloudOnly
-    case meshOnly
-    case cloudPreferred
-    case meshPreferred
-    case all
+    case meshDirect      // Envia agora via mesh
+    case meshWithQueue   // Envia + persiste em fila
+    case queueOnly       // Só persiste (offline)
+    case none            // Descarta (dados expirados/irrelevantes)
 }
 ```
 
 ---
 
-## 3. ConnectivityMonitor — detecção de estado
+## 3. ConnectivityMonitor
 
 ```swift
 import Network
@@ -128,356 +114,172 @@ class ConnectivityMonitor: ObservableObject {
     static let shared = ConnectivityMonitor()
 
     private let monitor = NWPathMonitor()
-    private let queue = DispatchQueue(label: "com.wawa.connectivity")
-
     @Published var hasInternet = false
-    @Published var connectionType: ConnectionType = .unknown
-    @Published var isExpensive = false       // Cellular (não WiFi)
-    @Published var isConstrained = false     // Low Data Mode
-
-    enum ConnectionType {
-        case wifi, cellular, wired, other, unknown
-    }
+    @Published var connectionType = "unknown"
 
     func start() {
         monitor.pathUpdateHandler = { [weak self] path in
             DispatchQueue.main.async {
                 self?.hasInternet = path.status == .satisfied
-                self?.isExpensive = path.isExpensive
-                self?.isConstrained = path.isConstrained
+                self?.connectionType = path.usesInterfaceType(.wifi) ? "wifi"
+                    : path.usesInterfaceType(.cellular) ? "cellular"
+                    : "other"
 
-                if path.usesInterfaceType(.wifi) {
-                    self?.connectionType = .wifi
-                } else if path.usesInterfaceType(.cellular) {
-                    self?.connectionType = .cellular
-                } else if path.usesInterfaceType(.wiredEthernet) {
-                    self?.connectionType = .wired
-                } else {
-                    self?.connectionType = .other
-                }
-
-                // Notifica TransportManager pra reavaliar estratégia
-                TransportManager.shared.onConnectivityChanged()
+                // Notifica mudança
+                // (MultipeerConnectivity já usa isso automaticamente)
             }
         }
-        monitor.start(queue: queue)
+        monitor.start(queue: DispatchQueue(label: "com.wawa.connectivity"))
     }
 }
 ```
 
 ---
 
-## 4. OfflineQueue — o último recurso
-
-### 4.1 Funcionamento
+## 4. OfflineQueue (v2)
 
 ```
-ENFILEIRAR:
+FUNCIONAMENTO:
+
+Enfileirar:
   1. Serializa MeshPayload → JSON
-  2. Insere no SQLite com prioridade + timestamp
-  3. Se queue.count > 1000:
-     - Remove 100 mensagens de menor prioridade mais antigas
-  4. Se mensagem crítica: marca flag `persist_until_ack = true`
+  2. Insere no SQLite
+  3. Máximo 1000 mensagens. Se exceder:
+     - Remove 100 mensagens mais antigas de menor prioridade
+  4. Mensagens críticas (SOS, hazard): flag persist_until_ack = true
+     (NUNCA são removidas automaticamente)
 
-DESENFILEIRAR (quando reconectar):
-  1. Ordena por: (flag persist_until_ack DESC, priority ASC, created_at ASC)
-  2. Envia em lotes de 20 (não sobrecarrega o canal)
-  3. Se sucesso: remove da fila
-  4. Se falha: incrementa retry_count, agenda retry com backoff
-  5. Se retry_count > max_retries: descarta (muito antiga)
+Desenfileirar (quando mesh reconecta):
+  1. Ordena: persist_until_ack DESC, priority ASC, created_at ASC
+  2. Envia em lotes de 30 (não sobrecarrega o MC)
+  3. Sucesso → remove. Falha → retry_count++, backoff.
+  4. Máximo de retries: 10 (critical), 5 (high), 3 (normal), 1 (low)
 
-EXPIRAR (background):
-  - Timer a cada 60s
-  - Remove mensagens expiradas por idade:
+Expirar (background timer a cada 60s):
+  - Mensagens expiram por idade:
     critical: 1h, high: 30min, normal: 10min, low: 5min
-  - Remove mensagens expiradas por TTL:
-    critical: 15 saltos, high: 8, normal: 5, low: 3
-    (TTL ainda importa mesmo offline — quando drenar, pode ser o último salto)
-```
+  - Mensagens expiram por TTL (saltos) também:
+    critical: 15, high: 8, normal: 5, low: 3
+  - Expiradas → removidas da fila
 
-### 4.2 Esquema SQLite
-
-```sql
-CREATE TABLE offline_queue (
-    id TEXT PRIMARY KEY,
-    ride_id TEXT NOT NULL,
-    type TEXT NOT NULL,           -- MeshPayloadType
-    priority INTEGER NOT NULL,     -- 0=critical, 1=high, 2=normal, 3=low
-    payload_json TEXT NOT NULL,
-    created_at REAL NOT NULL,     -- CFAbsoluteTime (segundos desde 2001)
-    expires_at REAL NOT NULL,
-    ttl INTEGER NOT NULL DEFAULT 3,
-    retry_count INTEGER DEFAULT 0,
-    max_retries INTEGER DEFAULT 10,
-    persist_until_ack INTEGER DEFAULT 0,  -- BOOL
-    last_error TEXT,
-    last_retry_at REAL
-);
-
-CREATE INDEX idx_queue_fetch
-    ON offline_queue(persist_until_ack DESC, priority ASC, created_at ASC);
-
-CREATE INDEX idx_queue_expiry
-    ON offline_queue(expires_at);
+ESTRATÉGIA DE DRENAGEM:
+  - Quando mesh reconecta: drena IMEDIATAMENTE
+  - Lotes pequenos (30) pra manter latência boa de voz
+  - Intervalo entre lotes: 200ms
+  - Voz ao vivo SEMPRE tem prioridade sobre drenagem
 ```
 
 ---
 
-## 5. Estratégia de Sincronização — Resolução de Conflitos
-
-### 5.1 Modelo Last-Write-Wins (LWW)
+## 5. Cenários de falha (v2)
 
 ```
-Conflito típico:
-  Rider A envia posição {lat: -28.1, lng: -49.4, ts: 10:00:05} via mesh
-  Rider B recebe posição de A indiretamente, tenta sincronizar com Firebase
-  Firebase já tem {lat: -28.0, lng: -49.3, ts: 10:00:02} (atrasado)
+CENÁRIO 1: Líder e rider em alcance BLE, sem internet
+  → Perfeito. Mesh direto. Latência < 200ms.
 
-Resolução:
-  Timestamp mais recente ganha.
-  Firebase sobrescreve com ts: 10:00:05.
-  Mesh payload com ts mais novo sobrescreve estado local.
-```
+CENÁRIO 2: Grupo espalhado (L ↔ R2 ↔ R3 ↔ V), sem internet
+  → Mesh store-and-forward. Latência 1-5s por salto.
+  → Funciona. Só perde qualidade de voz ao vivo.
 
-### 5.2 Regras de merge por tipo de dado
+CENÁRIO 3: Líder e rider longe, ambos COM internet
+  → MC automaticamente usa WiFi infra como relay.
+  → Latência similar a P2P direto (< 500ms).
+  → Transparente pro app.
 
-```
-POSIÇÃO GPS:
-  - LWW por locationTimestamp
-  - Se diferença < 1s: usa a que veio do mesh (latência menor)
+CENÁRIO 4: Rider offline total (sem mesh, sem internet)
+  → OfflineQueue acumula tudo.
+  → GPS continua.
+  → TTS avisa: "Sem conexão há 1 minuto" (depois 2, 5, 10...)
+  → Quando reconectar: drena fila, sincroniza estado.
 
-ROTA DO LÍDER:
-  - Append-only. Cada RoutePoint tem `order` monotônico.
-  - Ao receber batch, insere pontos com order > último conhecido.
-  - Não sobrescreve, não deleta.
+CENÁRIO 5: Líder cria sala privada, rider offline
+  → Sala criada no mesh local.
+  → roomCreated fica na OfflineQueue do líder.
+  → Quando rider reconectar: recebe a sala (ainda ativa? sim → aparece).
 
-ALERTAS DE PERIGO:
-  - Criar: se alertId não existe localmente, cria.
-  - Confirmar: append no array confirmedBy (sem duplicatas).
-  - Limpar: append no array clearedBy (sem duplicatas).
-  - Estado final: isActive = true se (confirmedBy.count > clearedBy.count) E não expirado.
-  - Merges são CRDT-like (add-only sets).
-
-STATUS DE RIDER:
-  - LWW por locationTimestamp
-  - Exceção: SOS é sticky. Se rider enviou SOS, mantém até cancelar explicitamente.
-  - isConnected: qualquer heartbeat nos últimos 60s = true.
+CENÁRIO 6: Grupo se divide em duas ilhas
+  → Ilha A e Ilha B operam independentes.
+  → Cada ilha tem visão parcial (só vê riders na sua ilha).
+  → Quando ilhas se aproximam: mesh reconecta, sincroniza estado completo.
+  → Merge: timestamp mais recente ganha (LWW).
 ```
 
 ---
 
-## 6. Heartbeat e Detecção de Ausência
-
-```
-FREQUÊNCIA DE HEARTBEAT:
-  - 4G disponível: a cada 30s (Firestore write)
-  - Só mesh: a cada 15s (BLE beacon)
-  - Totalmente offline: não envia, mas armazena último estado
-
-DETECÇÃO DE RIDER PERDIDO:
-  0-30s:    Rider está online (último heartbeat recente)
-  30-60s:   Rider está "lento" (pin fica amarelo)
-  60-120s:  Rider está "ausente" (pin fica cinza)
-  2-5min:   TTS: "Pedro está sem sinal há 2 minutos"
-  5-15min:  Pin com opacidade 50%, congelado na última posição
-  >15min:   Pin removido do mapa (rider considerado offline)
-            MAS: rider ainda está no grupo (pode reaparecer)
-            TTS: "Pedro está offline há 15 minutos"
-
-RIDER RECONECTA:
-  - Envia estado completo (posição atual + fila drenada)
-  - Firebase sync sobrescreve estado
-  - Pin volta ao normal
-  - TTS: "Pedro reconectou"
-```
-
----
-
-## 7. Cenários de falha e recuperação
-
-```
-CENÁRIO 1: Líder perde 4G (serra, 15 minutos)
-  - Mesh continua funcionando (se riders no alcance)
-  - Rota do líder continua via mesh (store-and-forward)
-  - Firebase fica desatualizado até 4G voltar
-  - Quando 4G volta: drena rota completa + posições acumuladas
-  - Riders fora do alcance do mesh (usando 4G): veem último estado
-    congelado até líder reconectar ao Firebase
-
-CENÁRIO 2: Rider fica totalmente offline (sem 4G + sem mesh)
-  - Última posição congelada pros outros (opacidade reduzindo)
-  - OfflineQueue acumula localmente
-  - Quando reconectar (4G ou mesh):
-    → Drena fila por prioridade
-    → Sincroniza estado completo (posição atual + rota perdida + alertas)
-    → Recebe tudo que perdeu (rota do líder, posições de outros, alertas)
-
-CENÁRIO 3: Grupo inteiro offline
-  - Se estão em alcance BLE (grupo compacto): mesh funciona, todos se veem
-  - Se estão espalhados (>50m entre alguns): apenas vizinhos se veem
-  - Store-and-forward propaga dados entre subgrupos
-  - Quando primeiro rider pega 4G: Firestore sync dispara
-  - Esse rider vira "ponte" — recebe do Firestore e propaga no mesh
-
-CENÁRIO 4: Grupo se divide (ex: líder para, varredor continua)
-  - Mesh mantém conexão entre subgrupos se alguém no meio fizer ponte
-  - Se distância > 200m entre subgrupos: mesh quebra em duas ilhas
-  - Cada ilha opera independente (vê os riders na sua ilha)
-  - Quando ilhas se aproximam: mesh reconecta, sincroniza
-  - Firebase (se algum rider de cada ilha tiver 4G): mantém visão global
-```
-
----
-
-## 8. Adaptive GPS Rate
+## 6. Adaptive GPS Rate (v2)
 
 ```swift
-class AdaptiveLocationRate {
-    // Fatores que aumentam a frequência (mais updates):
-    // - Curva (heading change > 10°/s)
-    // - Velocidade alta (> 80 km/h)
-    // - Rider está desviando da rota (> 20m)
-
-    // Fatores que diminuem a frequência (menos updates):
-    // - Reta (heading change < 3°/s)
-    // - Parado (speed < 5 km/h)
-    // - Bateria baixa (< 20%)
-    // - Sem 4G + sem mesh (offline total — não adianta enviar)
-
-    func calculateInterval(
-        speed: Double,
-        headingDelta: Double,
-        offRouteDistance: Double,
-        batteryLevel: Float,
-        hasConnectivity: Bool
-    ) -> TimeInterval {
-        guard hasConnectivity else { return 30 }  // Offline total: 30s
-
-        var interval: TimeInterval = 3.0  // Default
-
-        // Curva: 1s
-        if headingDelta > 10 { interval = 1.0 }
-        else if headingDelta > 5 { interval = 1.5 }
-
-        // Velocidade alta: 2s
-        if speed > 80 { interval = min(interval, 2.0) }
-
-        // Desviando da rota: 1s
-        if offRouteDistance > 20 { interval = min(interval, 1.0) }
-
-        // Parado há > 30s: 10s
-        if speed < 5 { interval = max(interval, 10.0) }
-
-        // Bateria baixa: dobra intervalo
-        if batteryLevel < 0.2 { interval *= 2.0 }
-
-        return interval
+func calculateInterval(
+    speed: Double,
+    headingDelta: Double,
+    offRouteDistance: Double,
+    batteryLevel: Float,
+    hasMeshPeers: Bool
+) -> TimeInterval {
+    guard hasMeshPeers else {
+        // Offline total: grava localmente a cada 5s (pra rota)
+        return 5.0
     }
+
+    var interval: TimeInterval = 3.0  // Default
+
+    if headingDelta > 10 { interval = 1.0 }
+    else if headingDelta > 5 { interval = 1.5 }
+
+    if speed > 80 { interval = min(interval, 2.0) }
+    if offRouteDistance > 20 { interval = min(interval, 1.0) }
+    if speed < 5 { interval = max(interval, 10.0) }
+    if batteryLevel < 0.2 { interval *= 2.0 }
+
+    return interval
 }
 ```
 
 ---
 
-## 9. Background e Persistência
+## 7. Background e Persistência
 
-### 9.1 Estados do app e impacto na conectividade
+Mesma estratégia da v1: location + BLE + audio background modes.  
+A diferença é que **não tem Firebase listener** — toda sincronização passa pelo mesh.
 
 ```
-FOREGROUND ATIVO (tela ligada):
-  ✅ GPS: 1-3s (adaptive)
-  ✅ BLE: advertising + browsing ativos
-  ✅ WiFi Direct: ativo (se peers)
-  ✅ Firebase: listener ativo
-  ✅ TTS: ativo
+APP EM BACKGROUND:
+  - MC mantém BLE advertising + browsing (bg modes)
+  - Conexões existentes MANTIDAS
+  - OfflineQueue continua acumulando se necessário
 
-FOREGROUND INATIVO (tela desligada, app ainda ativo):
-  ✅ GPS: 3-5s
-  ✅ BLE: advertising + browsing (intervalo maior)
-  ✅ Firebase: listener ativo
-  ✅ TTS: ativo
-
-BACKGROUND (app em segundo plano, location + BLE bg modes):
-  ✅ GPS: 5-30s (iOS controla, mas .otherNavigation ajuda)
-  ✅ BLE: advertising (periférico) + scanning (central) em background
-  ⚠️ WiFi Direct: PODE cair (iOS pode desligar WiFi em bg)
-  ⚠️ Firebase: listener PODE ser throttled pelo iOS
-  ✅ TTS: ativo (audio bg mode)
-
-SUSPENDED (iOS matou o app):
-  ❌ Tudo offline
-  ⚠️ BGTaskScheduler: acorda a cada ~15 min
-  ⚠️ Location region monitoring: acorda se mover > 500m
-```
-
-### 9.2 Estratégia anti-kill
-
-```swift
-// Táticas pra iOS NÃO matar o app durante o passeio:
-class AppKeepAlive {
-    // 1. Conexão BLE ativa — iOS nunca mata app com BLE connection
-    //    (ter pelo menos 1 peer conectado é a MELHOR defesa)
-    func maintainBLEConnection() {
-        // MultipeerConnectivity mantém isso automaticamente
-        // Se tiver 0 peers, aumenta advertising intensity
-    }
-
-    // 2. Audio background mode — TTS frequente mantém app "vivo"
-    func schedulePeriodicTTS() {
-        // A cada ~5 minutos, fala algo leve se nada foi falado
-        // "Todos conectados" (baixo volume) — suficiente pra iOS ver
-        // que o app está "em uso" de áudio
-    }
-
-    // 3. beginBackgroundTask — 30 segundos extras pra salvar estado
-    func onAppWillResignActive() {
-        var taskId = UIApplication.shared.beginBackgroundTask {
-            // Salva estado crítico (última posição, fila, etc)
-            self.saveState()
-            UIApplication.shared.endBackgroundTask(taskId)
-        }
-    }
-
-    // 4. BGTaskScheduler — último recurso
-    func scheduleWakeup() {
-        let request = BGAppRefreshTaskRequest(identifier: "com.wawa.keepalive")
-        request.earliestBeginDate = Date(timeIntervalSinceNow: 15 * 60) // 15 min
-        try? BGTaskScheduler.shared.submit(request)
-    }
-}
+APP SUSPENSO (iOS kill):
+  - Ao acordar (location update ou BGTaskScheduler):
+    1. Reativa MC (advertising + browsing)
+    2. Tenta reconectar a peers conhecidos
+    3. Se reconectar: drena OfflineQueue
+    4. Se não: continua acumulando
 ```
 
 ---
 
-## 10. Métricas de conectividade a monitorar
-
-Durante o MVP, coletar (localmente, sem analytics server):
+## 8. Resumo — o que mudou da v1 pra v2
 
 ```
-POR PASSEIO:
-  - % tempo com 4G disponível
-  - % tempo com mesh P2P ativo (peers conectados)
-  - % tempo totalmente offline
-  - Número de quedas de 4G
-  - Número de desconexões do mesh
-  - Tamanho médio da fila offline
-  - Tempo máximo offline consecutivo
-  - Latência média das mensagens (por canal)
+REMOVIDO:
+  ❌ Firebase Firestore
+  ❌ GoogleWebRTC
+  ❌ Servidor TURN/STUN
+  ❌ Signaling via Firestore
+  ❌ Cloud sync
+  ❌ Autenticação
 
-Esses dados vão guiar ajustes nos TTLs, timeouts, e frequências.
-```
+ADICIONADO:
+  ✅ MC Streams pra voz ao vivo (substitui WebRTC)
+  ✅ Opus codec em software
+  ✅ OfflineQueue mais robusto (única persistência de mensagens)
+  ✅ TransportManager simplificado (só mesh)
+  ✅ Relay via WiFi infra (automático, via MC)
 
----
-
-## 11. Resumo: modos de operação
-
-```
-┌──────────┬──────────┬──────────┬──────────┬──────────┬──────────┐
-│   Modo   │   4G     │   Mesh   │  Queue   │Latência  │Exp. visual│
-├──────────┼──────────┼──────────┼──────────┼──────────┼──────────┤
-│ Full     │    ✅    │    ✅    │  Vazia   │  < 1s    │ 🟢 Tudo  │
-│ Cloud    │    ✅    │    ❌    │  Vazia   │  < 1s    │ 🟢 Tudo  │
-│ Mesh     │    ❌    │    ✅    │  Drenando│  1-5s    │ 🔵 Mesh  │
-│ Isolado  │    ❌    │    ❌    │  Enchendo│   ∞      │ 🔴 Off   │
-│ Drenando │ Voltou  │    —     │  Drenando│  1-30s   │ 🟡 Sync  │
-└──────────┴──────────┴──────────┴──────────┴──────────┴──────────┘
+MANTIDO:
+  ✅ MultipeerConnectivity
+  ✅ Store-and-forward com TTL
+  ✅ Dedup
+  ✅ Adaptive GPS
+  ✅ Background BLE + location
 ```

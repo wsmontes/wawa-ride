@@ -1,33 +1,37 @@
-# WAWA Ride — Sistema de Áudio
+# WAWA Ride — Sistema de Áudio (v2)
+
+> **Zero servidor. Áudio sempre P2P: MCSession stream (voz ao vivo) ou MeshPayload (assíncrono).**
+> Codec Opus em software. Sem WebRTC, sem TURN/STUN.
+
+---
 
 ## 1. Arquitetura de Áudio
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                    AudioManager                          │
-│  (orquestrador — decide o que falar e quando)           │
+│  (orquestrador — decide o que falar, como e quando)     │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
-│  ┌───────────────┐  ┌───────────────┐  ┌─────────────┐ │
-│  │VoiceAssistant │  │VoiceCommand   │  │VoiceChat    │ │
-│  │(TTS Output)   │  │Listener       │  │Service      │ │
-│  │               │  │(Speech Input) │  │(WalkieTalkie)│ │
-│  │AVSpeechSynth  │  │SFSpeechRecog  │  │WebRTC +     │ │
-│  │               │  │               │  │MC Stream    │ │
-│  └───────┬───────┘  └───────┬───────┘  └──────┬──────┘ │
-│          │                  │                  │        │
-│          └──────────────────┼──────────────────┘        │
-│                             │                           │
-│                    ┌────────▼────────┐                  │
-│                    │ AVAudioSession  │                  │
-│                    │ (route/mix/     │                  │
-│                    │  category)      │                  │
-│                    └────────┬────────┘                  │
-│                             │                           │
-│              ┌──────────────┼──────────────┐            │
-│              ▼              ▼              ▼            │
-│         [Speaker]    [Bluetooth]    [Intercom]          │
-│                      (headset)      (Cardo/Sena)        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
+│  │VoiceAssistant│  │VoiceCommand  │  │VoiceService  │  │
+│  │(TTS Output)  │  │Listener      │  │(WalkieTalkie │  │
+│  │              │  │(Speech Input)│  │ + Async Msg) │  │
+│  │AVSpeechSynth │  │SFSpeechRecog │  │Opus Codec +  │  │
+│  │              │  │              │  │MC Stream +   │  │
+│  │              │  │              │  │Mesh Payload  │  │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
+│         │                 │                  │          │
+│         └─────────────────┼──────────────────┘          │
+│                           │                             │
+│                  ┌────────▼────────┐                    │
+│                  │ AVAudioSession  │                    │
+│                  └────────┬────────┘                    │
+│                           │                             │
+│            ┌──────────────┼──────────────┐              │
+│            ▼              ▼              ▼              │
+│       [Speaker]    [Bluetooth]    [Intercom]            │
+│                    (headset)      (Cardo/Sena)          │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -35,782 +39,620 @@
 
 ## 2. VoiceAssistant — TTS (App → Piloto)
 
-### 2.1 Configuração
+Mantido da v1. Ver `05-audio-system.md` v1 para detalhes.
+
+**Catálogo expandido (v2):**
 
 ```swift
-class VoiceAssistant: NSObject, AVSpeechSynthesizerDelegate {
-    static let shared = VoiceAssistant()
-    let synthesizer = AVSpeechSynthesizer()
-
-    private var alertQueue: [VoiceAlert] = []
-    private var isSpeaking = false
-    private var lastSpoken: [String: Date] = [:]  // dedup por chave
-
-    func setupAudioSession() {
-        let session = AVAudioSession.sharedInstance()
-        // .playback = só saída de áudio (TTS não precisa de microfone)
-        // .duckOthers = abaixa outras fontes (música, intercom) durante fala
-        // .allowBluetooth = roteia pro headset/capacete
-        // .interruptSpokenAudioAndMixWithOthers = interrompe outras falas mas mantém mix
-        try? session.setCategory(
-            .playback,
-            mode: .spokenAudio,
-            options: [.duckOthers, .allowBluetooth, .interruptSpokenAudioAndMixWithOthers]
-        )
-    }
-
-    func voiceForPortuguese() -> AVSpeechSynthesisVoice {
-        // Melhor voz em pt-BR disponível no dispositivo
-        return AVSpeechSynthesisVoice(language: "pt-BR") ??
-               AVSpeechSynthesisVoice(language: "pt-PT") ??
-               AVSpeechSynthesisVoice()
-    }
-}
-```
-
-### 2.2 Fila de alertas com prioridade
-
-```swift
-    func speak(_ alert: VoiceAlert) {
-        // Dedup: não fala a mesma coisa em intervalo curto
-        let key = alert.dedupKey
-        if let last = lastSpoken[key], Date().timeIntervalSince(last) < alert.minInterval {
-            return
-        }
-        lastSpoken[key] = Date()
-
-        // Alerta crítico interrompe qualquer fala
-        if alert.priority == .critical && alert.canInterrupt && isSpeaking {
-            synthesizer.stopSpeaking(at: .immediate)
-            isSpeaking = false
-        }
-
-        // Insere na fila na posição correta (ordenada por prioridade)
-        let insertIndex = alertQueue.firstIndex { $0.priority < alert.priority }
-                         ?? alertQueue.count
-        alertQueue.insert(alert, at: insertIndex)
-
-        if !isSpeaking {
-            processNext()
-        }
-    }
-
-    private func processNext() {
-        guard !isSpeaking, let alert = alertQueue.first else { return }
-
-        // Pula alertas expirados
-        guard alert.isStillRelevant() else {
-            alertQueue.removeFirst()
-            processNext()
-            return
-        }
-
-        alertQueue.removeFirst()
-        isSpeaking = true
-
-        let utterance = AVSpeechUtterance(string: alert.text)
-        utterance.voice = voiceForPortuguese()
-        utterance.rate = AVSpeechUtteranceDefaultSpeechRate * 0.85  // Mais lento pra moto
-        utterance.volume = 1.0
-        utterance.pitchMultiplier = 0.9  // Tom mais grave (fácil de ouvir com vento)
-        utterance.preUtteranceDelay = 0.05
-        utterance.postUtteranceDelay = 0.1
-
-        synthesizer.speak(utterance)
-    }
-
-    func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer,
-                           didFinish utterance: AVSpeechUtterance) {
-        isSpeaking = false
-        // Repete o alerta se repeatCount > 1
-        if let alert = currentAlert, alert.repeatCount > alert.timesSpoken + 1 {
-            var repeated = alert
-            repeated.timesSpoken += 1
-            alertQueue.insert(repeated, at: 0)
-        }
-        processNext()
-    }
-```
-
-### 2.3 Catálogo de alertas
-
-```swift
-// MARK: - Fábrica de Alertas
-
+// Novos alertas pra salas e mensagens
 extension VoiceAssistant {
 
-    // Navegação
-    static func turnApproaching(direction: String, distance: Int, severity: String) -> VoiceAlert {
+    static func newMessage(name: String, room: String) -> VoiceAlert {
         VoiceAlert(
-            text: "\(severity) \(direction) em \(distance) metros",
-            priority: .high,
-            canInterrupt: true,
-            repeatCount: 1,
-            minInterval: 8,
-            dedupKey: "turn_\(direction)_\(distance)"
-        )
-    }
-
-    // Entrada/saída de riders
-    static func riderJoined(_ name: String) -> VoiceAlert {
-        VoiceAlert(
-            text: "\(name) entrou no passeio",
-            priority: .background,
-            canInterrupt: false,
-            repeatCount: 1,
-            minInterval: 5,
-            dedupKey: "join_\(name)"
-        )
-    }
-
-    static func riderLeft(_ name: String) -> VoiceAlert {
-        VoiceAlert(
-            text: "\(name) saiu do passeio",
-            priority: .background,
-            canInterrupt: false,
-            repeatCount: 1,
-            minInterval: 5,
-            dedupKey: "leave_\(name)"
-        )
-    }
-
-    // Distância do grupo
-    static func riderFallingBehind(_ name: String, distance: Int) -> VoiceAlert {
-        VoiceAlert(
-            text: "\(name) está \(distance) metros atrás",
+            text: "Nova mensagem de \(name) na sala \(room)",
             priority: .normal,
             canInterrupt: false,
-            repeatCount: 1,
-            minInterval: 30,
-            dedupKey: "behind_\(name)"
-        )
-    }
-
-    static func riderFarBehind(_ name: String, distanceKm: Int) -> VoiceAlert {
-        VoiceAlert(
-            text: "Atenção: \(name) está a \(distanceKm) quilômetros atrás",
-            priority: .high,
-            canInterrupt: true,
-            repeatCount: 1,
-            minInterval: 60,
-            dedupKey: "far_\(name)"
-        )
-    }
-
-    // Desvio da rota
-    static func offRoute(distance: Int) -> VoiceAlert {
-        VoiceAlert(
-            text: "Você está \(distance) metros fora da rota",
-            priority: .high,
-            canInterrupt: true,
-            repeatCount: 1,
-            minInterval: 15,
-            dedupKey: "offroute"
-        )
-    }
-
-    static func backOnRoute() -> VoiceAlert {
-        VoiceAlert(
-            text: "Você voltou para a rota",
-            priority: .normal,
-            canInterrupt: false,
-            repeatCount: 1,
-            minInterval: 30,
-            dedupKey: "onroute"
-        )
-    }
-
-    // Líder parou
-    static func leaderStopped() -> VoiceAlert {
-        VoiceAlert(
-            text: "O líder parou",
-            priority: .high,
-            canInterrupt: true,
             repeatCount: 1,
             minInterval: 10,
-            dedupKey: "leader_stopped"
+            dedupKey: "msg_\(name)_\(room)"
         )
     }
 
-    // Perigos
-    static func hazardNearby(type: HazardType, distance: Int) -> VoiceAlert {
+    static func roomCreated(name: String, by: String) -> VoiceAlert {
         VoiceAlert(
-            text: "Atenção: \(type.voiceDescription) em \(distance) metros",
-            priority: .critical,
-            canInterrupt: true,
-            repeatCount: 2,
-            minInterval: 5,
-            dedupKey: "hazard_\(type.rawValue)_\(distance)"
-        )
-    }
-
-    static func hazardMarked(type: HazardType) -> VoiceAlert {
-        VoiceAlert(
-            text: "\(type.voiceDescription) marcado. Grupo será alertado.",
-            priority: .normal,
-            canInterrupt: false,
-            repeatCount: 1,
-            minInterval: 2,
-            dedupKey: "marked_\(type.rawValue)"
-        )
-    }
-
-    // SOS
-    static func sosReceived(name: String, reason: String?) -> VoiceAlert {
-        let reasonText = reason ?? "motivo não informado"
-        return VoiceAlert(
-            text: "Atenção! \(name) precisa de ajuda. \(reasonText).",
-            priority: .critical,
-            canInterrupt: true,
-            repeatCount: 3,
-            minInterval: 8,
-            dedupKey: "sos_\(name)"
-        )
-    }
-
-    // Status do grupo
-    static func groupStatus(online: Int, total: Int) -> VoiceAlert {
-        VoiceAlert(
-            text: "\(online) de \(total) riders conectados",
+            text: "Sala \(name) criada por \(by)",
             priority: .background,
             canInterrupt: false,
             repeatCount: 1,
-            minInterval: 60,
-            dedupKey: "status"
+            minInterval: 5,
+            dedupKey: "room_created_\(name)"
         )
     }
 
-    // Varredor
-    static func sweeperAllClear() -> VoiceAlert {
+    static func reconnected(pendingMessages: Int) -> VoiceAlert {
         VoiceAlert(
-            text: "Varredor confirma: todos juntos",
-            priority: .background,
-            canInterrupt: false,
-            repeatCount: 1,
-            minInterval: 120,
-            dedupKey: "sweeper_ok"
-        )
-    }
-
-    // Parada
-    static func stopApproaching(name: String, distanceKm: Int) -> VoiceAlert {
-        VoiceAlert(
-            text: "Próxima parada: \(name) em \(distanceKm) quilômetros",
+            text: pendingMessages > 0
+                ? "Conexão restaurada. \(pendingMessages) mensagens pendentes."
+                : "Conexão restaurada.",
             priority: .normal,
             canInterrupt: false,
             repeatCount: 1,
-            minInterval: 120,
-            dedupKey: "stop_\(name)"
+            minInterval: 30,
+            dedupKey: "reconnected"
         )
     }
 
-    // Passeio
-    static func rideStarted() -> VoiceAlert {
+    static func offline(duration: Int) -> VoiceAlert {
+        // duration em minutos
         VoiceAlert(
-            text: "Passeio criado. Aguardando riders.",
+            text: duration == 1
+                ? "Sem conexão há 1 minuto"
+                : "Sem conexão há \(duration) minutos",
+            priority: .normal,
+            canInterrupt: false,
+            repeatCount: 1,
+            minInterval: 120,  // Não enche o saco
+            dedupKey: "offline_\(duration)"
+        )
+    }
+
+    static func routeImported(name: String, waypoints: Int) -> VoiceAlert {
+        VoiceAlert(
+            text: "Rota \(name) importada com \(waypoints) pontos",
             priority: .normal,
             canInterrupt: false,
             repeatCount: 1,
             minInterval: 5,
-            dedupKey: "ride_start"
+            dedupKey: "route_imported"
         )
-    }
-
-    static func rideEnded() -> VoiceAlert {
-        VoiceAlert(
-            text: "Passeio encerrado.",
-            priority: .normal,
-            canInterrupt: false,
-            repeatCount: 1,
-            minInterval: 5,
-            dedupKey: "ride_end"
-        )
-    }
-}
-```
-
-### 2.4 HazardType — descrições em voz
-
-```swift
-extension HazardType {
-    var voiceDescription: String {
-        switch self {
-        case .radar:    return "Radar"
-        case .pothole:  return "Buraco na pista"
-        case .police:   return "Polícia"
-        case .oil:      return "Óleo na pista"
-        case .animal:   return "Animal na pista"
-        case .gravel:   return "Cascalho solto"
-        case .accident: return "Acidente"
-        case .other:    return "Perigo"
-        }
     }
 }
 ```
 
 ---
 
-## 3. VoiceCommandListener — Comandos de Voz (Piloto → App)
+## 3. VoiceCommandListener — Comandos de Voz
 
-### 3.1 Configuração
-
-```swift
-import Speech
-
-class VoiceCommandListener: ObservableObject {
-    static let shared = VoiceCommandListener()
-
-    private let recognizer = SFSpeechRecognizer(locale: Locale(identifier: "pt-BR"))
-    private let audioEngine = AVAudioEngine()
-    private var request: SFSpeechAudioBufferRecognitionRequest?
-    private var task: SFSpeechRecognitionTask?
-
-    @Published var isListening = false
-    @Published var lastCommand: VoiceCommand?
-
-    // Gatilho: "Ok moto"
-    private let triggerPhrase = "ok moto"
-    private var triggerDetected = false
-    private var commandBuffer = ""
-
-    func requestPermission() async -> Bool {
-        await withCheckedContinuation { continuation in
-            SFSpeechRecognizer.requestAuthorization { status in
-                continuation.resume(returning: status == .authorized)
-            }
-        }
-    }
-}
-```
-
-### 3.2 Comandos suportados
+Mantido da v1. Comandos expandidos:
 
 ```swift
 enum VoiceCommand: String, CaseIterable {
-    // Marcação de perigos
-    case markRadar      = "marcar radar"
-    case markPothole    = "marcar buraco"
-    case markPolice     = "marcar polícia"
-    case markOil        = "marcar óleo"
-    case markAnimal     = "marcar animal"
-    case markAccident   = "marcar acidente"
+    // Perigos (mantidos da v1)
+    case markRadar, markPothole, markPolice, markOil, markAnimal, markAccident
 
-    // Status
-    case groupStatus    = "status do grupo"
-    case whereIsLeader  = "onde está o líder"
-    case whereIsSweeper = "onde está o varredor"
+    // Salas (novos)
+    case createRoom      = "criar sala"
+    case listRooms       = "listar salas"
+    case switchRoom      = "trocar para sala"     // + nome da sala
 
-    // Comunicação
-    case startTalking   = "falar com o grupo"     // Abre canal de voz
-    case stopTalking    = "parar de falar"        // Fecha canal
+    // Mensagens (novos)
+    case sendMessage     = "mandar mensagem"      // + "pra [sala]"
+    case sendMessageTo   = "mandar mensagem para" // + nome do rider
+    case playMessages    = "tocar mensagens"
 
-    // Navegação
-    case nextStop       = "próxima parada"
-    case howFar         = "quanto falta"
+    // Voz ao vivo (mantidos + expandidos)
+    case startTalking    = "falar com o grupo"
+    case stopTalking     = "parar de falar"
+    case talkInRoom      = "falar na sala"         // + nome da sala
 
-    // SOS
-    case needHelp       = "preciso de ajuda"
-    case imOk           = "estou bem"
+    // Status (mantidos)
+    case groupStatus, whereIsLeader, whereIsSweeper, nextStop, howFar
 
-    var requiresTrigger: Bool {
-        true  // Todos requerem "Ok moto" antes
+    // SOS (mantidos)
+    case needHelp, imOk
+
+    // Rota (novos)
+    case startRecording  = "gravar rota"
+    case stopRecording   = "parar gravação"
+    case saveRoute       = "salvar rota"
+}
+```
+
+---
+
+## 4. VoiceService — Walkie-Talkie + Áudio Assíncrono
+
+### 4.1 Visão geral
+
+```
+VOICE SERVICE — Dois modos de comunicação por voz:
+
+MODO 1: Voz ao vivo (Walkie-Talkie)
+  - PTT (push-to-talk): aperta pra falar, solta pra ouvir
+  - Transporte: MCSession stream direto (P2P)
+  - Codec: Opus 32kbps, chunks de 20ms
+  - Latência: < 200ms (P2P direto), < 2s (relay mesh)
+  - Uso: conversa em tempo real
+
+MODO 2: Mensagem de voz assíncrona
+  - Grava → comprime → envia → notifica → toca
+  - Transporte: MeshPayload (store-and-forward)
+  - Codec: Opus 32kbps, arquivo completo
+  - Latência: < 1s (P2P direto), minutos/horas (offline)
+  - Uso: deixar recado, comunicação não-urgente
+```
+
+### 4.2 Codec Opus (software)
+
+```swift
+// Libopus compilada estaticamente no app
+// Configuração:
+
+struct OpusConfig {
+    static let sampleRate: Int32 = 16000      // 16kHz (voz)
+    static let channels: Int32 = 1             // Mono
+    static let bitrate: Int32 = 32000          // 32kbps
+    static let frameSize: Int32 = 320          // 20ms @ 16kHz = 320 samples
+    static let maxPacketSize = 4000            // ~4KB max por pacote
+
+    // Compressão típica:
+    // 1s de áudio PCM 16kHz 16-bit = 32KB
+    // 1s de áudio Opus 32kbps = 4KB
+    // Compressão: ~8x (excelente pra voz)
+}
+
+class OpusCodec {
+    private var encoder: OpaquePointer?
+    private var decoder: OpaquePointer?
+
+    func setup() {
+        var err: Int32 = 0
+        encoder = opus_encoder_create(
+            OpusConfig.sampleRate,
+            OpusConfig.channels,
+            OPUS_APPLICATION_VOIP,  // Otimizado pra voz
+            &err
+        )
+        opus_encoder_ctl(encoder, OPUS_SET_BITRATE(OpusConfig.bitrate))
+        opus_encoder_ctl(encoder, OPUS_SET_COMPLEXITY(5))  // Baixa complexidade = menos CPU
+        opus_encoder_ctl(encoder, OPUS_SET_SIGNAL(OPUS_SIGNAL_VOICE))
+
+        decoder = opus_decoder_create(OpusConfig.sampleRate, OpusConfig.channels, &err)
+    }
+
+    func encode(_ pcm: Data) -> Data? {
+        // PCM 16-bit → Opus frame
+        var opusData = Data(count: OpusConfig.maxPacketSize)
+        let len = opusData.withUnsafeMutableBytes { dst in
+            pcm.withUnsafeBytes { src in
+                opus_encode(encoder,
+                    src.bindMemory(to: opus_int16.self).baseAddress,
+                    OpusConfig.frameSize,
+                    dst.bindMemory(to: UInt8.self).baseAddress,
+                    opus_int32(OpusConfig.maxPacketSize))
+            }
+        }
+        guard len > 0 else { return nil }
+        return opusData.prefix(Int(len))
+    }
+
+    func decode(_ opus: Data) -> Data? {
+        // Opus frame → PCM 16-bit
+        var pcm = Data(count: OpusConfig.frameSize * 2)  // 16-bit = 2 bytes/sample
+        let len = pcm.withUnsafeMutableBytes { dst in
+            opus.withUnsafeBytes { src in
+                opus_decode(decoder,
+                    src.bindMemory(to: UInt8.self).baseAddress,
+                    opus_int32(opus.count),
+                    dst.bindMemory(to: opus_int16.self).baseAddress,
+                    OpusConfig.frameSize,
+                    0)  // 0 = no FEC
+            }
+        }
+        guard len > 0 else { return nil }
+        return pcm.prefix(Int(len) * 2)
     }
 }
 ```
 
-### 3.3 Loop de reconhecimento
+### 4.3 Voz ao vivo (Walkie-Talkie via MCSession Stream)
 
 ```swift
-    func startListening() throws {
-        guard recognizer?.isAvailable == true else {
-            throw VoiceCommandError.recognizerUnavailable
+class VoiceChatService: NSObject {
+    static let shared = VoiceChatService()
+    private let codec = OpusCodec()
+
+    // Streams ativos: key = "peerId-roomId"
+    private var outputStreams: [String: OutputStream] = [:]
+
+    // Microfone
+    private let audioEngine = AVAudioEngine()
+    private var isPTTActive = false
+    private var activeRoomId: String = "general"
+
+    func startPTT(roomId: String) {
+        activeRoomId = roomId
+        isPTTActive = true
+
+        // 1. Configura sessão de áudio pra gravação
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playAndRecord, mode: .voiceChat,
+                                 options: [.allowBluetooth, .defaultToSpeaker])
+        try? session.setActive(true)
+
+        // 2. Abre streams pra todos os peers conectados
+        for peer in MeshService.shared.session.connectedPeers {
+            let streamKey = "\(peer.displayName)-\(roomId)"
+            let stream = try! MeshService.shared.session.startStream(
+                withName: "wawa-voice-\(roomId)", toPeer: peer
+            )
+            stream.delegate = self
+            stream.schedule(in: .main, forMode: .default)
+            stream.open()
+            outputStreams[streamKey] = stream
         }
 
-        // Configura sessão de áudio pra gravação
-        let session = AVAudioSession.sharedInstance()
-        try session.setCategory(.playAndRecord, mode: .default,
-                                options: [.allowBluetooth, .mixWithOthers])
-        try session.setActive(true, options: .notifyOthersOnDeactivation)
-
-        // Cria request de reconhecimento
-        request = SFSpeechAudioBufferRecognitionRequest()
-        request?.shouldReportPartialResults = true
-        request?.taskHint = .search
-
-        // Instala tap no microfone
+        // 3. Instala tap no microfone
         let inputNode = audioEngine.inputNode
-        let format = inputNode.outputFormat(forBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 1024,
-                             format: format) { [weak self] buffer, _ in
-            self?.request?.append(buffer)
+        let format = inputNode.outputFormat(forBus: 0)  // 44.1kHz ou 48kHz
+        // Converter pra 16kHz mono
+        let desiredFormat = AVAudioFormat(
+            commonFormat: .pcmFormatInt16,
+            sampleRate: 16000,
+            channels: 1,
+            interleaved: true
+        )!
+
+        // Precisa de converter se o formato do mic for diferente
+        let converter = AVAudioConverter(from: format, to: desiredFormat)
+
+        inputNode.installTap(onBus: 0, bufferSize: 320, format: format) { [weak self] buffer, _ in
+            guard let self, self.isPTTActive else { return }
+
+            // Converte pra 16kHz 16-bit mono
+            guard let converted = self.convert(buffer, with: converter, to: desiredFormat) else { return }
+
+            // Opus encode
+            guard let opusFrame = self.codec.encode(converted) else { return }
+
+            // Envia via stream (peers diretos)
+            self.broadcastOpusFrame(opusFrame, roomId: roomId)
+
+            // Envia via mesh payload (peers indiretos, com relay)
+            self.broadcastOpusViaMesh(opusFrame, roomId: roomId)
         }
 
         audioEngine.prepare()
-        try audioEngine.start()
+        try? audioEngine.start()
 
-        // Inicia task de reconhecimento
-        task = recognizer?.recognitionTask(with: request!) { [weak self] result, error in
-            guard let self, let result = result else { return }
-
-            let text = result.bestTranscription.formattedString.lowercased()
-
-            if result.isFinal {
-                self.processUtterance(text)
-            }
-        }
-
-        isListening = true
-    }
-
-    func stopListening() {
-        audioEngine.stop()
-        audioEngine.inputNode.removeTap(onBus: 0)
-        request?.endAudio()
-        task?.cancel()
-        isListening = false
-    }
-
-    private func processUtterance(_ text: String) {
-        guard text.contains(triggerPhrase) else { return }
-
-        // Extrai comando após "ok moto"
-        let parts = text.components(separatedBy: triggerPhrase)
-        guard parts.count > 1 else { return }
-
-        let commandText = parts.last!.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        for command in VoiceCommand.allCases {
-            if commandText.contains(command.rawValue) {
-                DispatchQueue.main.async {
-                    self.lastCommand = command
-                    self.execute(command)
-                }
-                return
-            }
-        }
-
-        // Comando não reconhecido
-        VoiceAssistant.shared.speak(VoiceAlert(
-            text: "Não entendi. Tente: marcar radar, status do grupo, ou falar com o grupo.",
-            priority: .normal, canInterrupt: true, repeatCount: 1, minInterval: 5,
-            dedupKey: "unknown_command"
-        ))
-    }
-
-    private func execute(_ command: VoiceCommand) {
-        switch command {
-        case .markRadar:
-            HazardService.shared.markHazard(.radar)
-        case .markPothole:
-            HazardService.shared.markHazard(.pothole)
-        case .markPolice:
-            HazardService.shared.markHazard(.police)
-        case .markOil:
-            HazardService.shared.markHazard(.oil)
-        case .markAnimal:
-            HazardService.shared.markHazard(.animal)
-        case .markAccident:
-            HazardService.shared.markHazard(.accident)
-        case .groupStatus:
-            let status = RideService.shared.currentGroupStatus()
-            VoiceAssistant.shared.speak(.groupStatus(online: status.online, total: status.total))
-        case .startTalking:
-            VoiceChatService.shared.openChannel()
-        case .stopTalking:
-            VoiceChatService.shared.closeChannel()
-        case .needHelp:
-            SOSService.shared.triggerSOS()
-        case .imOk:
-            SOSService.shared.cancelSOS()
-        case .nextStop, .howFar, .whereIsLeader, .whereIsSweeper:
-            // Implementação futura (MVP pode não ter)
-            break
-        }
-    }
-}
-```
-
-### 3.4 Estratégia de reconhecimento contínuo
-
-```
-MVP: Push-to-listen (não escuta o tempo todo)
-
-Opção A (MVP): Botão "🎤 Comando" na tela do mapa
-  - Piloto aperta → app escuta por 5 segundos → processa
-  - Menos gasto de bateria
-  - Menos falsos positivos
-
-Opção B (desejável): Escuta contínua com gatilho "Ok moto"
-  - App mantém SFSpeechRecognizer rodando
-  - Só processa quando detecta "Ok moto"
-  - Gasta mais bateria (CPU + microfone)
-  - Pode ter falsos positivos com vento/escapamento
-
-Recomendação: MVP começa com Opção A (mais simples, mais confiável)
-             Evolui pra Opção B quando testarmos o reconhecimento real na moto
-```
-
----
-
-## 4. VoiceChatService — Walkie-Talkie (Piloto ↔ Pilotos)
-
-### 4.1 Arquitetura de dois caminhos
-
-```
-TEM 4G?
-  ├─ SIM → WebRTC (GoogleWebRTC)
-  │         - Codec Opus (32 kbps, otimizado pra voz)
-  │         - ICE/STUN/TURN pra furar NAT
-  │         - Servidor de sinalização: Firebase Firestore
-  │
-  └─ NÃO → MCSession Stream (MultipeerConnectivity)
-            - Áudio comprimido (Opus em software)
-            - Stream direto entre peers conectados
-            - Latência menor (sem round-trip ao servidor)
-            - Mas só alcança peers diretamente conectados (TTL 3 pra repassar)
-```
-
-### 4.2 WebRTC (caminho com 4G)
-
-```swift
-import WebRTC
-
-class VoiceChatService: NSObject, RTCPeerConnectionDelegate {
-    static let shared = VoiceChatService()
-
-    private let factory = RTCPeerConnectionFactory()
-    private var peerConnections: [String: RTCPeerConnection] = [:]
-    private var localAudioTrack: RTCAudioTrack?
-    private var localAudioSource: RTCAudioSource?
-
-    // Configuração ICE
-    private let iceServers = [
-        RTCIceServer(urlStrings: ["stun:stun.l.google.com:19302"]),
-        // TURN server público do Google (MVP).
-        // Futuro: servidor TURN próprio pra produção.
-        RTCIceServer(urlStrings: ["turn:freeturn.net:3478"],
-                     username: "free", credential: "free")
-    ]
-
-    func setupLocalAudio() {
-        let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
-        localAudioSource = factory.audioSource(with: constraints)
-        localAudioTrack = factory.audioTrack(with: localAudioSource!, trackId: "wawa-audio")
-    }
-
-    func createConnection(for riderId: String) -> RTCPeerConnection {
-        let config = RTCConfiguration()
-        config.iceServers = iceServers
-        config.continualGatheringPolicy = .gatherContinually
-        config.sdpSemantics = .unifiedPlan
-
-        let constraints = RTCMediaConstraints(
-            mandatoryConstraints: [
-                "OfferToReceiveAudio": "true"
-            ],
-            optionalConstraints: nil
-        )
-
-        let pc = factory.peerConnection(with: config, constraints: constraints, delegate: self)
-        pc.add(localAudioTrack!, streamIds: ["wawa-stream"])
-        peerConnections[riderId] = pc
-        return pc
-    }
-
-    // Sinalização via Firestore
-    func sendOffer(to riderId: String) {
-        let pc = peerConnections[riderId] ?? createConnection(for: riderId)
-
-        pc.offer(for: RTCMediaConstraints(mandatoryConstraints: ["OfferToReceiveAudio": "true"],
-                                           optionalConstraints: nil)) { sdp, error in
-            guard let sdp else { return }
-            pc.setLocalDescription(sdp) { _ in
-                // Envia SDP via Firestore
-                SignalingService.shared.send(sdp: sdp, to: riderId, type: .offer)
-            }
-        }
-    }
-
-    // Áudio remoto — roteado pro alto-falante/headset
-    func peerConnection(_ peerConnection: RTCPeerConnection,
-                        didAdd stream: RTCMediaStream) {
-        if let audioTrack = stream.audioTracks.first {
-            // O áudio toca automaticamente (WebRTC gerencia a saída)
-            print("🎤 Recebendo áudio de \(stream.streamId)")
-        }
-    }
-
-    // Push-to-talk: ativa/desativa track de áudio local
-    func startSpeaking() {
-        localAudioTrack?.isEnabled = true
-        // Vibração tátil pra confirmar
+        // Feedback tátil
         UIImpactFeedbackGenerator(style: .medium).impactOccurred()
     }
 
-    func stopSpeaking() {
-        localAudioTrack?.isEnabled = false
+    func stopPTT() {
+        isPTTActive = false
+        audioEngine.stop()
+        audioEngine.inputNode.removeTap(onBus: 0)
+
+        // Fecha streams
+        for (_, stream) in outputStreams {
+            stream.close()
+        }
+        outputStreams.removeAll()
+
+        // Restaura sessão de áudio
+        try? AVAudioSession.sharedInstance().setActive(false)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+    }
+
+    private func broadcastOpusFrame(_ frame: Data, roomId: String) {
+        for (key, stream) in outputStreams where key.hasSuffix("-\(roomId)") {
+            var length = UInt16(frame.count).littleEndian
+            let header = Data(bytes: &length, count: 2)
+            let packet = header + frame
+            _ = packet.withUnsafeBytes {
+                stream.write($0.bindMemory(to: UInt8.self).baseAddress!,
+                            maxLength: packet.count)
+            }
+        }
+    }
+
+    private var sequenceNumber: Int = 0
+
+    private func broadcastOpusViaMesh(_ frame: Data, roomId: String) {
+        sequenceNumber += 1
+        let payload = VoiceLivePayload(
+            roomId: roomId,
+            sequence: sequenceNumber,
+            durationMs: 20,
+            audioData: frame
+        )
+        let meshPayload = MeshPayload(
+            type: .voiceLive,
+            priority: .critical,
+            ttl: 3,
+            roomId: roomId,
+            payload: payload
+        )
+        MeshService.shared.send(meshPayload)
+    }
+
+    // Recebendo áudio de streams
+    func stream(_ stream: InputStream, handle eventCode: Stream.Event) {
+        guard eventCode == .hasBytesAvailable else { return }
+        // Lê [2 bytes length][N bytes opus] → decode → play
+        // (Implementação de leitura do stream, decode, e playback via AudioUnit)
     }
 }
 ```
 
-### 4.3 Sinalização via Firestore
+### 4.4 Mensagem de voz assíncrona
 
 ```swift
-// Estrutura no Firestore pra sinalização WebRTC
-// rides/{rideId}/signaling/{riderId}/
+class VoiceMessageService {
+    static let shared = VoiceMessageService()
+    private let codec = OpusCodec()
+    private var recordingBuffer: Data = Data()
+    private var isRecording = false
+    private var recordingStartTime: Date?
 
-struct SignalingMessage: Codable {
-    let from: String            // riderId
-    let to: String              // riderId (ou "*" pra broadcast)
-    let type: SignalingType     // .offer, .answer, .iceCandidate
-    let sdp: String?            // SDP (offer/answer)
-    let candidate: String?      // ICE candidate
-    let sdpMid: String?         // ICE candidate mid
-    let sdpMLineIndex: Int32?   // ICE candidate mline index
-    let timestamp: Date
+    // MARK: - Gravação
+
+    func startRecording() {
+        recordingBuffer = Data()
+        isRecording = true
+        recordingStartTime = Date()
+
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.record, mode: .default,
+                                 options: [.allowBluetooth])
+        try? session.setActive(true)
+
+        // Mesma lógica de tap do microfone, mas acumula em buffer
+        let inputNode = audioEngine.inputNode
+        let format = inputNode.outputFormat(forBus: 0)
+        let desiredFormat = AVAudioFormat(
+            commonFormat: .pcmFormatInt16, sampleRate: 16000,
+            channels: 1, interleaved: true
+        )!
+        let converter = AVAudioConverter(from: format, to: desiredFormat)
+
+        inputNode.installTap(onBus: 0, bufferSize: 320, format: format) { [weak self] buffer, _ in
+            guard let self, self.isRecording else { return }
+            guard let converted = self.convert(buffer, with: converter, to: desiredFormat) else { return }
+
+            self.recordingBuffer.append(converted)
+
+            // Limite de 60 segundos
+            if self.recordingDuration > 60 {
+                self.stopRecording()
+            }
+        }
+
+        audioEngine.prepare()
+        try? audioEngine.start()
+    }
+
+    func stopRecording() -> VoiceMessage? {
+        guard isRecording, !recordingBuffer.isEmpty else { return nil }
+        isRecording = false
+        audioEngine.stop()
+        audioEngine.inputNode.removeTap(onBus: 0)
+
+        let duration = recordingDuration
+
+        // Comprime todo o buffer de uma vez com Opus
+        guard let opusData = codec.encode(recordingBuffer) else { return nil }
+
+        let message = VoiceMessage(
+            id: UUID().uuidString,
+            roomId: currentRoomId,
+            rideId: currentRideId,
+            fromRiderId: profile.id,
+            fromRiderName: profile.name,
+            sentAt: Date(),
+            duration: duration,
+            audioData: opusData,
+            deliveredTo: [],
+            playedBy: []
+        )
+
+        // Salva localmente
+        LocalStore.shared.saveVoiceMessage(message)
+
+        // Envia via mesh (oportunístico)
+        send(message)
+
+        return message
+    }
+
+    var recordingDuration: TimeInterval {
+        guard let start = recordingStartTime else { return 0 }
+        return Date().timeIntervalSince(start)
+    }
+
+    // MARK: - Envio
+
+    func send(_ message: VoiceMessage) {
+        let payload = VoiceMessagePayload(
+            messageId: message.id,
+            roomId: message.roomId,
+            fromRiderId: message.fromRiderId,
+            fromRiderName: message.fromRiderName,
+            sentAt: message.sentAt,
+            duration: message.duration,
+            audioData: message.audioData
+        )
+
+        let meshPayload = MeshPayload(
+            id: message.id,
+            type: .voiceMessage,
+            senderId: profile.id,
+            senderName: profile.name,
+            rideId: currentRideId,
+            roomId: message.roomId,
+            timestamp: Date(),
+            ttl: 10,
+            priority: .high,
+            payload: try! JSONEncoder().encode(payload)
+        )
+
+        MeshService.shared.send(meshPayload)
+        OfflineQueue.shared.enqueue(meshPayload)
+    }
+
+    // MARK: - Recebimento
+
+    func handleIncoming(_ payload: VoiceMessagePayload) {
+        // Salva localmente
+        let message = VoiceMessage(
+            id: payload.messageId,
+            roomId: payload.roomId,
+            rideId: currentRideId,
+            fromRiderId: payload.fromRiderId,
+            fromRiderName: payload.fromRiderName,
+            sentAt: payload.sentAt,
+            duration: payload.duration,
+            audioData: payload.audioData,
+            deliveredTo: [profile.id],
+            playedBy: []
+        )
+        LocalStore.shared.saveVoiceMessage(message)
+
+        // Envia ack de entrega
+        sendAck(messageId: message.id, type: .delivered)
+
+        // Notifica (UI + TTS se não estiver vendo a sala)
+        if currentRoomId != message.roomId {
+            VoiceAssistant.shared.speak(.newMessage(
+                name: message.fromRiderName,
+                room: roomName(for: message.roomId)
+            ))
+        }
+
+        // Atualiza badge na UI
+        NotificationCenter.default.post(name: .newVoiceMessage, object: message)
+    }
+
+    // MARK: - Playback
+
+    func play(_ message: VoiceMessage) {
+        guard let pcmData = codec.decode(message.audioData) else { return }
+
+        // Toca via AudioUnit ou AVAudioPlayer
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playback, mode: .default,
+                                 options: [.allowBluetooth])
+
+        // Playback do PCM data
+        // (Usar AVAudioPlayer com WAV header, ou AudioUnit pra mais controle)
+
+        // Marca como tocado
+        LocalStore.shared.markVoiceMessagePlayed(message.id)
+        sendAck(messageId: message.id, type: .played)
+    }
+
+    func sendAck(messageId: String, type: AckType) {
+        let ack = VoiceMessageAckPayload(
+            messageId: messageId,
+            riderId: profile.id,
+            type: type
+        )
+        let meshPayload = MeshPayload(
+            type: .voiceMessageAck,
+            priority: .normal,
+            ttl: 5,
+            payload: try! JSONEncoder().encode(ack)
+        )
+        MeshService.shared.send(meshPayload)
+    }
 }
 
-enum SignalingType: String, Codable {
-    case offer, answer, iceCandidate
+enum AckType: String, Codable {
+    case delivered, played
 }
 ```
 
-### 4.4 Modo simplificado (MVP)
-
-No MVP, o voice chat pode ser simplificado:
-
-```
-EM VEZ DE WebRTC complexo (N conexões peer-to-peer, cada rider ↔ cada rider):
-
-MVP: Áudio em broadcast via Firestore
-  1. Rider aperta PTT
-  2. App grava áudio (máx 15 segundos)
-  3. Comprime com Opus → ~40KB pra 15s
-  4. Upload pro Firestore Storage ou como documento
-  5. Outros riders recebem via listener → tocam automaticamente
-
-  Isso é um "voice message" estilo WhatsApp, não walkie-talkie em tempo real.
-  Latência: 1-3 segundos. Aceitável pra MVP.
-
-MVP+: Walkie-talkie em tempo real via MCSession stream (sem 4G)
-  - Quando riders estão no mesh P2P, voz é transmitida em streaming
-  - Latência < 200ms
-  - Funciona mesmo sem 4G
-  - Mas só alcança peers diretamente conectados
-```
-
----
-
-## 5. Gerenciamento da Sessão de Áudio
-
-### 5.1 Cenários e configurações
+### 4.5 Gerenciamento da Sessão de Áudio
 
 ```swift
 class AudioSessionManager {
     static let shared = AudioSessionManager()
 
     enum Scenario {
-        case ttsOnly             // Só TTS, sem microfone
-        case ttsAndVoiceCommands // TTS + comandos de voz
-        case walkieTalkie        // Walkie-talkie ativo
-        case intercomDetected    // Cardo/Sena conectado
+        case ttsOnly             // Só TTS
+        case voiceCommand        // TTS + reconhecimento de voz
+        case walkieTalkie        // PTT ativo (playAndRecord)
+        case recording           // Gravando mensagem (record)
+        case playback            // Tocando mensagem (playback)
+        case intercomDetected    // Cardo/Sena presente
     }
-
-    var currentScenario: Scenario = .ttsOnly
 
     func configure(for scenario: Scenario) {
         let session = AVAudioSession.sharedInstance()
 
         switch scenario {
         case .ttsOnly:
-            // NÃO bloqueia intercom, NÃO pega microfone
             try? session.setCategory(.playback, mode: .spokenAudio,
                                      options: [.duckOthers, .allowBluetooth])
 
-        case .ttsAndVoiceCommands:
-            // Precisa de microfone pra comandos de voz
+        case .voiceCommand:
             try? session.setCategory(.playAndRecord, mode: .default,
                                      options: [.allowBluetooth, .mixWithOthers,
                                                .defaultToSpeaker])
 
         case .walkieTalkie:
-            // Walkie-talkie ativo — microfone + saída
             try? session.setCategory(.playAndRecord, mode: .voiceChat,
                                      options: [.allowBluetooth,
                                                .defaultToSpeaker])
 
+        case .recording:
+            try? session.setCategory(.record, mode: .default,
+                                     options: [.allowBluetooth])
+
+        case .playback:
+            try? session.setCategory(.playback, mode: .default,
+                                     options: [.allowBluetooth])
+
         case .intercomDetected:
-            // Cardo/Sena presente — app NÃO compete
-            // Só TTS, sem microfone, ducking
             try? session.setCategory(.playback, mode: .spokenAudio,
                                      options: [.duckOthers, .allowBluetooth])
         }
 
         try? session.setActive(true)
-        currentScenario = scenario
-    }
-
-    func detectIntercom() -> Bool {
-        let route = AVAudioSession.sharedInstance().currentRoute
-        return route.outputs.contains { output in
-            output.portType == .bluetoothHFP &&
-            ["cardo", "sena", "intercom", "packtalk",
-             "freecom", "spirit", "bold"].contains {
-                output.portName.lowercased().contains($0)
-            }
-        }
     }
 }
 ```
 
-### 5.2 Prioridade entre fontes de áudio
+---
+
+## 5. Prioridade entre fontes de áudio
 
 ```
-Quando duas coisas querem falar ao mesmo tempo:
+Quando múltiplas coisas querem falar:
 
-1. SOS / Alerta crítico          → Interrompe TUDO
-2. Alerta de perigo próximo       → Interrompe TTS normal e walkie
-3. Walkie-talkie (áudio chegando) → Abaixa TTS normal (ducking)
-4. TTS normal (status, posição)  → Fala quando canal livre
-5. Walkie-talkie (PTT ativado)   → Captura microfone
+1. SOS / Alerta crítico          → Interrompe TUDO, repete 3x
+2. Walkie-talkie (voz chegando)  → Abaixa TTS (ducking)
+3. Mensagem de voz recebida      → Só notifica (TTS), não toca automaticamente
+4. TTS normal                    → Fala quando canal livre
+5. Walkie-talkie (PTT ativado)   → Captura microfone, prioridade máxima
 6. Comando de voz                → Captura microfone
+7. Gravação de mensagem          → Captura microfone (mas PTT interrompe)
 ```
 
 ---
 
-## 6. Codec de Áudio — Opus
-
-Por que Opus:
-- Otimizado pra voz (não música)
-- Funciona de 6 kbps até 510 kbps
-- Baixíssima latência (5ms de frame)
-- Resiste a perda de pacotes (PLC — Packet Loss Concealment)
-- Royalty-free, open source
-
-```swift
-// Configuração típica pra walkie-talkie:
-// Sample rate: 16000 Hz (voz, suficiente)
-// Bitrate: 32000 bps (qualidade de chamada telefônica)
-// Frame size: 20ms
-// Complexidade: 5 (baixa = menos CPU = menos bateria)
-
-// No iOS, usar Opus via AudioUnit ou biblioteca C (libopus)
-// GoogleWebRTC já inclui Opus internamente
-```
-
----
-
-## 7. Testes de áudio (a fazer)
+## 6. Métricas de áudio
 
 ```
-Cenários de teste:
-  1. TTS com vento a 80 km/h — dá pra ouvir?
-  2. TTS com capacete fechado + protetor auricular
-  3. Comandos de voz com vento + escapamento — reconhece?
-  4. Comandos de voz com sotaque regional — testar com vários riders
-  5. Walkie-talkie 4G: latência e qualidade
-  6. Walkie-talkie mesh P2P: latência entre motos a 50m
-  7. Coexistência com intercom Cardo/Sena (se disponível)
-  8. Bateria: consumo com microfone + TTS contínuo por 4h
+VOZ AO VIVO (Walkie-Talkie):
+  - Sample rate: 16kHz mono
+  - Codec: Opus 32kbps
+  - Frame: 20ms → ~80 bytes por frame
+  - Latência P2P direto: < 200ms
+  - Latência mesh relay (3 hops): < 2s
+  - Banda necessária: ~4 KB/s (32 kbps + overhead)
+
+MENSAGEM DE VOZ:
+  - Sample rate: 16kHz mono
+  - Codec: Opus 32kbps
+  - Arquivo completo (não streaming)
+  - 5s de áudio → ~20KB
+  - 30s de áudio → ~120KB
+  - 60s de áudio → ~240KB (máximo)
+
+COMPARAÇÃO:
+  Walkie-Talkie: latência importa mais que qualidade
+  Mensagem: qualidade importa mais que latência
+  Ambos usam mesmo codec (Opus) — simplifica o stack
 ```
