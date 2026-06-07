@@ -281,6 +281,7 @@ struct UnifiedMapView: View {
                                 .background(.ultraThinMaterial).clipShape(Circle()).shadow(radius: 4)
                                 .foregroundColor(VoiceAssistant.shared.isMuted ? .red : .primary)
                         }
+                        .accessibilityLabel(VoiceAssistant.shared.isMuted ? "Ativar voz" : "Desativar voz")
                         Button {
                             mapVM.cycleMapType()
                         } label: {
@@ -288,6 +289,7 @@ struct UnifiedMapView: View {
                                 .font(.title3).padding(12)
                                 .background(.ultraThinMaterial).clipShape(Circle()).shadow(radius: 4)
                         }
+                        .accessibilityLabel("Alterar tipo de mapa")
                         Button {
                             mapVM.shouldRecenter = true
                         } label: {
@@ -295,6 +297,7 @@ struct UnifiedMapView: View {
                                 .font(.title3).padding(12)
                                 .background(.ultraThinMaterial).clipShape(Circle()).shadow(radius: 4)
                         }
+                        .accessibilityLabel("Centralizar na localização")
                     }
                     .padding(.trailing, 12)
                     .padding(.bottom, isInRide ? 180 : 100)
@@ -749,11 +752,13 @@ struct NavigationHUD: View {
                         .font(.caption).padding(6)
                         .background(Color.white.opacity(0.2)).clipShape(Circle())
                 }
+                .accessibilityLabel("Visão geral da rota")
                 Button { onStepList?() } label: {
                     Image(systemName: "list.bullet")
                         .font(.caption).padding(6)
                         .background(Color.white.opacity(0.2)).clipShape(Circle())
                 }
+                .accessibilityLabel("Lista de passos")
                 Button {
                     VoiceAssistant.shared.isMuted.toggle()
                 } label: {
@@ -761,10 +766,12 @@ struct NavigationHUD: View {
                         .font(.caption).padding(6)
                         .background(Color.white.opacity(0.2)).clipShape(Circle())
                 }
+                .accessibilityLabel(VoiceAssistant.shared.isMuted ? "Ativar voz" : "Desativar voz")
                 Button { onStop?() } label: {
                     Image(systemName: "xmark").font(.caption).padding(6)
                         .background(Color.white.opacity(0.2)).clipShape(Circle())
                 }
+                .accessibilityLabel("Parar navegação")
             }
             .padding(12).background(Color.green.opacity(0.85)).cornerRadius(12).padding(.horizontal, 8)
         }
@@ -801,6 +808,7 @@ struct RiderHUD: View {
                     }
                     .frame(width: 80, height: 80).background(Color.black.opacity(0.7)).cornerRadius(40)
                 }
+                .accessibilityLabel("Marcar perigo")
 
                 Button {} label: {
                     VStack(spacing: 4) {
@@ -811,6 +819,8 @@ struct RiderHUD: View {
                     .background(isPTTActive ? Color.green : Color.black.opacity(0.7))
                     .cornerRadius(isPTTActive ? 55 : 45)
                 }
+                .accessibilityLabel(isPTTActive ? "Parar de falar" : "Falar no grupo")
+                .accessibilityHint("Segure para falar, solte para parar")
                 .simultaneousGesture(
                     DragGesture(minimumDistance: 0)
                         .onChanged { _ in

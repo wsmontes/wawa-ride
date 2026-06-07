@@ -39,6 +39,21 @@
         <string>bluetooth-peripheral</string>
         <string>audio</string>
     </array>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>GPX Route File</string>
+            <key>CFBundleTypeRole</key>
+            <string>Viewer</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.xml</string>
+            </array>
+        </dict>
+    </array>
     <key>LSApplicationQueriesSchemes</key>
     <array>
         <string>comgooglemaps</string>

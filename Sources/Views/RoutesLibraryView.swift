@@ -191,6 +191,40 @@ struct RouteDetailView: View {
                     }
                 }
 
+                if let track = route.simplifiedTrack, !track.isEmpty {
+                    Section("Elevação") {
+                        let altitudes = track.compactMap(\.altitude)
+                        if let minAlt = altitudes.min(), let maxAlt = altitudes.max(), maxAlt > minAlt {
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("Máx: \(Int(maxAlt))m").font(.subheadline)
+                                    Spacer()
+                                    Text("Mín: \(Int(minAlt))m").font(.subheadline)
+                                    Spacer()
+                                    Text("Ganho: \(Int(maxAlt - minAlt))m").font(.subheadline)
+                                }
+                                .foregroundColor(.secondary)
+
+                                // Simple elevation bars
+                                GeometryReader { geo in
+                                    HStack(spacing: 1) {
+                                        ForEach(Array(altitudes.enumerated()), id: \.offset) { _, alt in
+                                            let height = CGFloat((alt - minAlt) / (maxAlt - minAlt)) * geo.size.height
+                                            Rectangle()
+                                                .fill(Color.orange.opacity(0.6))
+                                                .frame(width: max(2, geo.size.width / CGFloat(max(altitudes.count, 1)) - 1),
+                                                       height: max(1, height))
+                                        }
+                                    }
+                                }
+                                .frame(height: 60)
+                                .cornerRadius(4)
+                            }
+                            .padding(.vertical, 8)
+                        }
+                    }
+                }
+
                 if !route.waypoints.isEmpty {
                     Section("Waypoints") {
                         ForEach(Array(route.waypoints.sorted(by: { $0.order < $1.order }).enumerated()), id: \.element.id) { _, wp in
