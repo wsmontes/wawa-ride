@@ -15,6 +15,9 @@ struct UnifiedMapView: View {
     @State private var showRooms = false
     @State private var isPTTActive = false
     @State private var glowOpacity: Double = 0
+    @State private var showEndNavSummary = false
+    @State private var endNavDistance: Double = 0
+    @State private var endNavDuration: TimeInterval = 0
 
     let isInRide: Bool
 
@@ -45,10 +48,56 @@ struct UnifiedMapView: View {
             )
             .ignoresSafeArea(.all)
 
-            // ---- OVERLAYS (conditional) ----
+            // ---- OVERLAYS (priority: nav > search > BLE) ----
 
-            // Search bar (hidden during active navigation in ride mode)
-            if !(isInRide && rideVM.isNavigating) {
+            // Navigation HUD (highest priority — always visible when navigating)
+            if rideVM.isNavigating {
+                VStack {
+                    HStack {
+                        // Collapsed search button during navigation
+                        Button {
+                            mapVM.showSearchDuringNav.toggle()
+                        } label: {
+                            Image(systemName: "magnifyingglass")
+                                .font(.title3).padding(10)
+                                .background(.ultraThinMaterial).clipShape(Circle())
+                        }
+                        .padding(.leading, 12)
+
+                        Spacer()
+
+                        // Arrival banner
+                        if rideVM.remainingDistance < 50 && rideVM.remainingDistance > 0 {
+                            Text("🎉 Você chegou!")
+                                .font(.headline).foregroundColor(.white)
+                                .padding(.horizontal, 20).padding(.vertical, 10)
+                                .background(Color.green).cornerRadius(20)
+                        }
+                    }
+                    .padding(.top, 48)
+
+                    if !(rideVM.remainingDistance < 50 && rideVM.remainingDistance > 0) {
+                        NavigationHUD(viewModel: rideVM, onStop: { stopNavWithSummary() })
+                    }
+                    Spacer()
+                }
+            }
+
+            // Search bar (during nav: only if expanded; otherwise: always)
+            if rideVM.isNavigating && mapVM.showSearchDuringNav {
+                VStack {
+                    SearchBarView(
+                        searchText: $mapVM.searchQuery,
+                        completions: mapVM.completions,
+                        isSearching: mapVM.isSearching,
+                        mapRegion: mapVM.currentRegion,
+                        onSelectCompletion: { mapVM.selectSearchCompletion($0) { sheetState = .place($0) } },
+                        onSubmit: { mapVM.searchAddress { sheetState = .place($0) } }
+                    )
+                    .padding(.top, 100)
+                    Spacer()
+                }
+            } else if !rideVM.isNavigating {
                 VStack {
                     SearchBarView(
                         searchText: $mapVM.searchQuery,
@@ -63,17 +112,8 @@ struct UnifiedMapView: View {
                 }
             }
 
-            // Navigation HUD
-            if rideVM.isNavigating {
-                VStack {
-                    Spacer().frame(height: 48)
-                    NavigationHUD(viewModel: rideVM)
-                    Spacer()
-                }
-            }
-
-            // BLE ride banner (only when NOT in a ride)
-            if !isInRide && !mapVM.nearbyRides.isEmpty {
+            // BLE ride banner (lowest priority — only when idle, no sheets)
+            if !isInRide && !mapVM.nearbyRides.isEmpty && sheetState == nil {
                 VStack {
                     Spacer().frame(height: 120)
                     nearbyRidesBanner
@@ -90,7 +130,10 @@ struct UnifiedMapView: View {
                         glowOpacity: $glowOpacity,
                         showHazardMenu: $showHazardMenu,
                         showRooms: $showRooms,
-                        onEndRide: { endRide() }
+                        onEndRide: { endRide() },
+                        speed: rideVM.speed,
+                        connectedCount: rideVM.connectedCount,
+                        totalCount: rideVM.totalCount
                     )
                 }
 
@@ -106,6 +149,16 @@ struct UnifiedMapView: View {
                         )
                         .ignoresSafeArea()
                         .allowsHitTesting(false)
+                }
+            }
+
+            // End-nav summary
+            if showEndNavSummary {
+                VStack {
+                    Spacer()
+                    endNavSummaryCard
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .padding(.bottom, 120)
                 }
             }
 
@@ -317,6 +370,62 @@ struct UnifiedMapView: View {
         }
     }
 
+    private func stopNavWithSummary() {
+        endNavDistance = rideVM.remainingDistance
+        endNavDuration = rideVM.estimatedTimeRemaining
+        rideVM.stopNavigation()
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            showEndNavSummary = true
+        }
+        // Auto-dismiss after 4 seconds
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) {
+            withAnimation { showEndNavSummary = false }
+        }
+    }
+
+    var endNavSummaryCard: some View {
+        VStack(spacing: 12) {
+            Text("Navegação encerrada")
+                .font(.headline)
+
+            HStack(spacing: 24) {
+                VStack {
+                    Text(String(format: "%.1f", endNavDistance / 1000))
+                        .font(.title2).fontWeight(.bold)
+                    Text("km").font(.caption).foregroundColor(.secondary)
+                }
+                VStack {
+                    Text(formatDuration(endNavDuration))
+                        .font(.title2).fontWeight(.bold)
+                    Text("est.").font(.caption).foregroundColor(.secondary)
+                }
+                VStack {
+                    Text(endNavDuration > 0 ? "\(Int(endNavDistance / endNavDuration * 3.6))" : "--")
+                        .font(.title2).fontWeight(.bold)
+                    Text("km/h").font(.caption).foregroundColor(.secondary)
+                }
+            }
+
+            Button("OK") {
+                withAnimation { showEndNavSummary = false }
+            }
+            .font(.headline).foregroundColor(.white)
+            .padding(.horizontal, 40).padding(.vertical, 10)
+            .background(Color.orange).cornerRadius(20)
+        }
+        .padding(20)
+        .background(.ultraThinMaterial)
+        .cornerRadius(16)
+        .shadow(radius: 12)
+        .padding(.horizontal, 40)
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes >= 60 { return "\(minutes / 60)h \(minutes % 60)min" }
+        return "\(minutes) min"
+    }
+
     private func endRide() {
         MeshService.shared.stopAdvertising()
         MeshService.shared.leaveMesh()
@@ -341,6 +450,7 @@ struct UnifiedMapView: View {
 
 struct NavigationHUD: View {
     @ObservedObject var viewModel: LiveMapViewModel
+    var onStop: (() -> Void)?
 
     var body: some View {
         if let instructions = viewModel.currentStepInstructions {
@@ -357,7 +467,7 @@ struct NavigationHUD: View {
                     .foregroundColor(.white.opacity(0.8))
                 }
                 Spacer()
-                Button { viewModel.stopNavigation() } label: {
+                Button { onStop?() } label: {
                     Image(systemName: "xmark").font(.caption).padding(6)
                         .background(Color.white.opacity(0.2)).clipShape(Circle())
                 }
@@ -375,6 +485,9 @@ struct RiderHUD: View {
     @Binding var showHazardMenu: Bool
     @Binding var showRooms: Bool
     var onEndRide: () -> Void
+    var speed: Double = 0
+    var connectedCount: Int = 0
+    var totalCount: Int = 0
 
     var body: some View {
         VStack(spacing: 12) {
@@ -428,7 +541,13 @@ struct RiderHUD: View {
         }
     }
 
-    private var statusText: String { "WAWA Ride" }
+    private var statusText: String {
+        var parts: [String] = []
+        if speed > 0 { parts.append("\(Int(speed)) km/h") }
+        if totalCount > 0 { parts.append("\(connectedCount)/\(totalCount) riders") }
+        if parts.isEmpty { parts.append("WAWA Ride") }
+        return parts.joined(separator: " • ")
+    }
 
     private func startPTT() {
         isPTTActive = true

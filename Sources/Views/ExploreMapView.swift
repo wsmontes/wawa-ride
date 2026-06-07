@@ -352,6 +352,7 @@ final class ExploreMapViewModel: ObservableObject {
     @Published var previewPolyline: MKPolyline?
     @Published var shouldRecenter = false
     @Published var pendingZoomToRoute = false
+    @Published var showSearchDuringNav = false
     @Published var currentMapType: MKMapType = .standard
 
     var mapTypeIcon: String {
