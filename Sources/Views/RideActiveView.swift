@@ -48,6 +48,41 @@ struct RideActiveView: View {
                 .padding(.horizontal).padding(.top, 48)
                 .background(LinearGradient(colors: [.black.opacity(0.7), .clear], startPoint: .top, endPoint: .bottom))
 
+                // Navigation instruction banner
+                if viewModel.isNavigating, let instructions = viewModel.currentStepInstructions {
+                    HStack {
+                        Image(systemName: "arrow.turn.up.right")
+                            .font(.title2)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(instructions)
+                                .font(.subheadline).fontWeight(.semibold)
+                                .lineLimit(2)
+                            HStack {
+                                Text(viewModel.navigationStatusText)
+                                    .font(.caption)
+                                if viewModel.distanceToNextStep > 0 {
+                                    Text("•")
+                                    Text("\(Int(viewModel.distanceToNextStep))m")
+                                        .font(.caption).fontWeight(.medium)
+                                }
+                            }
+                            .foregroundColor(.white.opacity(0.8))
+                        }
+                        Spacer()
+                        Button {
+                            viewModel.stopNavigation()
+                        } label: {
+                            Image(systemName: "xmark")
+                                .font(.caption).padding(6)
+                                .background(Color.white.opacity(0.2)).clipShape(Circle())
+                        }
+                    }
+                    .padding(12)
+                    .background(Color.green.opacity(0.85))
+                    .cornerRadius(12)
+                    .padding(.horizontal, 8)
+                }
+
                 Spacer()
 
                 // Bottom controls
@@ -130,7 +165,14 @@ struct RideActiveView: View {
             }
         }
         .sheet(isPresented: $showRouteCreator) { RouteCreatorView() }
-        .onAppear { setupRideSession() }
+        .onAppear {
+            setupRideSession()
+            // If launched with a pending navigation route, start it
+            if let route = AppState.shared.pendingNavigationRoute {
+                viewModel.startNavigation(with: route)
+                AppState.shared.pendingNavigationRoute = nil
+            }
+        }
     }
 
     private func startPTT() {

@@ -1,6 +1,7 @@
 import SwiftUI
 import AVFoundation
 import CoreLocation
+import MapKit
 
 // MARK: - App Entry Point
 
@@ -70,6 +71,16 @@ struct ContentView: View {
             withAnimation {
                 appState.currentRideId = nil
                 appState.currentRideName = nil
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .startSoloNavigation)) { notif in
+            // Start a solo "ride" for navigation
+            if appState.currentRideId == nil {
+                appState.currentRideId = "solo-\(UUID().uuidString.prefix(8))"
+                appState.currentRideName = "Navegação"
+            }
+            if let route = notif.object as? MKRoute {
+                appState.pendingNavigationRoute = route
             }
         }
         .sheet(isPresented: $showOnboarding) {

@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import MapKit
 
 // MARK: - App State (Global)
 
@@ -18,6 +19,9 @@ final class AppState: ObservableObject {
     // Rooms
     @Published var activeRooms: [Room] = []
     @Published var hasUnreadMessages = false
+
+    // Pending navigation (from ExploreMapView)
+    @Published var pendingNavigationRoute: MKRoute?
 
     private init() {}
 
