@@ -245,21 +245,15 @@ extension MeshService: MCSessionDelegate {
                 self.onPeerConnected?(peerID)
                 NotificationCenter.default.post(name: .meshPeerConnected, object: peerID)
 
-                // Set up internet relay: share our IP so they can reach us if BLE drops
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    self.startInternetRelayIfNeeded()
-                    self.sendRelayInfo(to: peerID)
-                }
+                // MCSession is the continuous channel — BLE → WiFi Direct → WiFi Infra
+                // Data flows automatically. No separate relay needed.
 
             case .notConnected:
                 self.connectedPeers.removeAll { $0.displayName == peerID.displayName }
                 self.onPeerDisconnected?(peerID)
                 NotificationCenter.default.post(name: .meshPeerDisconnected, object: peerID)
 
-                // Try to reconnect via internet relay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    self.tryInternetRelayReconnect()
-                }
+                // MCSession will auto-reconnect when back in range
 
             case .connecting:
                 break
@@ -334,38 +328,6 @@ extension MeshService: MeshBrowserDelegate {
 
     func browser(_ browser: MeshBrowser, didLose peerID: MCPeerID) {
         discoveredRides.removeAll { $0.peerID == peerID }
-    }
-}
-
-// MARK: - Internet Relay
-
-extension MeshService {
-    private var relayIPs: [String: String] {
-        get { objc_getAssociatedObject(self, &RelayKeys.ips) as? [String: String] ?? [:] }
-        set { objc_setAssociatedObject(self, &RelayKeys.ips, newValue, .OBJC_ASSOCIATION_RETAIN) }
-    }
-
-    private struct RelayKeys { static var ips: UInt8 = 0 }
-
-    fileprivate func startInternetRelayIfNeeded() {
-        if !InternetRelay.shared.isRelayActive, let myIP = InternetRelay.localWiFiIP() {
-            try? InternetRelay.shared.startAsHub()
-        }
-    }
-
-    fileprivate func sendRelayInfo(to peerID: MCPeerID) {
-        guard let myIP = InternetRelay.localWiFiIP() else { return }
-        var ips = relayIPs
-        ips[peerID.displayName] = myIP
-        relayIPs = ips
-        wawaLog("InternetRelay: shared IP \(myIP) with \(peerID.displayName)", category: "mesh")
-    }
-
-    fileprivate func tryInternetRelayReconnect() {
-        for (peerName, ip) in relayIPs where !connectedPeers.contains(where: { $0.displayName == peerName }) {
-            InternetRelay.shared.connectToHub(host: ip)
-            wawaLog("InternetRelay: trying reconnect to \(peerName) at \(ip)", category: "mesh")
-        }
     }
 }
 
