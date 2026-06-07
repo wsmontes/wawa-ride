@@ -22,6 +22,7 @@ struct UnifiedMapView: View {
     @State private var showSaveTrackAlert = false
     @State private var trackNameInput = ""
     @State private var showMicDeniedAlert = false
+    @State private var showStepList = false
 
     let isInRide: Bool
 
@@ -114,7 +115,11 @@ struct UnifiedMapView: View {
                     .padding(.top, 48)
 
                     if !(rideVM.remainingDistance < 50 && rideVM.remainingDistance > 0) {
-                        NavigationHUD(viewModel: rideVM, onStop: { stopNavWithSummary() })
+                        NavigationHUD(viewModel: rideVM,
+                            onStop: { stopNavWithSummary() },
+                            onOverview: { mapVM.shouldZoomToOverview = true },
+                            onStepList: { showStepList = true }
+                        )
                     }
                     Spacer()
                 }
@@ -339,6 +344,9 @@ struct UnifiedMapView: View {
             }
         }
         .sheet(isPresented: $showRooms) { RoomListView() }
+        .sheet(isPresented: $showStepList) {
+            NavigationStepListView()
+        }
         .alert("Microfone necessário", isPresented: $showMicDeniedAlert) {
             Button("Abrir Ajustes") {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
@@ -618,11 +626,76 @@ struct UnifiedMapView: View {
     }
 }
 
+// MARK: - Navigation Step List View
+
+struct NavigationStepListView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            let engine = NavigationEngine.shared
+            let route = engine.activeRoute
+            List {
+                if let route {
+                    Section("\(route.steps.count) passos • \(String(format: "%.1f", route.distance / 1000)) km") {
+                        ForEach(Array(route.steps.enumerated()), id: \.offset) { index, step in
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    Circle()
+                                        .fill(index == engine.currentStepIndex ? Color.green : Color.secondary.opacity(0.3))
+                                        .frame(width: 28, height: 28)
+                                    if index < engine.currentStepIndex {
+                                        Image(systemName: "checkmark")
+                                            .font(.caption2).fontWeight(.bold).foregroundColor(.white)
+                                    } else {
+                                        Text("\(index + 1)")
+                                            .font(.caption2).fontWeight(.bold)
+                                            .foregroundColor(index == engine.currentStepIndex ? .white : .primary)
+                                    }
+                                }
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(step.instructions)
+                                        .font(.subheadline)
+                                        .fontWeight(index == engine.currentStepIndex ? .bold : .regular)
+                                        .foregroundColor(index < engine.currentStepIndex ? .secondary : .primary)
+                                    if step.distance > 0 {
+                                        Text(formatDistance(step.distance))
+                                            .font(.caption).foregroundColor(.secondary)
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                } else {
+                    Text("Nenhuma rota ativa")
+                        .foregroundColor(.secondary)
+                }
+            }
+            .navigationTitle("Passos da rota")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("OK") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func formatDistance(_ meters: CLLocationDistance) -> String {
+        if meters > 1000 { return String(format: "%.1f km", meters / 1000) }
+        return "\(Int(meters)) m"
+    }
+}
+
 // MARK: - Navigation HUD
 
 struct NavigationHUD: View {
     @ObservedObject var viewModel: LiveMapViewModel
     var onStop: (() -> Void)?
+    var onOverview: (() -> Void)?
+    var onStepList: (() -> Void)?
 
     var body: some View {
         if let instructions = viewModel.currentStepInstructions {
@@ -639,6 +712,16 @@ struct NavigationHUD: View {
                     .foregroundColor(.white.opacity(0.8))
                 }
                 Spacer()
+                Button { onOverview?() } label: {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.caption).padding(6)
+                        .background(Color.white.opacity(0.2)).clipShape(Circle())
+                }
+                Button { onStepList?() } label: {
+                    Image(systemName: "list.bullet")
+                        .font(.caption).padding(6)
+                        .background(Color.white.opacity(0.2)).clipShape(Circle())
+                }
                 Button {
                     VoiceAssistant.shared.isMuted.toggle()
                 } label: {
@@ -833,6 +916,13 @@ struct UnifiedMapUIKit: UIViewRepresentable {
                 let insets = UIEdgeInsets(top: 80, left: 40, bottom: 400, right: 40)
                 mapView.setVisibleMapRect(poly.boundingMapRect, edgePadding: insets, animated: true)
                 mapVM.pendingZoomToRoute = false
+            }
+
+            // Overview zoom (show full route during navigation)
+            if mapVM.shouldZoomToOverview, let poly = mapVM.previewPolyline ?? rideVM.routePolyline {
+                let insets = UIEdgeInsets(top: 120, left: 40, bottom: 200, right: 40)
+                mapView.setVisibleMapRect(poly.boundingMapRect, edgePadding: insets, animated: true)
+                mapVM.shouldZoomToOverview = false
             }
         }
 
