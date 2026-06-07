@@ -205,6 +205,35 @@ struct RouteDetailView: View {
                     }
                 }
 
+                Section("Abrir rota em") {
+                    Button {
+                        let coords = route.waypoints.sorted(by: { $0.order < $1.order }).map(\.coordinate)
+                        let names = route.waypoints.sorted(by: { $0.order < $1.order }).map { $0.name ?? "" }
+                        MapAppsExporter.openRouteWithWaypoints(coords, names: names, in: .appleMaps)
+                    } label: {
+                        Label("Apple Maps", systemImage: "map")
+                    }
+
+                    if MapAppsExporter.canOpenGoogleMaps {
+                        Button {
+                            let coords = route.waypoints.sorted(by: { $0.order < $1.order }).map(\.coordinate)
+                            let names = route.waypoints.sorted(by: { $0.order < $1.order }).map { $0.name ?? "" }
+                            MapAppsExporter.openRouteWithWaypoints(coords, names: names, in: .googleMaps)
+                        } label: {
+                            Label("Google Maps", systemImage: "mappin")
+                        }
+                    }
+
+                    if MapAppsExporter.canOpenWaze {
+                        Button {
+                            let coords = route.waypoints.sorted(by: { $0.order < $1.order }).map(\.coordinate)
+                            MapAppsExporter.openRouteWithWaypoints(coords, in: .waze)
+                        } label: {
+                            Label("Waze", systemImage: "car")
+                        }
+                    }
+                }
+
                 Section {
                     Button {
                         showShare = true

@@ -90,23 +90,56 @@ struct PlaceCardView: View {
                         }
                     }
 
-                    // Coordinates & Open in Maps
-                    HStack(spacing: 16) {
-                        Button {
-                            UIPasteboard.general.string = "\(item.coordinate.latitude), \(item.coordinate.longitude)"
-                        } label: {
-                            Label("Copiar", systemImage: "doc.on.doc").font(.subheadline)
+                    // Open in external maps
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Abrir em").font(.subheadline).foregroundColor(.secondary)
+
+                        HStack(spacing: 12) {
+                            Button {
+                                MapAppsExporter.openLocation(item.coordinate, name: item.name, in: .appleMaps)
+                            } label: {
+                                VStack(spacing: 4) {
+                                    Image(systemName: "map").font(.title3)
+                                    Text("Maps").font(.caption2)
+                                }
+                                .frame(maxWidth: .infinity).padding(.vertical, 8)
+                                .background(Color(.systemGray5)).cornerRadius(8)
+                            }
+
+                            if MapAppsExporter.canOpenGoogleMaps {
+                                Button {
+                                    MapAppsExporter.openLocation(item.coordinate, name: item.name, in: .googleMaps)
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: "mappin").font(.title3)
+                                        Text("Google").font(.caption2)
+                                    }
+                                    .frame(maxWidth: .infinity).padding(.vertical, 8)
+                                    .background(Color(.systemGray5)).cornerRadius(8)
+                                }
+                            }
+
+                            if MapAppsExporter.canOpenWaze {
+                                Button {
+                                    MapAppsExporter.openLocation(item.coordinate, name: item.name, in: .waze)
+                                } label: {
+                                    VStack(spacing: 4) {
+                                        Image(systemName: "car").font(.title3)
+                                        Text("Waze").font(.caption2)
+                                    }
+                                    .frame(maxWidth: .infinity).padding(.vertical, 8)
+                                    .background(Color(.systemGray5)).cornerRadius(8)
+                                }
+                            }
                         }
 
                         Button {
-                            let mapItem = MKMapItem(placemark: MKPlacemark(coordinate: item.coordinate))
-                            mapItem.name = item.name
-                            mapItem.openInMaps()
+                            UIPasteboard.general.string = "\(item.coordinate.latitude), \(item.coordinate.longitude)"
                         } label: {
-                            Label("Abrir no Maps", systemImage: "arrow.turn.up.forward.iphone").font(.subheadline)
+                            Label("Copiar coordenadas", systemImage: "doc.on.doc").font(.caption)
                         }
+                        .foregroundColor(.secondary)
                     }
-                    .foregroundColor(.secondary)
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 32)

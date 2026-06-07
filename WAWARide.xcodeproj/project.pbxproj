@@ -27,6 +27,7 @@
 		61E1B6199623F7CE81087573 /* ExploreMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C79220AE225D5A4E8DB1902 /* ExploreMapView.swift */; };
 		6A10400C98D558692194C63D /* RoutesLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB79495B1659156E18CD67E /* RoutesLibraryView.swift */; };
 		700EC0841C84DBAA421E4C37 /* JoinRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC508B9FFEDD22FB83F75C4A /* JoinRideView.swift */; };
+		70344D3F251EB107FA1A3D96 /* MapAppsExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F8CACE0438A8D5691E4846B /* MapAppsExporter.swift */; };
 		70CEF53277BEEE13AB788C03 /* CreateRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80D068F7547E2F56557911C1 /* CreateRideView.swift */; };
 		70F0BA4D006631A95604F65B /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0149EBA0B1D06B8D9030960 /* Route.swift */; };
 		73F5FCA130790118296BB72F /* UnifiedMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D8B59995E681A2138351B33 /* UnifiedMapView.swift */; };
@@ -77,6 +78,7 @@
 		6C1C34E382325A4DE9CE6670 /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
 		6D7751B58BCDEBFC79E886B8 /* PlaceCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaceCardView.swift; sourceTree = "<group>"; };
 		6E49AF7F8E77CFE7B09CAA24 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		6F8CACE0438A8D5691E4846B /* MapAppsExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapAppsExporter.swift; sourceTree = "<group>"; };
 		778179E3EE09D1A29357FC42 /* LiveMapViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveMapViewModel.swift; sourceTree = "<group>"; };
 		7C79220AE225D5A4E8DB1902 /* ExploreMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExploreMapView.swift; sourceTree = "<group>"; };
 		7F6AD586B29C1E967DB81D0C /* OpusCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpusCodec.swift; sourceTree = "<group>"; };
@@ -205,6 +207,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		86BC87E6A2BF83300406FE4C /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				6F8CACE0438A8D5691E4846B /* MapAppsExporter.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 		8F26B5C17C9E579160331C6E /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
@@ -217,6 +227,7 @@
 			isa = PBXGroup;
 			children = (
 				532F787721F0BF0B3DC27772 /* App */,
+				86BC87E6A2BF83300406FE4C /* Extensions */,
 				EAC847DFAEDC33B1B70B7E10 /* Models */,
 				309424743B3BD121B07A5E0A /* Resources */,
 				54E4FEF9804F3A32C917BEC2 /* Services */,
@@ -389,6 +400,7 @@
 				18BA894AED5CAEC555B55885 /* LiveMapViewModel.swift in Sources */,
 				9033668E219F770C7FD84B3F /* LocalStore.swift in Sources */,
 				3404A754C40DF4CE01FEF191 /* LocationService.swift in Sources */,
+				70344D3F251EB107FA1A3D96 /* MapAppsExporter.swift in Sources */,
 				DAB7808377BDE79456731267 /* MeshAdvertiser.swift in Sources */,
 				57A710810E15D3EF4C2B7D3F /* MeshBrowser.swift in Sources */,
 				540DD63C16367B93061A381A /* MeshPayload.swift in Sources */,

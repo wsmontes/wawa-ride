@@ -39,6 +39,11 @@
         <string>bluetooth-peripheral</string>
         <string>audio</string>
     </array>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>comgooglemaps</string>
+        <string>waze</string>
+    </array>
     <key>UIRequiredDeviceCapabilities</key>
     <array>
         <string>location-services</string>
