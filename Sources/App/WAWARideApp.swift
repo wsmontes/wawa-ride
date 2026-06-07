@@ -26,11 +26,38 @@ struct WAWARideApp: App {
     }
 
     private func handleOpenURL(_ url: URL) {
+        // Handle geo: URIs
+        if url.scheme == "geo", let coords = parseGeoURI(url) {
+            NotificationCenter.default.post(name: .openGeoCoordinate, object: coords)
+            return
+        }
+        // Handle GPX/KML files
         let ext = url.pathExtension.lowercased()
         guard ext == "gpx" || ext == "kml" else { return }
         if let route = RouteService.shared.importGPX(from: url) {
             VoiceAssistant.shared.speak(VoiceAssistant.routeImported(name: route.name, waypoints: route.waypoints.count))
         }
+    }
+
+    private func parseGeoURI(_ url: URL) -> GeoCoordinate? {
+        // geo:lat,lng or geo:0,0?q=lat,lng(label)
+        guard url.scheme == "geo" else { return nil }
+        let str = url.absoluteString.replacingOccurrences(of: "geo:", with: "")
+        // Check query format: geo:0,0?q=lat,lng(label)
+        if let queryRange = str.range(of: "?q=") {
+            let query = String(str[queryRange.upperBound...])
+            let parts = query.components(separatedBy: ",")
+            if parts.count >= 2, let lat = Double(parts[0]), let lng = Double(parts[1]) {
+                let label = parts.count >= 3 ? parts[2].replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "") : nil
+                return GeoCoordinate(lat: lat, lng: lng, label: label)
+            }
+        }
+        // Direct format: geo:lat,lng
+        let parts = str.components(separatedBy: ",")
+        if parts.count >= 2, let lat = Double(parts[0]), let lng = Double(parts[1]) {
+            return GeoCoordinate(lat: lat, lng: lng, label: nil)
+        }
+        return nil
     }
 }
 
@@ -233,8 +260,17 @@ struct ProfileTabView: View {
     }
 }
 
+// MARK: - Geo Coordinate
+
+struct GeoCoordinate {
+    let lat: Double
+    let lng: Double
+    let label: String?
+}
+
 // MARK: - Notification Names
 
 extension Notification.Name {
     static let rideEnded = Notification.Name("rideEnded")
+    static let openGeoCoordinate = Notification.Name("openGeoCoordinate")
 }

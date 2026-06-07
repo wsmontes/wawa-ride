@@ -370,6 +370,21 @@ struct UnifiedMapView: View {
         } message: {
             Text("Dê um nome para o track gravado ou descarte.")
         }
+        .onReceive(NotificationCenter.default.publisher(for: .openGeoCoordinate)) { notif in
+            if let geo = notif.object as? GeoCoordinate {
+                let coord = CLLocationCoordinate2D(latitude: geo.lat, longitude: geo.lng)
+                let name = geo.label ?? "Coordenada"
+                mapVM.pins.removeAll()
+                mapVM.pins.append(ExploreMapViewModel.ExplorePin(
+                    coordinate: coord,
+                    title: name,
+                    subtitle: "\(String(format: "%.5f", geo.lat)), \(String(format: "%.5f", geo.lng))",
+                    mapItem: nil
+                ))
+                mapVM.shouldZoomToPins = true
+                sheetState = .place(PlaceCardItem(coordinate: coord, name: name))
+            }
+        }
         .onAppear {
             mapVM.startBrowsing()
             if isInRide { setupRideSession() }
