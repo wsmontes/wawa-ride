@@ -13,15 +13,22 @@ final class LiveMapViewModel: ObservableObject {
     @Published var alerts: [HazardAlert] = []
     @Published var hazardAnnotations: [HazardAnnotation] = []
 
-    // Route
+    // Route (from DirectionsService)
+    @Published var activeRoute: MKRoute?
     @Published var routePolyline: MKPolyline?
-    @Published var offRouteDistance: Double = 0
-    @Published var nextTurn: TurnInfo?
+    @Published var alternateRoutes: [MKRoute] = []
 
-    // Status
+    // Navigation (from NavigationEngine)
+    @Published var isNavigating = false
+    @Published var currentStepInstructions: String?
+    @Published var distanceToNextStep: CLLocationDistance = 0
+    @Published var remainingDistance: CLLocationDistance = 0
+    @Published var estimatedTimeRemaining: TimeInterval = 0
+    @Published var offRouteDistance: Double = 0
+
+    // Speed & heading
     @Published var speed: Double = 0
     @Published var heading: Double = 0
-    @Published var isTrackingRoute = false
 
     // Connectivity
     @Published var meshState: MeshService.MeshState = .idle
@@ -45,33 +52,66 @@ final class LiveMapViewModel: ObservableObject {
         self.hazardAnnotations = alerts.filter { $0.isActive }.map { HazardAnnotation(alert: $0) }
     }
 
-    func updateRoute(trackPoints: [RoutePoint]) {
-        guard trackPoints.count > 1 else {
-            routePolyline = nil
-            return
-        }
+    // MARK: - Route Display
 
+    func setActiveRoute(_ route: MKRoute) {
+        activeRoute = route
+        routePolyline = route.polyline
+    }
+
+    /// Display a polyline from raw track points (used for mesh-received routes)
+    func setTrackPolyline(trackPoints: [RoutePoint]) {
+        guard trackPoints.count > 1 else { return }
         let coords = trackPoints.map {
             CLLocationCoordinate2D(latitude: $0.latitude, longitude: $0.longitude)
         }
-
         routePolyline = MKPolyline(coordinates: coords, count: coords.count)
-        isTrackingRoute = true
+    }
+
+    func setAlternateRoutes(_ routes: [MKRoute]) {
+        alternateRoutes = routes
     }
 
     func clearRoute() {
+        activeRoute = nil
         routePolyline = nil
-        isTrackingRoute = false
+        alternateRoutes = []
+        isNavigating = false
+        currentStepInstructions = nil
+        distanceToNextStep = 0
+        remainingDistance = 0
+        estimatedTimeRemaining = 0
         offRouteDistance = 0
-        nextTurn = nil
     }
+
+    // MARK: - Navigation
+
+    func startNavigation(with route: MKRoute) {
+        setActiveRoute(route)
+        isNavigating = true
+        NavigationEngine.shared.startNavigation(route: route)
+    }
+
+    func stopNavigation() {
+        isNavigating = false
+        NavigationEngine.shared.stopNavigation()
+    }
+
+    func updateNavigationFromEngine() {
+        let nav = NavigationEngine.shared
+        currentStepInstructions = nav.activeRoute?.steps[nav.currentStepIndex].instructions
+        distanceToNextStep = nav.distanceToNextStep
+        remainingDistance = nav.remainingDistance
+        estimatedTimeRemaining = nav.estimatedTimeRemaining
+        offRouteDistance = nav.offRouteDistance
+    }
+
+    // MARK: - Location
 
     func updateLocation(speed: Double, heading: Double) {
         self.speed = speed
         self.heading = heading
     }
-
-    // MARK: - Rider Management
 
     func rider(for annotation: RiderAnnotation) -> RideParticipant? {
         participants.first { $0.riderId == annotation.riderId }
@@ -81,17 +121,33 @@ final class LiveMapViewModel: ObservableObject {
         alerts.first { $0.id == annotation.id }
     }
 
+    // MARK: - Display Strings
+
     var statusText: String {
-        if !isTrackingRoute {
-            return "\(Int(speed)) km/h"
+        if isNavigating {
+            if let instructions = currentStepInstructions {
+                return "\(Int(speed)) km/h • \(instructions)"
+            }
+            return "\(Int(speed)) km/h • \(formatDistance(remainingDistance)) restantes"
         }
-        if let turn = nextTurn {
-            return "\(Int(speed)) km/h • \(Int(turn.distance))m até \(turn.severity.lowercased()) \(turn.direction)"
+        if let route = activeRoute {
+            let km = route.distance / 1000
+            let eta = formatDuration(route.expectedTravelTime)
+            return "\(Int(speed)) km/h • \(String(format: "%.1f", km)) km • \(eta)"
         }
+        return "\(Int(speed)) km/h"
+    }
+
+    var navigationStatusText: String {
+        guard isNavigating else { return "" }
+
         if offRouteDistance > 50 {
-            return "\(Int(speed)) km/h • Fora da rota (\(Int(offRouteDistance))m)"
+            return "Fora da rota (\(Int(offRouteDistance))m)"
         }
-        return "\(Int(speed)) km/h • Na rota"
+
+        let remain = formatDistance(remainingDistance)
+        let eta = formatDuration(estimatedTimeRemaining)
+        return "\(remain) • \(eta)"
     }
 
     var connectivityIcon: String {
@@ -104,5 +160,24 @@ final class LiveMapViewModel: ObservableObject {
 
     var titleBarText: String {
         "\(AppState.shared.currentRideName ?? "WAWA Ride")  \(connectivityIcon)\(connectedCount)"
+    }
+
+    // MARK: - Format Helpers
+
+    private func formatDistance(_ meters: Double) -> String {
+        if meters > 1000 {
+            return String(format: "%.1f km", meters / 1000)
+        }
+        return "\(Int(meters)) m"
+    }
+
+    private func formatDuration(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes >= 60 {
+            let hours = minutes / 60
+            let mins = minutes % 60
+            return "\(hours)h \(mins)min"
+        }
+        return "\(minutes) min"
     }
 }

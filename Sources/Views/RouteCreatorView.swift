@@ -1,75 +1,121 @@
 import SwiftUI
 import MapKit
 
-// MARK: - Route Creator View
+// MARK: - Helpers
+
+private func routeName(_ name: String, index: Int) -> String {
+    name.isEmpty ? "Rota \(index + 1)" : name
+}
+
+private func routeInfo(_ route: MKRoute) -> String {
+    let km = String(format: "%.1f", route.distance / 1000)
+    let minutes = Int(route.expectedTravelTime / 60)
+    let timeStr = minutes >= 60 ? "\(minutes / 60)h \(minutes % 60)min" : "\(minutes) min"
+    return "\(km) km • \(timeStr)"
+}
+
+private func routeAdvisory(_ route: MKRoute) -> String {
+    "Transporte: \(route.transportType == .automobile ? "Carro/Moto" : "A pé")"
+}
+
+// MARK: - Route Creator View 2.0
 
 struct RouteCreatorView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = RouteCreatorViewModel()
     @State private var routeName = ""
     @State private var showNamePrompt = false
+    @State private var showAlternatives = false
 
     var body: some View {
         NavigationStack {
             ZStack {
+                // Map
                 RouteCreatorMapView(viewModel: viewModel)
                     .ignoresSafeArea(.all)
 
-                VStack {
-                    // Top controls
-                    HStack {
-                        Button("Cancelar") {
-                            dismiss()
+                VStack(spacing: 0) {
+                    // Search bar
+                    SearchBarView(
+                        searchText: $viewModel.searchQuery,
+                        completions: viewModel.completions,
+                        isSearching: viewModel.isSearching,
+                        onSelectCompletion: { completion in
+                            viewModel.selectSearchCompletion(completion)
+                        },
+                        onSubmit: {
+                            viewModel.searchAddress()
                         }
-                        .padding(12)
-                        .background(Color.black.opacity(0.7))
-                        .cornerRadius(8)
-
-                        Spacer()
-
-                        Text("\(viewModel.waypoints.count) pontos")
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.black.opacity(0.7))
-                            .cornerRadius(8)
-
-                        Spacer()
-
-                        Button("Salvar") {
-                            showNamePrompt = true
-                        }
-                        .padding(12)
-                        .background(Color.orange)
-                        .cornerRadius(8)
-                        .disabled(viewModel.waypoints.count < 2)
-                    }
-                    .padding(.horizontal)
+                    )
                     .padding(.top, 48)
 
                     Spacer()
 
                     // Bottom controls
-                    HStack {
-                        Button {
-                            viewModel.undoLastWaypoint()
-                        } label: {
-                            Label("Desfazer", systemImage: "arrow.uturn.backward")
-                                .font(.subheadline)
-                                .padding(12)
+                    VStack(spacing: 8) {
+                        // Route info
+                        if let route = viewModel.previewRoute {
+                            HStack {
+                                Label(
+                                    "\(String(format: "%.1f", route.distance / 1000)) km • \(formatTime(route.expectedTravelTime))",
+                                    systemImage: "car"
+                                )
+                                .font(.caption)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
                                 .background(Color.black.opacity(0.7))
                                 .cornerRadius(8)
+
+                                if !viewModel.alternateRoutes.isEmpty {
+                                    Button("Alternativas (\(viewModel.alternateRoutes.count + 1))") {
+                                        showAlternatives = true
+                                    }
+                                    .font(.caption)
+                                    .foregroundColor(.orange)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.black.opacity(0.7))
+                                    .cornerRadius(8)
+                                }
+                            }
                         }
-                        .disabled(viewModel.waypoints.isEmpty)
 
-                        Spacer()
+                        HStack {
+                            Button {
+                                viewModel.undoLastWaypoint()
+                            } label: {
+                                Label("Desfazer", systemImage: "arrow.uturn.backward")
+                                    .font(.subheadline)
+                                    .padding(12)
+                                    .background(Color.black.opacity(0.7))
+                                    .cornerRadius(8)
+                            }
+                            .disabled(viewModel.waypoints.isEmpty)
 
-                        Text("Long press no mapa para adicionar pontos")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                            Spacer()
+
+                            Text("\(viewModel.waypoints.count) pontos")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+
+                            Spacer()
+
+                            Button("Salvar") {
+                                if viewModel.waypoints.count >= 2 {
+                                    showNamePrompt = true
+                                }
+                            }
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .padding(12)
+                            .background(viewModel.waypoints.count >= 2 ? Color.orange : Color.gray)
+                            .cornerRadius(8)
+                            .disabled(viewModel.waypoints.count < 2)
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 32)
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 32)
                 }
             }
             .alert("Nome da Rota", isPresented: $showNamePrompt) {
@@ -80,7 +126,79 @@ struct RouteCreatorView: View {
                 }
                 Button("Cancelar", role: .cancel) {}
             }
+            .sheet(isPresented: $showAlternatives) {
+                RouteAlternativesView(
+                    routes: [viewModel.previewRoute].compactMap { $0 } + viewModel.alternateRoutes,
+                    selectedIndex: $viewModel.selectedRouteIndex,
+                    onSelect: { index in
+                        viewModel.selectAlternative(at: index)
+                        showAlternatives = false
+                    }
+                )
+                .presentationDetents([.medium])
+            }
         }
+    }
+
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes >= 60 {
+            return "\(minutes / 60)h \(minutes % 60)min"
+        }
+        return "\(minutes) min"
+    }
+}
+
+// MARK: - Route Alternatives View
+
+struct RouteAlternativesView: View {
+    let routes: [MKRoute]
+    @Binding var selectedIndex: Int
+    let onSelect: (Int) -> Void
+
+    var body: some View {
+        NavigationStack {
+            List(Array(routes.enumerated()), id: \.offset) { index, route in
+                Button {
+                    onSelect(index)
+                } label: {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(routeName(route.name, index: index))
+                                .font(.headline)
+
+                            Text(routeInfo(route))
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+
+                            Text(routeAdvisory(route))
+                                .font(.caption)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+
+                        if index == selectedIndex {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundColor(.orange)
+                                .font(.title2)
+                        }
+                    }
+                }
+                .listRowBackground(index == selectedIndex ? Color.orange.opacity(0.1) : Color.clear)
+            }
+            .navigationTitle("Rotas alternativas")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func formatTime(_ seconds: TimeInterval) -> String {
+        let minutes = Int(seconds / 60)
+        if minutes >= 60 {
+            return "\(minutes / 60)h \(minutes % 60)min"
+        }
+        return "\(minutes) min"
     }
 }
 
@@ -92,6 +210,8 @@ struct RouteCreatorMapView: UIViewRepresentable {
     func makeUIView(context: Context) -> MKMapView {
         let map = MKMapView()
         map.delegate = context.coordinator
+        map.showsCompass = true
+        map.showsScale = true
         map.overrideUserInterfaceStyle = .dark
 
         let longPress = UILongPressGestureRecognizer(
@@ -105,27 +225,8 @@ struct RouteCreatorMapView: UIViewRepresentable {
     }
 
     func updateUIView(_ mapView: MKMapView, context: Context) {
-        // Update waypoint annotations
-        let currentAnns = Set(mapView.annotations.compactMap { $0 as? MKPointAnnotation })
-        let newAnns = viewModel.waypoints.map { wp -> MKPointAnnotation in
-            let ann = MKPointAnnotation()
-            ann.coordinate = wp.coordinate
-            ann.title = wp.name ?? "Ponto \(wp.order + 1)"
-            return ann
-        }
-
-        mapView.removeAnnotations(mapView.annotations)
-        mapView.addAnnotations(newAnns)
-
-        // Update polyline
-        mapView.removeOverlays(mapView.overlays)
-        if viewModel.previewLine != nil {
-            let coords = viewModel.waypoints.map { $0.coordinate }
-            if coords.count > 1 {
-                let polyline = MKPolyline(coordinates: coords, count: coords.count)
-                mapView.addOverlay(polyline)
-            }
-        }
+        context.coordinator.updateAnnotations(mapView: mapView, viewModel: viewModel)
+        context.coordinator.updateOverlays(mapView: mapView, viewModel: viewModel)
     }
 
     func makeCoordinator() -> RouteCreatorCoordinator {
@@ -149,15 +250,49 @@ final class RouteCreatorCoordinator: NSObject, MKMapViewDelegate {
         viewModel.addWaypoint(at: coordinate)
     }
 
+    func updateAnnotations(mapView: MKMapView, viewModel: RouteCreatorViewModel) {
+        mapView.removeAnnotations(mapView.annotations.filter { !($0 is MKUserLocation) })
+
+        for (index, wp) in viewModel.waypoints.enumerated() {
+            let ann = MKPointAnnotation()
+            ann.coordinate = wp.coordinate
+            ann.title = wp.name ?? "Ponto \(index + 1)"
+            ann.subtitle = wp.isStop ? "Parada" : nil
+            mapView.addAnnotation(ann)
+        }
+    }
+
+    func updateOverlays(mapView: MKMapView, viewModel: RouteCreatorViewModel) {
+        mapView.removeOverlays(mapView.overlays)
+
+        // Preview route polyline (from MKDirections)
+        if let polyline = viewModel.previewPolyline {
+            mapView.addOverlay(polyline)
+        }
+    }
+
+    // MARK: - MKMapViewDelegate
+
     func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
         if let polyline = overlay as? MKPolyline {
             let renderer = MKPolylineRenderer(polyline: polyline)
-            renderer.strokeColor = UIColor.systemOrange
-            renderer.lineWidth = 3
-            renderer.lineDashPattern = [6, 3]
+            renderer.strokeColor = UIColor.systemBlue
+            renderer.lineWidth = 4
+            renderer.lineCap = .round
             return renderer
         }
         return MKOverlayRenderer(overlay: overlay)
+    }
+
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+        guard !(annotation is MKUserLocation) else { return nil }
+
+        let view = mapView.dequeueReusableAnnotationView(withIdentifier: "waypoint") as? MKMarkerAnnotationView
+            ?? MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: "waypoint")
+
+        view.canShowCallout = true
+        view.markerTintColor = .systemOrange
+        return view
     }
 }
 
@@ -166,7 +301,18 @@ final class RouteCreatorCoordinator: NSObject, MKMapViewDelegate {
 @MainActor
 final class RouteCreatorViewModel: ObservableObject {
     @Published var waypoints: [RouteWaypoint] = []
-    @Published var previewLine: MKPolyline?
+    @Published var previewRoute: MKRoute?
+    @Published var previewPolyline: MKPolyline?
+    @Published var alternateRoutes: [MKRoute] = []
+    @Published var selectedRouteIndex = 0
+
+    // Search
+    @Published var searchQuery = ""
+    @Published var completions: [MKLocalSearchCompletion] = []
+    @Published var isSearching = false
+
+    private let searchService = SearchService.shared
+    private let directionsService = DirectionsService.shared
 
     func addWaypoint(at coordinate: CLLocationCoordinate2D) {
         let wp = RouteWaypoint(
@@ -175,27 +321,107 @@ final class RouteCreatorViewModel: ObservableObject {
             order: waypoints.count
         )
         waypoints.append(wp)
-
-        if waypoints.count > 1 {
-            let coords = waypoints.map { $0.coordinate }
-            previewLine = MKPolyline(coordinates: coords, count: coords.count)
-        }
+        updateRoutePreview()
     }
 
     func undoLastWaypoint() {
         guard !waypoints.isEmpty else { return }
         waypoints.removeLast()
 
-        if waypoints.count > 1 {
-            let coords = waypoints.map { $0.coordinate }
-            previewLine = MKPolyline(coordinates: coords, count: coords.count)
+        if waypoints.count >= 2 {
+            updateRoutePreview()
         } else {
-            previewLine = nil
+            previewRoute = nil
+            previewPolyline = nil
         }
     }
+
+    // MARK: - Route Preview via MKDirections
+
+    private func updateRoutePreview() {
+        guard waypoints.count >= 2 else { return }
+
+        let coords = waypoints.map { $0.coordinate }
+
+        Task {
+            do {
+                let routes = try await directionsService.calculateRouteWithWaypoints(
+                    waypoints: coords,
+                    alternateRoutes: waypoints.count == 2
+                )
+
+                if let first = routes.first {
+                    previewRoute = first
+                    previewPolyline = first.polyline
+
+                    // Separate alternates from main
+                    if routes.count > 1 {
+                        alternateRoutes = Array(routes.dropFirst())
+                    }
+                }
+            } catch {
+                print("📍 Route preview error: \(error)")
+            }
+        }
+    }
+
+    func selectAlternative(at index: Int) {
+        let allRoutes = [previewRoute].compactMap { $0 } + alternateRoutes
+        guard index < allRoutes.count else { return }
+        selectedRouteIndex = index
+        previewPolyline = allRoutes[index].polyline
+    }
+
+    // MARK: - Search
+
+    func searchAddress() {
+        guard !searchQuery.isEmpty else { return }
+        isSearching = true
+
+        Task {
+            do {
+                let results = try await searchService.search(query: searchQuery)
+                if let first = results.first, let location = first.location {
+                    addWaypoint(at: location.coordinate)
+                }
+            } catch {
+                print("🔍 Search error: \(error)")
+            }
+            isSearching = false
+            searchQuery = ""
+        }
+    }
+
+    func selectSearchCompletion(_ completion: MKLocalSearchCompletion) {
+        isSearching = true
+
+        Task {
+            do {
+                let results = try await searchService.search(completion: completion)
+                if let first = results.first, let location = first.location {
+                    addWaypoint(at: location.coordinate)
+                }
+            } catch {
+                print("🔍 Search error: \(error)")
+            }
+            isSearching = false
+            searchQuery = ""
+            searchService.clearCompletions()
+        }
+    }
+
+    // MARK: - Save
 
     func saveRoute(name: String) {
         guard waypoints.count >= 2 else { return }
         _ = RouteService.shared.createDrawnRoute(name: name, waypoints: waypoints)
+    }
+}
+
+// MARK: - MKMapItem Extension
+
+extension MKMapItem {
+    var location: CLLocation? {
+        placemark.location
     }
 }

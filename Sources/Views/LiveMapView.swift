@@ -13,12 +13,24 @@ struct LiveMapView: UIViewRepresentable {
     func makeUIView(context: Context) -> MKMapView {
         let mapView = MKMapView()
         mapView.delegate = context.coordinator
+
+        // User location and tracking
         mapView.showsUserLocation = true
         mapView.userTrackingMode = .followWithHeading
-        mapView.overrideUserInterfaceStyle = .dark
+
+        // Native controls (standard MapKit)
+        mapView.showsCompass = true
+        mapView.showsScale = true
+        mapView.showsUserTrackingButton = true
+        mapView.showsTraffic = true
+
+        // 3D and rotation
         mapView.isPitchEnabled = true
         mapView.isRotateEnabled = true
+
+        // Map type
         mapView.mapType = .mutedStandard
+        mapView.overrideUserInterfaceStyle = .dark
 
         // Gestures
         let longPress = UILongPressGestureRecognizer(
@@ -29,6 +41,17 @@ struct LiveMapView: UIViewRepresentable {
         mapView.addGestureRecognizer(longPress)
 
         return mapView
+    }
+
+    /// Toggle map type from outside the view
+    static func toggleMapType(on mapView: MKMapView) {
+        switch mapView.mapType {
+        case .standard:      mapView.mapType = .hybrid
+        case .hybrid:        mapView.mapType = .satellite
+        case .satellite:     mapView.mapType = .mutedStandard
+        case .mutedStandard: mapView.mapType = .standard
+        default:             mapView.mapType = .standard
+        }
     }
 
     func updateUIView(_ mapView: MKMapView, context: Context) {

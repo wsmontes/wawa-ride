@@ -268,13 +268,9 @@ struct RideActiveView: View {
                     )
                 }
 
-                // Update navigation
-                RouteService.shared.updateNavigation(
-                    currentLocation: CLLocation(
-                        latitude: payload.lat,
-                        longitude: payload.lng
-                    )
-                )
+                // Update navigation (via NavigationEngine)
+                let location = CLLocation(latitude: payload.lat, longitude: payload.lng)
+                NavigationEngine.shared.updatePosition(location)
 
                 // Send location via mesh
                 sendLocationUpdate(payload)
@@ -388,14 +384,14 @@ struct RideActiveView: View {
             if let routePayload = try? JSONDecoder().decode(RoutePayload.self, from: payload.payload) {
                 try? LocalStore.shared.saveRoute(routePayload.route)
                 if routePayload.route.createdBy == AppState.shared.currentRideId {
-                    viewModel.updateRoute(trackPoints: routePayload.route.simplifiedTrack ?? [])
+                    viewModel.setTrackPolyline(trackPoints: routePayload.route.simplifiedTrack ?? [])
                 }
             }
 
         case .routeBatch:
             if let batch = try? JSONDecoder().decode(RouteBatchPayload.self, from: payload.payload) {
                 // Append track points to route
-                viewModel.updateRoute(trackPoints: batch.points)
+                viewModel.setTrackPolyline(trackPoints: batch.points)
             }
 
         case .statusChange:
@@ -417,7 +413,7 @@ struct RideActiveView: View {
             if let state = try? JSONDecoder().decode(FullStatePayload.self, from: payload.payload) {
                 viewModel.updateParticipants(state.participants)
                 if let route = state.activeRoute {
-                    viewModel.updateRoute(trackPoints: route.simplifiedTrack ?? [])
+                    viewModel.setTrackPolyline(trackPoints: route.simplifiedTrack ?? [])
                 }
                 viewModel.updateAlerts(state.activeAlerts)
             }
@@ -436,8 +432,8 @@ struct RideActiveView: View {
             Task { @MainActor in
                 viewModel.updateParticipants(AppState.shared.participants)
                 viewModel.updateAlerts(HazardService.shared.activeAlerts)
-                viewModel.offRouteDistance = RouteService.shared.offRouteDistance
-                viewModel.nextTurn = RouteService.shared.nextTurn
+                viewModel.offRouteDistance = NavigationEngine.shared.offRouteDistance
+                viewModel.updateNavigationFromEngine()
             }
         }
     }
