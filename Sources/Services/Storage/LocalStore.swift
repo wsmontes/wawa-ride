@@ -20,7 +20,15 @@ final class LocalStore: @unchecked Sendable {
             dbQueue = try DatabaseQueue(path: dbPath)
             try createTables()
         } catch {
-            fatalError("LocalStore setup failed: \(error)")
+            // Try in-memory database as fallback
+            print("📦 LocalStore disk setup failed: \(error). Using in-memory DB.")
+            do {
+                dbQueue = try DatabaseQueue()
+                try createTables()
+            } catch {
+                assertionFailure("LocalStore: both disk and memory DB failed: \(error)")
+                dbQueue = try! DatabaseQueue() // last resort — will crash if this fails
+            }
         }
     }
 

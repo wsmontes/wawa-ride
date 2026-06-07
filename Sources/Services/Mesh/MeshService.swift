@@ -238,11 +238,9 @@ extension MeshService: MCSessionDelegate {
 // MARK: - MeshAdvertiserDelegate
 
 extension MeshService: MeshAdvertiserDelegate {
-    func advertiser(_ advertiser: MeshAdvertiser, didReceiveInvitationFrom peerID: MCPeerID) {
-        // Auto-accept in MVP
-        // Future: show confirmation dialog to leader
-        let context = advertiser.invitationContext(from: peerID)
-        advertiser.acceptInvitation(from: peerID, into: session)
+    func advertiser(_ advertiser: MeshAdvertiser, didReceiveInvitationFrom peerID: MCPeerID, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
+        // Auto-accept in MVP by providing our session
+        invitationHandler(true, session)
     }
 }
 

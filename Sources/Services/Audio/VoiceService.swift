@@ -41,6 +41,10 @@ final class VoiceService: NSObject, ObservableObject {
         setupNotifications()
     }
 
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+
     private func setupNotifications() {
         NotificationCenter.default.addObserver(
             self, selector: #selector(handleVoiceStream(_:)),

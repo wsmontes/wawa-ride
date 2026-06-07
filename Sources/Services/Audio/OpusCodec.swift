@@ -28,26 +28,21 @@ final class OpusCodec {
         // AAC at 32kbps for voice is acceptable for MVP
 
         return encoderQueue.sync { () -> Data? in
-            let pcmFormat = AVAudioFormat(
+            guard let pcmFormat = AVAudioFormat(
                 commonFormat: .pcmFormatInt16,
                 sampleRate: sampleRate,
                 channels: 1,
                 interleaved: true
-            )!
+            ) else {
+                print("🔊 Opus: failed to create PCM format")
+                return nil
+            }
 
             guard let pcmBuffer = pcmData.toPCMBuffer(format: pcmFormat) else {
                 return nil
             }
 
-            // Convert to compressed format using AVAudioConverter
-            let outputFormat = AVAudioFormat(
-                commonFormat: .pcmFormatFloat32,
-                sampleRate: Double(OpusCodec.sampleRate),
-                channels: AVAudioChannelCount(OpusCodec.channels),
-                interleaved: false
-            )!
-
-            // For MVP: store as raw compressed data
+            // For MVP: return raw PCM (no compression yet)
             // TODO: Replace with actual Opus encoding via libopus
             return compressWithAAC(pcmBuffer: pcmBuffer, inputFormat: pcmFormat)
         }

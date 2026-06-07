@@ -4,7 +4,7 @@ import MultipeerConnectivity
 // MARK: - Mesh Advertiser Delegate
 
 protocol MeshAdvertiserDelegate: AnyObject {
-    func advertiser(_ advertiser: MeshAdvertiser, didReceiveInvitationFrom peerID: MCPeerID)
+    func advertiser(_ advertiser: MeshAdvertiser, didReceiveInvitationFrom peerID: MCPeerID, invitationHandler: @escaping (Bool, MCSession?) -> Void)
 }
 
 // MARK: - Mesh Advertiser
@@ -15,9 +15,6 @@ final class MeshAdvertiser: NSObject, MCNearbyServiceAdvertiserDelegate {
     private var advertiser: MCNearbyServiceAdvertiser?
 
     weak var delegate: MeshAdvertiserDelegate?
-
-    // Store pending invitations for context
-    private var invitationContexts: [String: Data] = [:]
 
     init(peerID: MCPeerID, serviceType: String) {
         self.peerID = peerID
@@ -38,18 +35,6 @@ final class MeshAdvertiser: NSObject, MCNearbyServiceAdvertiserDelegate {
     func stop() {
         advertiser?.stopAdvertisingPeer()
         advertiser = nil
-        invitationContexts.removeAll()
-    }
-
-    func invitationContext(from peerID: MCPeerID) -> Data? {
-        invitationContexts[peerID.displayName]
-    }
-
-    func acceptInvitation(from peerID: MCPeerID, into session: MCSession) {
-        // Invitation is auto-accepted in the delegate callback.
-        // This method is a no-op kept for API consistency.
-        // The invitation handler is called directly in
-        // advertiser(_:didReceiveInvitationFromPeer:withContext:invitationHandler:)
     }
 
     // MARK: - MCNearbyServiceAdvertiserDelegate
@@ -58,14 +43,8 @@ final class MeshAdvertiser: NSObject, MCNearbyServiceAdvertiserDelegate {
                     didReceiveInvitationFromPeer peerID: MCPeerID,
                     withContext context: Data?,
                     invitationHandler: @escaping (Bool, MCSession?) -> Void) {
-        // Auto-accept in MVP
-        invitationContexts[peerID.displayName] = context
-
-        // Get the current session from MeshService
-        let session = MeshService.shared.session
-        invitationHandler(true, session)
-
-        delegate?.advertiser(self, didReceiveInvitationFrom: peerID)
+        // Delegate to MeshService which will provide the session and accept
+        delegate?.advertiser(self, didReceiveInvitationFrom: peerID, invitationHandler: invitationHandler)
     }
 
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser,

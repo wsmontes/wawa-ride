@@ -173,12 +173,10 @@ final class JoinRideViewModel: ObservableObject {
     }
 
     private func bindMeshUpdates() {
-        // Observe discovered rides
-        Task {
+        // Observe discovered rides via @Published publisher
+        Task { @MainActor in
             for await rides in mesh.$discoveredRides.values {
-                await MainActor.run {
-                    self.discoveredRides = rides
-                }
+                self.discoveredRides = rides
             }
         }
     }
