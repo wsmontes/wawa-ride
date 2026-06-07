@@ -29,6 +29,7 @@
 		700EC0841C84DBAA421E4C37 /* JoinRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC508B9FFEDD22FB83F75C4A /* JoinRideView.swift */; };
 		70CEF53277BEEE13AB788C03 /* CreateRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80D068F7547E2F56557911C1 /* CreateRideView.swift */; };
 		70F0BA4D006631A95604F65B /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0149EBA0B1D06B8D9030960 /* Route.swift */; };
+		73F5FCA130790118296BB72F /* UnifiedMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9D8B59995E681A2138351B33 /* UnifiedMapView.swift */; };
 		755E44A54BE55272AF1CFA38 /* OpusCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F6AD586B29C1E967DB81D0C /* OpusCodec.swift */; };
 		7D707E0C5A90236111AFFB5F /* ConnectivityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6542EB848026170261E7BB77 /* ConnectivityMonitor.swift */; };
 		7FD2E7043CF44B04EBFC63EA /* WAWARideApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */; };
@@ -87,6 +88,7 @@
 		8B93D3261D866FC02B556E8D /* HazardService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HazardService.swift; sourceTree = "<group>"; };
 		8CADA335D9C5D811C95DC89C /* RoomService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomService.swift; sourceTree = "<group>"; };
 		8F8850FA9BCC9D27A9CDAADF /* VoiceAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceAlert.swift; sourceTree = "<group>"; };
+		9D8B59995E681A2138351B33 /* UnifiedMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnifiedMapView.swift; sourceTree = "<group>"; };
 		A0149EBA0B1D06B8D9030960 /* Route.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Route.swift; sourceTree = "<group>"; };
 		A02283ABE3673EDB9179EC4A /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
 		ACD3277E0BD54C01C50FE9E0 /* MeshBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshBrowser.swift; sourceTree = "<group>"; };
@@ -260,6 +262,7 @@
 				289B63192CA701EEA73371F8 /* RouteCreatorView.swift */,
 				6BB79495B1659156E18CD67E /* RoutesLibraryView.swift */,
 				64DFEED427065907C748CF93 /* SearchBarView.swift */,
+				9D8B59995E681A2138351B33 /* UnifiedMapView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -409,6 +412,7 @@
 				CE451470662818B60A2CB08D /* SearchBarView.swift in Sources */,
 				E3ED73410F6AE247958989BA /* SearchService.swift in Sources */,
 				B16D7F3A837D8728EDE927C2 /* TransportManager.swift in Sources */,
+				73F5FCA130790118296BB72F /* UnifiedMapView.swift in Sources */,
 				A0D085C142E4914F480B3CD7 /* VoiceAlert.swift in Sources */,
 				1FEE398A23AD3A6CC6970275 /* VoiceAssistant.swift in Sources */,
 				2C359761EC163C8754B34161 /* VoiceCommandListener.swift in Sources */,

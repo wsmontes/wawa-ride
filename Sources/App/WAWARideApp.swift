@@ -42,29 +42,28 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            // Normal tab navigation
-            TabView(selection: $selectedTab) {
-                ExploreMapView(selectedTab: $selectedTab)
-                    .tabItem { Label("Mapa", systemImage: "map") }
-                    .tag(0)
-
-                RoutesLibraryView()
-                    .tabItem { Label("Rotas", systemImage: "point.topleft.down.curvedto.point.bottomright.up") }
-                    .tag(1)
-
-                RidesListView(showCreateRide: $showCreateRide)
-                    .tabItem { Label("Passeios", systemImage: "motorcycle") }
-                    .tag(2)
-
-                ProfileTabView()
-                    .tabItem { Label("Perfil", systemImage: "person.circle") }
-                    .tag(3)
-            }
-
-            // Active ride overlay (full screen)
             if appState.currentRideId != nil {
-                RideActiveView()
-                    .transition(.move(edge: .bottom))
+                // In a ride — fullscreen map only (no tabs)
+                UnifiedMapView(isInRide: true)
+            } else {
+                // Idle — TabView with map + library tabs
+                TabView(selection: $selectedTab) {
+                    UnifiedMapView(isInRide: false)
+                        .tabItem { Label("Mapa", systemImage: "map") }
+                        .tag(0)
+
+                    RoutesLibraryView()
+                        .tabItem { Label("Rotas", systemImage: "point.topleft.down.curvedto.point.bottomright.up") }
+                        .tag(1)
+
+                    RidesListView(showCreateRide: $showCreateRide)
+                        .tabItem { Label("Passeios", systemImage: "motorcycle") }
+                        .tag(2)
+
+                    ProfileTabView()
+                        .tabItem { Label("Perfil", systemImage: "person.circle") }
+                        .tag(3)
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .rideEnded)) { _ in
@@ -74,7 +73,6 @@ struct ContentView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .startSoloNavigation)) { notif in
-            // Start a solo "ride" for navigation
             if appState.currentRideId == nil {
                 appState.currentRideId = "solo-\(UUID().uuidString.prefix(8))"
                 appState.currentRideName = "Navegação"
