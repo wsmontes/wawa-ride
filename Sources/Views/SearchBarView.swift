@@ -47,6 +47,7 @@ struct SearchBarView: View {
                         .focused($isFocused)
                         .onSubmit {
                             dismissResults()
+                            SearchHistory.shared.add(searchText)
                             onSubmit()
                         }
                         .onChange(of: searchText) { _, newValue in
@@ -108,6 +109,40 @@ struct SearchBarView: View {
     var searchResultsPanel: some View {
         VStack(spacing: 0) {
             if searchText.isEmpty {
+                // Search history (when focused, before typing)
+                if isFocused && !SearchHistory.shared.recentSearches.isEmpty {
+                    VStack(alignment: .leading, spacing: 0) {
+                        HStack {
+                            Text("Recentes")
+                                .font(.subheadline).fontWeight(.semibold).foregroundColor(.secondary)
+                            Spacer()
+                            Button("Limpar") { SearchHistory.shared.clear() }
+                                .font(.caption).foregroundColor(.orange)
+                        }
+                        .padding(.horizontal).padding(.top, 12).padding(.bottom, 8)
+
+                        ForEach(SearchHistory.shared.recentSearches, id: \.self) { query in
+                            Button {
+                                searchText = query
+                                SearchService.shared.searchCompletions(query: query, region: mapRegion)
+                            } label: {
+                                HStack {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                        .font(.system(size: 14)).foregroundColor(.secondary)
+                                    Text(query).font(.subheadline).foregroundColor(.primary)
+                                    Spacer()
+                                    Image(systemName: "arrow.up.forward")
+                                        .font(.system(size: 12)).foregroundColor(.secondary)
+                                }
+                                .padding(.horizontal).padding(.vertical, 10)
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        Divider().padding(.vertical, 8)
+                    }
+                }
+
                 // Quick categories when search is empty
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Encontre por perto")
@@ -115,7 +150,6 @@ struct SearchBarView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.secondary)
                         .padding(.horizontal)
-                        .padding(.top, 12)
                         .padding(.bottom, 8)
 
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 4) {
@@ -181,10 +215,20 @@ struct SearchBarView: View {
                                             .foregroundColor(.primary)
                                             .lineLimit(1)
 
-                                        Text(completion.subtitle)
-                                            .font(.system(size: 13))
-                                            .foregroundColor(.secondary)
-                                            .lineLimit(1)
+                                        HStack(spacing: 6) {
+                                            Text(completion.subtitle)
+                                                .font(.system(size: 13))
+                                                .foregroundColor(.secondary)
+                                                .lineLimit(1)
+
+                                            if let distance = estimatedDistance(for: completion) {
+                                                Text("•")
+                                                    .foregroundColor(.secondary)
+                                                Text(distance)
+                                                    .font(.system(size: 13))
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
                                     }
 
                                     Spacer()
@@ -274,11 +318,62 @@ struct SearchBarView: View {
         return .blue
     }
 
+    private func estimatedDistance(for completion: MKLocalSearchCompletion) -> String? {
+        // MKLocalSearchCompletion doesn't have coordinates,
+        // so we show distance based on the subtitle context
+        guard let region = mapRegion else { return nil }
+
+        // Rough estimate: if subtitle contains a known city/neighborhood,
+        // estimate based on region span. Otherwise nil (don't show fake data).
+        let span = region.span
+        let roughDiameter = sqrt(pow(span.latitudeDelta * 111000, 2) + pow(span.longitudeDelta * 111000 * cos(region.center.latitude * .pi / 180), 2))
+
+        if roughDiameter > 50000 {
+            return nil // Too large region, don't guess
+        }
+
+        // Estimate ~30% of region diameter as typical distance
+        let est = roughDiameter * 0.3
+        if est > 1000 {
+            return String(format: "%.1f km", est / 1000)
+        } else if est > 100 {
+            return "\(Int(est)) m"
+        }
+        return nil
+    }
+
     private func highlightMatch(in text: String, query: String) -> AttributedString {
         var attributed = AttributedString(text)
         if let range = attributed.range(of: query, options: .caseInsensitive) {
             attributed[range].font = .system(size: 16, weight: .bold)
         }
         return attributed
+    }
+}
+
+// MARK: - Search History
+
+final class SearchHistory {
+    static let shared = SearchHistory()
+    private let key = "searchHistory"
+    private let maxItems = 10
+
+    var recentSearches: [String] {
+        UserDefaults.standard.stringArray(forKey: key) ?? []
+    }
+
+    func add(_ query: String) {
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return }
+
+        var searches = recentSearches
+        searches.removeAll { $0.lowercased() == trimmed.lowercased() }
+        searches.insert(trimmed, at: 0)
+        if searches.count > maxItems { searches = Array(searches.prefix(maxItems)) }
+        UserDefaults.standard.set(searches, forKey: key)
+    }
+
+    func clear() {
+        UserDefaults.standard.removeObject(forKey: key)
     }
 }

@@ -10,10 +10,26 @@ struct RideActiveView: View {
     @State private var showRouteCreator = false
     @State private var isPTTActive = false
 
+    @State private var glowOpacity: Double = 0
+
     var body: some View {
         ZStack {
             LiveMapView(viewModel: viewModel)
                 .ignoresSafeArea()
+
+            // PTT active glow border
+            if isPTTActive {
+                Rectangle()
+                    .fill(Color.clear)
+                    .background(
+                        RoundedRectangle(cornerRadius: 0)
+                            .stroke(Color.green.opacity(0.6), lineWidth: 6)
+                            .blur(radius: 8)
+                            .opacity(glowOpacity)
+                    )
+                    .ignoresSafeArea()
+                    .allowsHitTesting(false)
+            }
 
             VStack {
                 // Top bar
@@ -179,11 +195,21 @@ struct RideActiveView: View {
         isPTTActive = true
         let roomId = AppState.shared.currentRoomId ?? AppState.shared.activeRooms.first?.id ?? "general"
         VoiceService.shared.startPTT(roomId: roomId)
+
+        // Pulse glow animation
+        withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+            glowOpacity = 1.0
+        }
+        UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
     }
 
     private func stopPTT() {
         isPTTActive = false
         VoiceService.shared.stopPTT()
+        withAnimation(.easeOut(duration: 0.3)) {
+            glowOpacity = 0
+        }
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
     }
 
     private func endRide() {

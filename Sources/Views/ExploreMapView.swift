@@ -60,6 +60,38 @@ struct ExploreMapView: View {
 
                 Spacer()
 
+                // Right-side floating controls
+                HStack {
+                    Spacer()
+                    VStack(spacing: 12) {
+                        // Map type toggle
+                        Button {
+                            viewModel.cycleMapType()
+                        } label: {
+                            Image(systemName: viewModel.mapTypeIcon)
+                                .font(.title3)
+                                .padding(12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                                .shadow(radius: 4)
+                        }
+
+                        // Recenter
+                        Button {
+                            viewModel.shouldRecenter = true
+                        } label: {
+                            Image(systemName: "location.fill")
+                                .font(.title3)
+                                .padding(12)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Circle())
+                                .shadow(radius: 4)
+                        }
+                    }
+                    .padding(.trailing, 12)
+                    .padding(.bottom, 100)
+                }
+
                 if sheetState == nil {
                     HStack(spacing: 16) {
                         Button {
@@ -188,6 +220,17 @@ struct ExploreMapUIKit: UIViewRepresentable {
     func updateUIView(_ map: MKMapView, context: Context) {
         context.coordinator.updateAnnotations(map: map, viewModel: viewModel)
         context.coordinator.updatePreviewRouteOverlay(map: map, viewModel: viewModel)
+
+        // Map type changes
+        if map.mapType != viewModel.currentMapType {
+            map.mapType = viewModel.currentMapType
+        }
+
+        // Recenter
+        if viewModel.shouldRecenter {
+            map.setUserTrackingMode(.follow, animated: true)
+            viewModel.shouldRecenter = false
+        }
     }
 
     func makeCoordinator() -> Coordinator {
@@ -307,6 +350,28 @@ final class ExploreMapViewModel: ObservableObject {
     @Published var shouldZoomToPins = false
     @Published var currentRegion: MKCoordinateRegion?
     @Published var previewPolyline: MKPolyline?
+    @Published var shouldRecenter = false
+    @Published var currentMapType: MKMapType = .standard
+
+    var mapTypeIcon: String {
+        switch currentMapType {
+        case .standard: "map"
+        case .satellite: "globe.americas"
+        case .hybrid: "globe.americas.fill"
+        case .mutedStandard: "moon"
+        default: "map"
+        }
+    }
+
+    func cycleMapType() {
+        switch currentMapType {
+        case .standard: currentMapType = .hybrid
+        case .hybrid: currentMapType = .satellite
+        case .satellite: currentMapType = .mutedStandard
+        case .mutedStandard: currentMapType = .standard
+        default: currentMapType = .standard
+        }
+    }
 
     private let searchService = SearchService.shared
     private let mesh = MeshService.shared
