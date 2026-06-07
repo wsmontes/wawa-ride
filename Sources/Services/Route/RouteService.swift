@@ -148,6 +148,13 @@ final class RouteService: ObservableObject {
     // MARK: - Import / Export
 
     func importGPX(from url: URL) -> Route? {
+        // Try GPX first, then KML
+        if let gpxRoute = importGPXFile(from: url) { return gpxRoute }
+        if let kmlRoute = importKMLFile(from: url) { return kmlRoute }
+        return nil
+    }
+
+    private func importGPXFile(from url: URL) -> Route? {
         guard let parser = GPXParser(url: url) else { return nil }
         guard parser.parse() else { return nil }
 
@@ -164,6 +171,30 @@ final class RouteService: ObservableObject {
         }
 
         var route = Route(name: parser.routeName ?? "Rota Importada", createdBy: myId, source: .imported, waypoints: waypoints)
+        route.simplifiedTrack = parser.trackPoints
+        route.totalDistance = calculateTotalDistance(parser.trackPoints)
+
+        try? LocalStore.shared.saveRoute(route)
+        return route
+    }
+
+    private func importKMLFile(from url: URL) -> Route? {
+        guard let parser = KMLParser(url: url) else { return nil }
+        guard parser.parse() else { return nil }
+
+        let myId = UserDefaults.standard.string(forKey: "riderProfileId") ?? ""
+        let waypoints = parser.waypoints.enumerated().map { index, wp in
+            RouteWaypoint(
+                latitude: wp.latitude,
+                longitude: wp.longitude,
+                order: index,
+                name: wp.name,
+                type: .waypoint,
+                isStop: false
+            )
+        }
+
+        var route = Route(name: parser.routeName ?? "Rota KML", createdBy: myId, source: .imported, waypoints: waypoints)
         route.simplifiedTrack = parser.trackPoints
         route.totalDistance = calculateTotalDistance(parser.trackPoints)
 

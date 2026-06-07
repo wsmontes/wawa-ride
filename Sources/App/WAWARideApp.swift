@@ -25,7 +25,8 @@ struct WAWARideApp: App {
     }
 
     private func handleOpenURL(_ url: URL) {
-        guard url.pathExtension.lowercased() == "gpx" else { return }
+        let ext = url.pathExtension.lowercased()
+        guard ext == "gpx" || ext == "kml" else { return }
         if let route = RouteService.shared.importGPX(from: url) {
             VoiceAssistant.shared.speak(VoiceAssistant.routeImported(name: route.name, waypoints: route.waypoints.count))
         }

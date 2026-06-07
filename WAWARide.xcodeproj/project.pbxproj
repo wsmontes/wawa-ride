@@ -48,6 +48,7 @@
 		D6E9C5FF1876DD64C5873A66 /* RiderProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DBCF8C9EEE28CC0C426D7F0 /* RiderProfile.swift */; };
 		DAB7808377BDE79456731267 /* MeshAdvertiser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 158E4766E4F058DBE3695658 /* MeshAdvertiser.swift */; };
 		E3ED73410F6AE247958989BA /* SearchService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6373BFFC7F9168712B600921 /* SearchService.swift */; };
+		F012D00671A7564043057BB7 /* KMLParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD4DE6C29678258DBBBD900B /* KMLParser.swift */; };
 		F072AA786589004066691C2C /* GPXParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11D798071348FAAEAB9D8D4A /* GPXParser.swift */; };
 		F0F199A25194BB82F734B6A9 /* LiveMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5E6390DDEB4526E1A75898A /* LiveMapView.swift */; };
 		F2B6F27910864FCDBB5FB48C /* MeshRelay.swift in Sources */ = {isa = PBXBuildFile; fileRef = E499C0DB9427A90DDE4F7F31 /* MeshRelay.swift */; };
@@ -94,6 +95,7 @@
 		A0149EBA0B1D06B8D9030960 /* Route.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Route.swift; sourceTree = "<group>"; };
 		A02283ABE3673EDB9179EC4A /* LocalStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalStore.swift; sourceTree = "<group>"; };
 		ACD3277E0BD54C01C50FE9E0 /* MeshBrowser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshBrowser.swift; sourceTree = "<group>"; };
+		AD4DE6C29678258DBBBD900B /* KMLParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KMLParser.swift; sourceTree = "<group>"; };
 		B13D1C114499361DEA5B3E8B /* WAWARide.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WAWARide.entitlements; sourceTree = "<group>"; };
 		B53E29801FB001F3A9B5A19A /* RouteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteService.swift; sourceTree = "<group>"; };
 		BC508B9FFEDD22FB83F75C4A /* JoinRideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JoinRideView.swift; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 			children = (
 				11D798071348FAAEAB9D8D4A /* GPXParser.swift */,
 				8B93D3261D866FC02B556E8D /* HazardService.swift */,
+				AD4DE6C29678258DBBBD900B /* KMLParser.swift */,
 				8CADA335D9C5D811C95DC89C /* RoomService.swift */,
 				B53E29801FB001F3A9B5A19A /* RouteService.swift */,
 			);
@@ -396,6 +399,7 @@
 				3DF0A5F9760AEEEADF640159 /* HazardMenuView.swift in Sources */,
 				120CDD4A854E688153CE9394 /* HazardService.swift in Sources */,
 				700EC0841C84DBAA421E4C37 /* JoinRideView.swift in Sources */,
+				F012D00671A7564043057BB7 /* KMLParser.swift in Sources */,
 				F0F199A25194BB82F734B6A9 /* LiveMapView.swift in Sources */,
 				18BA894AED5CAEC555B55885 /* LiveMapViewModel.swift in Sources */,
 				9033668E219F770C7FD84B3F /* LocalStore.swift in Sources */,

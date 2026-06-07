@@ -97,7 +97,11 @@ struct RoutesLibraryView: View {
             }
             .fileImporter(
                 isPresented: $showImporter,
-                allowedContentTypes: [.xml, .init(filenameExtension: "gpx")!],
+                allowedContentTypes: [
+                    .xml,
+                    .init(filenameExtension: "gpx")!,
+                    .init(filenameExtension: "kml")!
+                ],
                 allowsMultipleSelection: false
             ) { result in
                 if case .success(let urls) = result, let url = urls.first {
