@@ -1013,13 +1013,23 @@ struct UnifiedMapUIKit: UIViewRepresentable {
         }
 
         func updateAll(map mapView: MKMapView, mapVM: ExploreMapViewModel, rideVM: LiveMapViewModel, isInRide: Bool) {
-            // Search pins
-            let existingPins = Set(mapView.annotations.compactMap { $0 as? MKPointAnnotation }.map { $0.title ?? "" })
-            let wantedPins = Set(mapVM.pins.map { $0.title })
+            // Search pins — differentiate search results from dropped pins
+            let existingPins = Set(mapView.annotations.compactMap { $0 as? TypedPointAnnotation }.map { "\($0.pinType.rawValue)-\($0.title ?? "")" })
+            let wantedPins = Set(mapVM.pins.flatMap { pin in
+                pin.mapItem != nil
+                    ? ["\(PinType.search.rawValue)-\(pin.title)"]
+                    : ["\(PinType.dropped.rawValue)-\(pin.title)"]
+            })
             if existingPins != wantedPins {
-                mapView.removeAnnotations(mapView.annotations.filter { !($0 is MKUserLocation) && !($0 is RiderAnnotation) })
+                mapView.removeAnnotations(mapView.annotations.filter {
+                    !($0 is MKUserLocation) && !($0 is RiderAnnotation)
+                })
                 for pin in mapVM.pins {
-                    let ann = MKPointAnnotation(); ann.coordinate = pin.coordinate; ann.title = pin.title; ann.subtitle = pin.subtitle
+                    let ann = TypedPointAnnotation()
+                    ann.coordinate = pin.coordinate
+                    ann.title = pin.title
+                    ann.subtitle = pin.subtitle
+                    ann.pinType = pin.mapItem != nil ? .search : .dropped
                     mapView.addAnnotation(ann)
                 }
             }
@@ -1084,6 +1094,20 @@ struct UnifiedMapUIKit: UIViewRepresentable {
             if let riderAnn = ann as? RiderAnnotation {
                 return RiderAnnotationView.create(for: riderAnn, in: map)
             }
+            if let typed = ann as? TypedPointAnnotation {
+                let id = "pin-\(typed.pinType.rawValue)"
+                let v = map.dequeueReusableAnnotationView(withIdentifier: id) as? MKMarkerAnnotationView
+                    ?? MKMarkerAnnotationView(annotation: ann, reuseIdentifier: id)
+                v.canShowCallout = false
+                v.animatesWhenAdded = true
+                switch typed.pinType {
+                case .search:   v.markerTintColor = .systemRed       // search results → red
+                case .dropped:  v.markerTintColor = .systemBlue      // dropped pins → blue
+                case .route:    v.markerTintColor = .systemPurple    // route waypoints → purple
+                }
+                v.glyphImage = typed.pinType == .dropped ? UIImage(systemName: "star.fill") : nil
+                return v
+            }
             let v = map.dequeueReusableAnnotationView(withIdentifier: "pin") as? MKMarkerAnnotationView ?? MKMarkerAnnotationView(annotation: ann, reuseIdentifier: "pin")
             v.canShowCallout = false; v.markerTintColor = .systemOrange; v.animatesWhenAdded = true
             return v
@@ -1100,4 +1124,16 @@ struct UnifiedMapUIKit: UIViewRepresentable {
             return MKOverlayRenderer(overlay: overlay)
         }
     }
+}
+
+// MARK: - Typed Point Annotation (pin color differentiation)
+
+enum PinType: String {
+    case search   // red — from search results
+    case dropped  // blue — user-dropped pin (long press)
+    case route    // purple — route waypoints
+}
+
+final class TypedPointAnnotation: MKPointAnnotation {
+    var pinType: PinType = .search
 }
