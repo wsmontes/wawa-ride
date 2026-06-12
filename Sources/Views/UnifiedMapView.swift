@@ -394,10 +394,10 @@ struct UnifiedMapView: View {
                         Button {
                             VoiceAssistant.shared.isMuted.toggle()
                         } label: {
-                            Image(systemName: VoiceAssistant.shared.isMuted ? "speaker.slash" : "speaker.wave.2")
+                            Image(systemName: VoiceAssistant.shared.isMuted ? "speaker.slash.fill" : "speaker.wave.2.fill")
                                 .font(.title3).padding(12)
                                 .background(.ultraThinMaterial).clipShape(Circle()).shadow(radius: 4)
-                                .foregroundColor(VoiceAssistant.shared.isMuted ? .red : .primary)
+                                .foregroundColor(VoiceAssistant.shared.isMuted ? .red : .green)
                         }
                         .accessibilityLabel(VoiceAssistant.shared.isMuted ? "Ativar voz" : "Desativar voz")
                         Button {
