@@ -1084,12 +1084,28 @@ struct RiderHUD: View {
     var totalCount: Int = 0
 
     var body: some View {
-        VStack(spacing: 12) {
-            // Status
-            Text(statusText)
-                .font(.system(.body, design: .monospaced)).foregroundColor(.white)
-                .padding(.horizontal, 12).padding(.vertical, 6)
-                .background(Color.black.opacity(0.6)).cornerRadius(8)
+        VStack(spacing: 10) {
+            // Speed — dominant, instantly readable
+            if speed > 0 {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text("\(Int(speed))")
+                        .font(.system(size: 42, weight: .heavy, design: .rounded))
+                        .foregroundColor(.white)
+                    Text("km/h")
+                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+                .padding(.bottom, 2)
+            }
+
+            // Secondary info — compact, supplementary
+            if !secondaryInfo.isEmpty {
+                Text(secondaryInfo)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.8))
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(Color.black.opacity(0.5)).cornerRadius(6)
+            }
 
             // Ride code (visible to leader so riders can confirm verbally)
             if let code = AppState.shared.currentRideCode, !code.isEmpty {
@@ -1109,11 +1125,15 @@ struct RiderHUD: View {
             // Action buttons
             HStack(spacing: 16) {
                 Button { showHazardMenu = true } label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: "exclamationmark.triangle").font(.title2)
-                        Text("Perigo").font(.caption2)
+                    VStack(spacing: 3) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.title2)
+                            .foregroundColor(.yellow)
+                        Text("Perigo")
+                            .font(.caption2).fontWeight(.bold)
                     }
-                    .frame(width: 80, height: 80).background(Color.black.opacity(0.7)).cornerRadius(40)
+                    .frame(width: 84, height: 84)
+                    .background(Color.black.opacity(0.7)).cornerRadius(42)
                 }
                 .accessibilityLabel("Marcar perigo")
 
@@ -1231,6 +1251,20 @@ struct RiderHUD: View {
         if speed > 0 { parts.append("\(Int(speed)) km/h") }
         if totalCount > 0 { parts.append("\(connectedCount)/\(totalCount) riders") }
         if parts.isEmpty { parts.append("WAWA Ride") }
+        return parts.joined(separator: " • ")
+    }
+
+    /// Secondary info line — everything except speed (which is shown dominantly)
+    private var secondaryInfo: String {
+        var parts: [String] = []
+        if totalCount > 0 { parts.append("\(connectedCount)/\(totalCount) riders") }
+        // Show closest rider distance
+        let connected = AppState.shared.participantsByDistance()
+        if let (closest, dist) = connected.first,
+           closest.riderId != UserDefaults.standard.string(forKey: "riderProfileId") {
+            if dist < 1000 { parts.append("\(closest.name) \(Int(dist))m") }
+            else { parts.append("\(closest.name) \(String(format: "%.1f", dist/1000))km") }
+        }
         return parts.joined(separator: " • ")
     }
 
