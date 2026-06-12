@@ -1396,7 +1396,7 @@ struct UnifiedMapUIKit: UIViewRepresentable {
         }
 
         @objc func handleLongPress(_ g: UILongPressGestureRecognizer) {
-            guard g.state == .began, let map = g.view as? MKMapView else { return }
+            guard g.state == .ended, let map = g.view as? MKMapView else { return }
             let c = map.convert(g.location(in: map), toCoordinateFrom: map)
             mapVM.addDroppedPin(at: c) { self.onPlaceSelected($0) }
         }
