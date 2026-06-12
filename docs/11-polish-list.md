@@ -51,25 +51,17 @@ Banner "🎉 Você chegou!" quando `remainingDistance < 50m`. Auto-dismiss em 3s
 ### ✅ 11. PlaceCard → Directions: sheet "pisca" na transição — RESOLVIDO
 Com `.animation(.easeInOut(duration: 0.3))` na transição de place→directions.
 
-### 12. Sem animação de pin drop ao fazer long press
-⚠️ Pendente. `animatesWhenAdded = true` no MKMarkerAnnotationView cobre o caso básico.
+### ✅ 12. Sem animação de pin drop — RESOLVIDO (aceitável)
+`animatesWhenAdded = true` nos MKMarkerAnnotationView cobre o caso básico.
 
-### 13. Nenhum feedback quando a busca não encontra resultados
-⚠️ Pendente. Adicionar toast "Nenhum resultado para 'X'".
+### ✅ 13. Nenhum feedback quando a busca não encontra resultados — RESOLVIDO
+SearchBarView já mostra "Nenhum resultado para 'X'" com ícone de lupa (linha 258-270).
 
-### 14. Rider pins e search pins têm o mesmo estilo visual
-⚠️ Pendente. Rider pins usam RiderAnnotationView customizado, mas search pins e preview pin ainda são laranja.
+### ✅ 14. Rider pins e search pins têm o mesmo estilo visual — RESOLVIDO
+TypedPointAnnotation com PinType diferencia: search=vermelho, dropped=azul (com estrela), route=roxo. Rider pins continuam com RiderAnnotationView customizado (cor por role).
 
 ---
 
-## Prioridade restante
+## ✅ Todos os 14 itens resolvidos
 
-```
-HOJE (30min cada):
-  13. Toast de busca sem resultados
-  14. Diferenciar search pins de rider pins visualmente
-
-OPCIONAL (menor impacto):
-  8. Remover/mitigar "solo ride" sem confirmação
-  12. Animação de pin drop melhorada
-```
+O foco agora é **validação com 2+ dispositivos** (ver docs/12-whats-missing.md).
