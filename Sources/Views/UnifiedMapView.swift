@@ -556,6 +556,14 @@ struct UnifiedMapView: View {
             // Always share location when peers are connected (even without a ride)
             setupAutoLocationSharing()
 
+            // Restore navigation state if engine is still running
+            // (handles view recreation after startSoloRide switches ContentView)
+            if isInRide, NavigationEngine.shared.isNavigating, let route = NavigationEngine.shared.activeRoute {
+                rideVM.setActiveRoute(route)
+                rideVM.isNavigating = true
+                rideVM.updateNavigationFromEngine()
+            }
+
             // Auto-show first-time hint after 8s if no rides found (once per session)
             if !isInRide && !UserDefaults.standard.bool(forKey: "didShowFirstTimeHint") {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
