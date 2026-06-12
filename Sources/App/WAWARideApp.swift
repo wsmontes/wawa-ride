@@ -174,6 +174,16 @@ struct QuickOnboardingView: View {
                 Text("Configure rapidamente para começar")
                     .foregroundColor(.secondary)
 
+                // What to expect
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Abra o app perto de outros riders — eles aparecem aqui", systemImage: "antenna.radiowaves.left.and.right")
+                    Label("Toque ENTRAR e já estão conectados, sem código", systemImage: "person.2.fill")
+                    Label("Veja o grupo no mapa e fale via walkie-talkie", systemImage: "map.fill")
+                }
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.horizontal)
+
                 VStack(spacing: 16) {
                     TextField("Seu nome ou apelido", text: $name)
                         .textFieldStyle(.roundedBorder)
