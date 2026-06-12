@@ -1282,7 +1282,7 @@ struct RiderHUD: View {
         isPTTActive = true
         let roomId = AppState.shared.currentRoomId ?? AppState.shared.activeRooms.first?.id ?? "general"
         VoiceService.shared.startPTT(roomId: roomId)
-        withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) { glowOpacity = 1.0 }
+        withAnimation(.easeOut(duration: 0.2)) { glowOpacity = 1.0 }
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
     }
 
