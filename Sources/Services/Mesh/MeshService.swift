@@ -58,6 +58,7 @@ final class MeshService: NSObject, ObservableObject {
         let riderCount: Int
         let rideStatus: String
         let roomCount: Int
+        let rideCode: String    // 4-char confirmation code
     }
 
     override init() {
@@ -108,14 +109,11 @@ final class MeshService: NSObject, ObservableObject {
             riderCount: "1",
             rideStatus: "presence",
             roomCount: "0",
-            version: "2"
+            version: "2",
+            rideCode: ""  // Auto-presence has no ride code — only explicit rides do
         )
 
         advertiser.start(with: info)
-        browser.start()
-        meshState = .browsing
-        Logger.shared.mesh("Auto-presence started: presenceId=\(presenceId.prefix(8)) name=\(name) advertising+[\(Self.serviceType)]")
-    }
 
     func stopAutoPresence() {
         isAutoPresenceActive = false
@@ -130,7 +128,7 @@ final class MeshService: NSObject, ObservableObject {
 
     // MARK: - Lifecycle
 
-    func startAdvertising(rideId: String, rideName: String, leaderName: String, riderCount: Int, roomCount: Int) {
+    func startAdvertising(rideId: String, rideName: String, leaderName: String, riderCount: Int, roomCount: Int, rideCode: String = "") {
         currentRideId = rideId
         currentRiderName = leaderName
         meshState = .advertising
@@ -142,7 +140,8 @@ final class MeshService: NSObject, ObservableObject {
             riderCount: String(riderCount),
             rideStatus: "active",
             roomCount: String(roomCount),
-            version: "2"
+            version: "2",
+            rideCode: rideCode
         )
 
         advertiser.start(with: info)
@@ -355,7 +354,8 @@ extension MeshService: MeshBrowserDelegate {
             leaderName: info.leaderName,
             riderCount: Int(info.riderCount) ?? 0,
             rideStatus: info.rideStatus,
-            roomCount: Int(info.roomCount) ?? 0
+            roomCount: Int(info.roomCount) ?? 0,
+            rideCode: info.rideCode
         )
 
         if !discoveredRides.contains(where: { $0.id == ride.id }) {
@@ -386,6 +386,7 @@ struct MeshDiscoveryInfo {
     let rideStatus: String
     let roomCount: String
     let version: String
+    let rideCode: String    // Short alphanumeric confirmation code
 
     var dictionary: [String: String] {
         [
@@ -395,7 +396,8 @@ struct MeshDiscoveryInfo {
             "rc": riderCount,
             "rs": rideStatus,
             "rmc": roomCount,
-            "v": version
+            "v": version,
+            "cd": rideCode
         ]
     }
 
@@ -417,7 +419,8 @@ struct MeshDiscoveryInfo {
             riderCount: riderCount,
             rideStatus: rideStatus,
             roomCount: roomCount,
-            version: version
+            version: version,
+            rideCode: dict["cd"] ?? ""
         )
     }
 }

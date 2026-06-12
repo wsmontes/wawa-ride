@@ -263,6 +263,15 @@ struct ProfileTabView: View {
                         }
                     }
                 }
+
+                Section {
+                    NavigationLink("Política de Privacidade") {
+                        PrivacyPolicyView()
+                    }
+                    NavigationLink("Sobre o WAWA Ride") {
+                        AboutView()
+                    }
+                }
             }
             .navigationTitle("Perfil")
         }
@@ -282,4 +291,81 @@ struct GeoCoordinate {
 extension Notification.Name {
     static let rideEnded = Notification.Name("rideEnded")
     static let openGeoCoordinate = Notification.Name("openGeoCoordinate")
+}
+
+// MARK: - Privacy Policy View
+
+struct PrivacyPolicyView: View {
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Política de Privacidade")
+                    .font(.title2).fontWeight(.bold)
+
+                Text("Última atualização: Junho 2026")
+                    .font(.caption).foregroundColor(.secondary)
+
+                Text("O WAWA Ride foi construído com privacidade como princípio fundamental. Nós não temos servidores, não coletamos seus dados e não rastreamos você.")
+
+                Group {
+                    Text("Dados que NUNCA saem do seu iPhone")
+                        .font(.headline)
+                    Text("• Sua localização — processada exclusivamente no dispositivo\n• Seu nome, foto e perfil — armazenados apenas localmente\n• Suas rotas e histórico de passeios — no seu iPhone\n• Suas mensagens de voz — transmitidas apenas P2P, nunca armazenadas em servidores\n• Seus contatos — o app nunca acessa")
+
+                    Text("O que é compartilhado (apenas com riders no seu grupo)")
+                        .font(.headline)
+                    Text("• Sua posição no mapa — visível apenas para riders conectados ao mesmo passeio\n• Seu nome/apelido — para identificação no grupo\n• Alertas de perigo que você marcar\n• Mensagens de voz que você enviar\n\nToda comunicação é direta entre dispositivos (P2P) via Bluetooth e WiFi Direct. Nada passa por servidores externos.")
+
+                    Text("Permissões")
+                        .font(.headline)
+                    Text("• Localização: necessária para mostrar sua posição no mapa do grupo. Usada apenas durante o passeio.\n• Microfone: necessário para o walkie-talkie. Usado apenas quando você aperta FALAR.\n• Bluetooth: necessário para descobrir riders próximos e conectar o grupo.\n\nVocê pode revogar qualquer permissão nos Ajustes do iPhone a qualquer momento.")
+
+                    Text("Sem anúncios, sem rastreamento")
+                        .font(.headline)
+                    Text("O WAWA Ride não contém anúncios, não usa frameworks de analytics, não integra SDKs de terceiros para rastreamento, e não monetiza seus dados de forma alguma.")
+
+                    Text("Contato")
+                        .font(.headline)
+                    Text("Para questões sobre privacidade, entre em contato pelo email associado ao desenvolvedor na App Store.")
+                }
+            }
+            .padding()
+        }
+        .navigationTitle("Privacidade")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+// MARK: - About View
+
+struct AboutView: View {
+    var body: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Image(systemName: "motorcycle")
+                .font(.system(size: 64))
+                .foregroundColor(.orange)
+
+            Text("WAWA Ride")
+                .font(.largeTitle).fontWeight(.bold)
+
+            Text("versão \(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1")")
+                .font(.subheadline).foregroundColor(.secondary)
+
+            Text("Passeios de moto em grupo, mais simples.\nVeja o grupo no mapa, compartilhe alertas\ne registre sua rota.")
+                .font(.body).multilineTextAlignment(.center)
+                .foregroundColor(.secondary)
+
+            VStack(spacing: 8) {
+                Text("Zero servidor. Zero login. 100% P2P.")
+                    .font(.caption).fontWeight(.medium).foregroundColor(.orange)
+                Text("Feito para motociclistas, por motociclistas.")
+                    .font(.caption2).foregroundColor(.secondary)
+            }
+
+            Spacer()
+        }
+        .padding()
+    }
 }

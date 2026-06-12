@@ -440,7 +440,17 @@ struct UnifiedMapView: View {
                     HStack {
                         Image(systemName: "motorcycle").font(.title3)
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(ride.rideName).font(.subheadline).fontWeight(.semibold)
+                            HStack(spacing: 4) {
+                                Text(ride.rideName).font(.subheadline).fontWeight(.semibold)
+                                if !ride.rideCode.isEmpty {
+                                    Text("· \(ride.rideCode)")
+                                        .font(.caption).fontWeight(.bold)
+                                        .foregroundColor(.orange)
+                                        .padding(.horizontal, 6).padding(.vertical, 1)
+                                        .background(Color.orange.opacity(0.2))
+                                        .cornerRadius(4)
+                                }
+                            }
                             Text("Líder: \(ride.leaderName) • \(ride.riderCount) riders").font(.caption)
                         }
                         Spacer()
@@ -885,6 +895,21 @@ struct RiderHUD: View {
                 .font(.system(.body, design: .monospaced)).foregroundColor(.white)
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(Color.black.opacity(0.6)).cornerRadius(8)
+
+            // Ride code (visible to leader so riders can confirm verbally)
+            if let code = AppState.shared.currentRideCode, !code.isEmpty {
+                HStack(spacing: 6) {
+                    Text("CÓDIGO")
+                        .font(.system(size: 10, design: .monospaced)).foregroundColor(.secondary)
+                    Text(code)
+                        .font(.system(size: 18, design: .monospaced)).fontWeight(.heavy)
+                        .foregroundColor(.orange)
+                        .tracking(4)
+                }
+                .padding(.horizontal, 14).padding(.vertical, 6)
+                .background(Color.black.opacity(0.5))
+                .cornerRadius(8)
+            }
 
             // Action buttons
             HStack(spacing: 16) {

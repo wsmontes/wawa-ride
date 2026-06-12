@@ -11,6 +11,7 @@ final class AppState: ObservableObject {
     // Current ride
     @Published var currentRideId: String?
     @Published var currentRideName: String?
+    @Published var currentRideCode: String?
     @Published var currentRoomId: String?
     @Published var rideStartedAt: Date?
 
@@ -189,9 +190,12 @@ final class AppState: ObservableObject {
     func reset() {
         currentRideId = nil
         currentRideName = nil
+        currentRideCode = nil
         currentRoomId = nil
         participants.removeAll()
         activeRooms.removeAll()
         hasUnreadMessages = false
+        sweeperConfirmedAll = false
+        sweeperReportedMissing = false
     }
 }

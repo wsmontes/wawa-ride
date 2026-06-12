@@ -89,17 +89,20 @@ final class CreateRideViewModel: ObservableObject {
         let leaderId = profile?.id ?? ""
 
         let rideId = UUID().uuidString
+        let rideCode = generateRideCode()
         AppState.shared.currentRideId = rideId
         AppState.shared.currentRideName = rideName
+        AppState.shared.currentRideCode = rideCode
         AppState.shared.rideStartedAt = Date()
 
-        // Start advertising via BLE
+        // Start advertising via BLE with confirmation code
         MeshService.shared.startAdvertising(
             rideId: rideId,
             rideName: rideName,
             leaderName: leaderName,
             riderCount: 1,
-            roomCount: 2
+            roomCount: 2,
+            rideCode: rideCode
         )
 
         // Start GPS tracking
@@ -119,5 +122,13 @@ final class CreateRideViewModel: ObservableObject {
                 RouteService.shared.setActiveRoute(route)
             }
         }
+
+        Logger.shared.ride("Ride created: '\(rideName)' code=\(rideCode) leader=\(leaderName)")
+    }
+
+    /// Generate a 4-character alphanumeric confirmation code
+    private func generateRideCode() -> String {
+        let chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // No I,O,0,1 to avoid confusion
+        return String((0..<4).map { _ in chars.randomElement()! })
     }
 }
