@@ -48,12 +48,12 @@ O WAWA Ride tem um produto muito bom escondido dentro de um app ambicioso demais
 
 ## Ajustes Técnicos Obrigatórios
 
-1. **Logging persistente** — tela de diagnóstico (Bluetooth, GPS, peers, latência, exportar log)
-2. **Feature flags** — desligar walkie-talkie, voice, salas, KML, turn-by-turn, mesh relay
-3. **Modo pilotando vs parado** — UI diferente para cada estado
-4. **Identidade do passeio** — código curto ou confirmação do líder
-5. **Política de privacidade** — in-app + App Store
-6. **Permissões no contexto** — GPS ao abrir mapa, mic ao falar, etc.
+1. ✅ **Logging persistente** — Logger.swift + DiagnosticView com export
+2. ✅ **Feature flags** — FeatureFlags.swift com 11 flags + toggles na UI
+3. ✅ **Modo pilotando vs parado** — isRiding (speed > 10) esconde overlays
+4. ✅ **Identidade do passeio** — código 4-char exibido no HUD e banner BLE
+5. ✅ **Política de privacidade** — PrivacyPolicyView in-app
+6. ✅ **Permissões no contexto** — banner GPS + alerta microfone com botão Ajustes
 
 ---
 
