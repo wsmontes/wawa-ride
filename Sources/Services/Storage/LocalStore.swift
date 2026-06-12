@@ -7,6 +7,8 @@ final class LocalStore: @unchecked Sendable {
     static let shared = LocalStore()
 
     private var dbQueue: DatabaseQueue!
+    private var consecutiveErrors = 0
+    private let maxConsecutiveErrors = 5
 
     private init() {
         setupDatabase()
@@ -30,6 +32,20 @@ final class LocalStore: @unchecked Sendable {
                 dbQueue = try! DatabaseQueue() // last resort — will crash if this fails
             }
         }
+    }
+
+    /// Log DB errors and track consecutive failures to detect corruption.
+    /// Callers can still use try? — the error is captured here.
+    private func logDBError(_ error: Error, operation: String) {
+        consecutiveErrors += 1
+        Logger.shared.log("LocalStore \(operation) failed (consecutive: \(consecutiveErrors)): \(error.localizedDescription)", category: "storage")
+        if consecutiveErrors >= maxConsecutiveErrors {
+            Logger.shared.log("⚠️ LocalStore may be corrupted — \(consecutiveErrors) consecutive failures", category: "storage")
+        }
+    }
+
+    private func resetErrorCount() {
+        consecutiveErrors = 0
     }
 
     private func createTables() throws {
@@ -239,12 +255,13 @@ final class LocalStore: @unchecked Sendable {
             String(data: $0, encoding: .utf8)
         }
 
-        try dbQueue.write { db in
-            try db.execute(
-                sql: """
-                    INSERT OR REPLACE INTO routes (id, name, created_by, created_at, source, waypoints_json, simplified_track_json, total_distance, estimated_duration, elevation_gain, tags)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
+        do {
+            try dbQueue.write { db in
+                try db.execute(
+                    sql: """
+                        INSERT OR REPLACE INTO routes (id, name, created_by, created_at, source, waypoints_json, simplified_track_json, total_distance, estimated_duration, elevation_gain, tags)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
                 arguments: [
                     route.id, route.name, route.createdBy,
                     route.createdAt.timeIntervalSinceReferenceDate,
@@ -254,6 +271,11 @@ final class LocalStore: @unchecked Sendable {
                     tagsJSON
                 ]
             )
+        }
+            resetErrorCount()
+        } catch {
+            logDBError(error, operation: "saveRoute")
+            throw error
         }
     }
 
