@@ -1113,6 +1113,7 @@ struct RiderHUD: View {
                 Text(secondaryInfo)
                     .font(.system(size: 12, weight: .medium))
                     .foregroundColor(.white.opacity(0.8))
+                    .lineLimit(1)
                     .padding(.horizontal, 10).padding(.vertical, 4)
                     .background(Color.black.opacity(0.5)).cornerRadius(6)
             }
