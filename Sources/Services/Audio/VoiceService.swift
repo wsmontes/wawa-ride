@@ -114,11 +114,11 @@ final class VoiceService: NSObject, ObservableObject {
             // Encode with Opus
             guard let opusFrame = self.codec.encode(pcmData: pcmData) else { return }
 
-            // Send via streams (direct peers)
+            // Send via direct streams only (MCSession streams = low-latency P2P)
+            // Live voice does NOT use mesh relay — relay would add latency
+            // and cause duplicate audio for direct peers. Async voice messages
+            // use mesh relay instead (store-and-forward, not time-sensitive).
             self.sendViaStreams(opusFrame)
-
-            // Send via mesh payload (relay for indirect peers)
-            self.sendViaMesh(opusFrame)
         }
 
         audioEngine.prepare()

@@ -24,11 +24,18 @@ struct UnifiedMapView: View {
     @State private var trackNameInput = ""
     @State private var showMicDeniedAlert = false
     @State private var showStepList = false
+    @State private var pendingHazard: (type: HazardType, coordinate: CLLocationCoordinate2D)?
+    @State private var showHazardUndo = false
+    @State private var hazardUndoTimer: Timer?
+    @State private var riderJoinedName: String?
+    @State private var showRiderJoined = false
 
     let isInRide: Bool
 
     // Riding mode detection
     private var isRiding: Bool { rideVM.speed > 10 }
+    /// Hide non-essential UI while riding for safety
+    private var isRidingAggressive: Bool { rideVM.speed > 30 }
 
     // Permission states
     private var gpsDenied: Bool {
@@ -158,6 +165,24 @@ struct UnifiedMapView: View {
                 }
             }
 
+            // Rider-joined banner (brief overlay when a new peer connects)
+            if showRiderJoined, let name = riderJoinedName {
+                VStack {
+                    Spacer().frame(height: 130)
+                    HStack(spacing: 8) {
+                        Image(systemName: "person.fill.checkmark").foregroundColor(.green)
+                        Text("\(name) entrou no grupo")
+                            .font(.subheadline).fontWeight(.medium)
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .background(.ultraThinMaterial).cornerRadius(20)
+                    .shadow(radius: 8)
+                    Spacer()
+                }
+                .transition(.move(edge: .top).combined(with: .opacity))
+                .allowsHitTesting(false)
+            }
+
             // BLE ride banner (lowest priority — only when idle, no sheets)
             if !isInRide && !mapVM.nearbyRides.isEmpty && sheetState == nil {
                 VStack {
@@ -165,6 +190,36 @@ struct UnifiedMapView: View {
                     nearbyRidesBanner
                     Spacer()
                 }
+            }
+
+            // Hazard undo toast
+            if showHazardUndo, let pending = pendingHazard {
+                VStack {
+                    Spacer().frame(height: UIScreen.main.bounds.height * 0.6)
+                    HStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.yellow)
+                        Text(hazardLabel(pending.type))
+                            .font(.subheadline).fontWeight(.medium).foregroundColor(.white)
+                        Spacer()
+                        Button("DESFAZER") {
+                            hazardUndoTimer?.invalidate()
+                            pendingHazard = nil
+                            showHazardUndo = false
+                            Logger.shared.ride("Hazard undone by user")
+                        }
+                        .font(.caption).fontWeight(.bold).foregroundColor(.white)
+                        .padding(.horizontal, 12).padding(.vertical, 6)
+                        .background(Color.red.opacity(0.8)).cornerRadius(12)
+                    }
+                    .padding(12)
+                    .background(Color.black.opacity(0.85))
+                    .cornerRadius(12)
+                    .padding(.horizontal, 40)
+                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .animation(.spring(response: 0.3), value: showHazardUndo)
+                .allowsHitTesting(true)
             }
 
             // Rider HUD (PTT, hazards — always. Rooms only if feature flag enabled)
@@ -350,7 +405,21 @@ struct UnifiedMapView: View {
         .sheet(isPresented: $showHazardMenu) {
             HazardMenuView { type in
                 if let loc = LocationService.shared.currentLocation {
-                    HazardService.shared.markHazard(type: type, at: loc.coordinate)
+                    // Start undo window instead of sending immediately
+                    pendingHazard = (type, loc.coordinate)
+                    showHazardUndo = true
+                    // Auto-send after 3 seconds unless undone
+                    hazardUndoTimer?.invalidate()
+                    hazardUndoTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { _ in
+                        Task { @MainActor in
+                            if let pending = pendingHazard {
+                                HazardService.shared.markHazard(type: pending.type, at: pending.coordinate)
+                                Logger.shared.ride("Hazard sent: \(pending.type)")
+                            }
+                            pendingHazard = nil
+                            showHazardUndo = false
+                        }
+                    }
                 }
                 showHazardMenu = false
             }
@@ -400,6 +469,12 @@ struct UnifiedMapView: View {
         .onReceive(NotificationCenter.default.publisher(for: .meshPeerConnected)) { notif in
             if let peerID = notif.object as? MCPeerID {
                 mapVM.nearbyPeers.append(peerID.displayName)
+                // Show rider-joined banner briefly
+                riderJoinedName = peerID.displayName
+                withAnimation(.spring(response: 0.3)) { showRiderJoined = true }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                    withAnimation { showRiderJoined = false }
+                }
                 // Save to persistent memory
                 let myName = UserDefaults.standard.string(forKey: "riderProfileName") ?? "Rider"
                 try? LocalStore.shared.saveKnownPeer(
@@ -679,6 +754,19 @@ struct UnifiedMapView: View {
         let minutes = Int(seconds / 60)
         if minutes >= 60 { return "\(minutes / 60)h \(minutes % 60)min" }
         return "\(minutes) min"
+    }
+
+    private func hazardLabel(_ type: HazardType) -> String {
+        switch type {
+        case .pothole: return "Buraco marcado"
+        case .speedTrap: return "Radar marcado"
+        case .police: return "Polícia marcada"
+        case .oil: return "Óleo na pista"
+        case .animal: return "Animal na pista"
+        case .accident: return "Acidente marcado"
+        case .danger: return "Perigo marcado"
+        case .help: return "Pedido de ajuda"
+        }
     }
 
     private func endRide() {
