@@ -49,14 +49,14 @@ Mas o que faz ele ser um **rider app** — a razão de existir — ainda não fo
 
 ### 🟢 Funcionalidades de passeio AUSENTES
 
-| # | Item |
-|---|------|
-| 14 | **Líder/piloto parado** — notificação quando alguém para por mais de 2min |
-| 15 | **Distância entre riders** — "Pedro está 500m atrás" no HUD |
-| 16 | **Varredor confirma grupo** — botão "Todos juntos" / "Alguém ficou" |
-| 17 | **Rota do líder visível para followers** — polyline da rota que o líder está fazendo |
-| 18 | **Resumo pós-passeio real** — distância, altimetria, velocidades (não hardcoded como está agora) |
-| 19 | **Compartilhar rota pós-passeio** — exportar .GPX do passeio completo |
+| # | Item | Status |
+|---|------|--------|
+| 14 | **Líder/piloto parado** — notificação quando alguém para por mais de 2min | ✅ Implementado (build 1e2d2a7) |
+| 15 | **Distância entre riders** — "Pedro está 500m atrás" no HUD | ✅ Implementado (build 1e2d2a7) |
+| 16 | **Varredor confirma grupo** — botão "Todos juntos" / "Alguém ficou" | ✅ Implementado (build 6b7f94e) |
+| 17 | **Rota do líder visível para followers** — polyline da rota que o líder está fazendo | ✅ Código existe (mesh route payloads) |
+| 18 | **Resumo pós-passeio real** — distância, altimetria, velocidades (não hardcoded como estava) | ✅ Implementado (endRide calcula dados reais) |
+| 19 | **Compartilhar rota pós-passeio** — exportar .GPX do passeio completo | ✅ GPX export + mesh share |
 
 ---
 

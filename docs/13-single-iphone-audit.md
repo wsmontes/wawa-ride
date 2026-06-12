@@ -4,6 +4,8 @@ Tudo que dá pra fazer com UM iPhone, sem precisar de segundo dispositivo.
 
 Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 
+**Atualizado:** Build `6b7f94e` — vários itens implementados desde o audit original.
+
 ---
 
 ## 1. Mapas & Navegação
@@ -25,9 +27,9 @@ Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 | 13 | Rerouting ao desviar | ✅ | > 50m |
 | 14 | Indicador de chegada | ✅ | "Você chegou" < 50m |
 | 15 | Resumo ao fim da navegação | ✅ | Distância, tempo, velocidade |
-| 16 | Ver overview da rota durante nav | ❌ | Sem botão/gesto para zoom out |
-| 17 | Step list durante navegação | ❌ | Só instrução atual |
-| 18 | Pausar navegação | ❌ | Só parar (X) |
+| 16 | Ver overview da rota durante nav | ✅ | Botão no NavigationHUD |
+| 17 | Step list durante navegação | ✅ | Botão no NavigationHUD, NavigationStepListView |
+| 18 | Pausar navegação | ✅ | NavigationEngine.pauseNavigation() |
 | 19 | Velocidade atual no HUD | ✅ | |
 | 20 | Limite de velocidade | ❌ | MapKit não expõe |
 | 21 | Mapa 3D | ✅ | isPitchEnabled |
@@ -55,8 +57,8 @@ Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 | 36 | Rota de ida e volta | ❌ | |
 | 37 | Inverter rota | ❌ | |
 | 38 | Distância total da rota | ✅ | |
-| 39 | Elevação da rota | ❌ | Modelo tem elevationGain, mas não calcula |
-| 40 | Perfil de elevação (gráfico) | ❌ | |
+| 39 | Elevação da rota | ✅ | RouteDetailView mostra min/max/ganho |
+| 40 | Perfil de elevação (gráfico) | ✅ | Barras de elevação no RouteDetailView |
 
 ---
 
@@ -64,10 +66,10 @@ Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 
 | # | Feature | Status | Notas |
 |---|---------|--------|-------|
-| 41 | Gravar track enquanto pilota | ⚠️ | RouteService.startRecording existe, sem UI acessível |
-| 42 | Pausar/retomar gravação | ❌ | Só iniciar/parar |
-| 43 | Ver stats ao vivo durante gravação | ❌ | Distância, tempo, velocidade atual |
-| 44 | Salvar track como rota | ⚠️ | Salva via stopRecording, mas sem nome |
+| 41 | Gravar track enquanto pilota | ✅ | Botão record no mapa + RouteService |
+| 42 | Pausar/retomar gravação | ✅ | Botões pause/resume na barra de gravação |
+| 43 | Ver stats ao vivo durante gravação | ✅ | recordingStatusText mostra distância/tempo |
+| 44 | Salvar track como rota | ✅ | Alerta com nome ao parar |
 
 ---
 
@@ -76,17 +78,17 @@ Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 | # | Feature | Status | Notas |
 |---|---------|--------|-------|
 | 45 | Importar .GPX | ✅ | Files app + onOpenURL |
-| 46 | Importar .KML (Google Maps) | ❌ | Google Maps exporta KML, não GPX |
+| 46 | Importar .KML (Google Maps) | ✅ | Feature flag ff_kml_import |
 | 47 | Importar .FIT / .TCX (Garmin/Wahoo) | ❌ | Formatos comuns de ciclismo |
 | 48 | Abrir .GPX de outros apps (Rever, Calimoto) | ✅ | Funciona |
 | 49 | Exportar .GPX | ✅ | Share sheet |
-| 50 | Abrir rota no Apple Maps | ⚠️ | PlaceCard tem botão, mas exporta? |
-| 51 | Abrir rota no Google Maps | ❌ | comgooglemaps:// URL scheme |
-| 52 | Abrir rota no Waze | ❌ | waze:// URL scheme |
+| 50 | Abrir rota no Apple Maps | ✅ | RouteDetailView → MapAppsExporter |
+| 51 | Abrir rota no Google Maps | ✅ | RouteDetailView, verifica disponibilidade |
+| 52 | Abrir rota no Waze | ✅ | RouteDetailView, verifica disponibilidade |
 | 53 | Compartilhar rota como link | ❌ | |
 | 54 | Compartilhar rota como imagem | ❌ | Screenshot do mapa com rota |
 | 55 | Compartilhar coordenadas | ✅ | Copiar no PlaceCard |
-| 56 | Receber coordenadas (geo URI) | ❌ | geo:lat,lng |
+| 56 | Receber coordenadas (geo URI) | ✅ | onOpenURL + FeatureFlags.geoURI |
 
 ---
 
@@ -96,10 +98,10 @@ Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 |---|---------|--------|-------|
 | 57 | Lista de rotas salvas | ✅ | RoutesLibraryView |
 | 58 | Ver detalhes da rota | ✅ | RouteDetailView |
-| 59 | Deletar rota | ❌ | .onDelete sem implementação |
-| 60 | Renomear rota | ❌ | |
-| 61 | Duplicar rota | ❌ | |
-| 62 | Ordenar rotas (data, nome, distância) | ❌ | Só por data |
+| 59 | Deletar rota | ✅ | Swipe + confirmation dialog |
+| 60 | Renomear rota | ✅ | Swipe rename action |
+| 61 | Duplicar rota | ✅ | Botão no RouteDetailView |
+| 62 | Ordenar rotas (data, nome, distância) | ✅ | Menu de ordenação |
 | 63 | Filtrar rotas (importada, gravada, etc) | ❌ | |
 
 ---
@@ -111,8 +113,8 @@ Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 | 64 | Editar nome/apelido | ✅ | ProfileTabView |
 | 65 | Editar moto | ✅ | |
 | 66 | Mudar função padrão | ✅ | Líder/Rider/Varredor |
-| 67 | Foto de perfil | ⚠️ | Botão existe, sem implementação de picker |
-| 68 | Ativar/desativar voz (TTS) | ❌ | VoiceAssistant.isMuted existe, sem UI |
+| 67 | Foto de perfil | ✅ | PhotosPicker com compressão 200KB |
+| 68 | Ativar/desativar voz (TTS) | ✅ | Botão speaker no mapa + NavigationHUD |
 | 69 | Unidades (km/milhas) | ❌ | |
 | 70 | Tipo de mapa padrão | ❌ | Sempre standard |
 | 71 | Configurações de áudio | ❌ | Sem UI |
@@ -120,7 +122,7 @@ Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 | 73 | Limpar histórico de buscas | ✅ | Botão "Limpar" |
 | 74 | Limpar todas as rotas | ❌ | |
 | 75 | Limpar histórico de passeios | ❌ | |
-| 76 | Exportar todos os dados | ❌ | |
+| 76 | Exportar todos os dados | ✅ | DiagnosticView exporta log |
 | 77 | Sobre / versão do app | ❌ | |
 
 ---
@@ -130,7 +132,7 @@ Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 | # | Feature | Status | Notas |
 |---|---------|--------|-------|
 | 78 | Lista de passeios passados | ✅ | RidesListView |
-| 79 | Estatísticas reais do passeio | ❌ | Dados hardcoded (3600s, nil) |
+| 79 | Estatísticas reais do passeio | ✅ | endRide() calcula distância, duração, alt, velocidade |
 | 80 | Ver rota do passeio no mapa | ❌ | |
 | 81 | Compartilhar resumo do passeio | ❌ | |
 | 82 | Deletar passeio do histórico | ❌ | |
@@ -154,8 +156,8 @@ Legenda: ✅ Feito | ⚠️ Parcial/Bug | ❌ Não existe
 
 | # | Feature | Status | Notas |
 |---|---------|--------|-------|
-| 89 | GPS negado → tela de erro | ❌ | Só não inicia tracking |
-| 90 | Microfone negado → feedback | ❌ | Sem indicação |
+| 89 | GPS negado → tela de erro | ✅ | Banner "GPS desativado" + botão Ajustes |
+| 90 | Microfone negado → feedback | ✅ | Alerta "Microfone necessário" + botão Ajustes |
 | 91 | Bluetooth desligado → feedback | ⚠️ | JoinView mostra, mapa não |
 | 92 | Sem internet → fallback | ⚠️ | MapKit cache, sem feedback visual |
 | 93 | GPS sinal fraco → indicador | ❌ | |
