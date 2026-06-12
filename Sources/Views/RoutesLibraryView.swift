@@ -99,7 +99,7 @@ struct RoutesLibraryView: View {
                 }
                 Button("Cancelar", role: .cancel) { showDeleteConfirm = nil }
             } message: {
-                Text("\"\(showDeleteConfirm?.name ?? "")\" será removida permanentemente.")
+                Text("\"\(showDeleteConfirm?.name ?? "")\" será removida permanentemente. Você pode importar o arquivo .GPX novamente depois.")
             }
             .alert("Renomear rota", isPresented: Binding(get: { showRename != nil }, set: { if !$0 { showRename = nil } })) {
                 TextField("Nome", text: $renameText)
