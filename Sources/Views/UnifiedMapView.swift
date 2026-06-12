@@ -29,6 +29,7 @@ struct UnifiedMapView: View {
     @State private var hazardUndoTimer: Timer?
     @State private var riderJoinedName: String?
     @State private var showRiderJoined = false
+    @State private var showFirstTimeHint = false
 
     let isInRide: Bool
 
@@ -181,6 +182,62 @@ struct UnifiedMapView: View {
                 }
                 .transition(.move(edge: .top).combined(with: .opacity))
                 .allowsHitTesting(false)
+            }
+
+            // Auto-presence status indicator (idle, listening for nearby riders)
+            if !isInRide && mapVM.nearbyRides.isEmpty && sheetState == nil {
+                VStack {
+                    Spacer().frame(height: 110)
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(Color.green.opacity(0.7))
+                            .frame(width: 7, height: 7)
+                            .overlay(
+                                Circle().fill(Color.green.opacity(0.3))
+                                    .frame(width: 13, height: 13)
+                                    .opacity(1.0)
+                            )
+                        Text("Ouvindo rides próximos")
+                            .font(.caption).foregroundColor(.secondary)
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 7)
+                    .background(.ultraThinMaterial).cornerRadius(16)
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.5)) { showFirstTimeHint.toggle() }
+                    }
+                    Spacer()
+                }
+                .allowsHitTesting(true)
+            }
+
+            // First-time hint (shown briefly, can be dismissed)
+            if !isInRide && showFirstTimeHint && mapVM.nearbyRides.isEmpty && sheetState == nil {
+                VStack {
+                    Spacer().frame(height: 160)
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Image(systemName: "antenna.radiowaves.left.and.right").foregroundColor(.orange)
+                            Text("Como funciona").font(.headline).foregroundColor(.white)
+                            Spacer()
+                            Button {
+                                withAnimation { showFirstTimeHint = false }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill").font(.title3).foregroundColor(.secondary)
+                            }
+                        }
+                        Text("Quando outros riders abrirem o app perto de você, um banner verde aparece aqui. Toque ENTRAR e já estarão conectados — sem código, sem link, sem internet.")
+                            .font(.caption).foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(14)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(14)
+                    .shadow(radius: 12)
+                    .padding(.horizontal, 24)
+                    Spacer()
+                }
+                .transition(.opacity)
+                .allowsHitTesting(true)
             }
 
             // BLE ride banner (lowest priority — only when idle, no sheets)
@@ -497,6 +554,16 @@ struct UnifiedMapView: View {
             if isInRide { setupRideSession() }
             // Always share location when peers are connected (even without a ride)
             setupAutoLocationSharing()
+
+            // Auto-show first-time hint after 8s if no rides found (once per session)
+            if !isInRide && !UserDefaults.standard.bool(forKey: "didShowFirstTimeHint") {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 8) {
+                    if mapVM.nearbyRides.isEmpty && sheetState == nil {
+                        withAnimation { showFirstTimeHint = true }
+                        UserDefaults.standard.set(true, forKey: "didShowFirstTimeHint")
+                    }
+                }
+            }
         }
         .onDisappear {
             mapVM.stopBrowsing()
