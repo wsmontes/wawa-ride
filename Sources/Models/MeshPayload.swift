@@ -65,6 +65,7 @@ enum MeshPayloadType: String, Codable {
     case rideEnded
     case fullState
     case fullStateRequest
+    case sweeperConfirm
 }
 
 enum MeshPriority: Int, Codable, Comparable {
@@ -178,4 +179,8 @@ struct FullStatePayload: Codable {
     let rooms: [Room]
     let activeRoute: Route?
     let activeAlerts: [HazardAlert]
+}
+
+struct SweeperPayload: Codable {
+    let message: String
 }

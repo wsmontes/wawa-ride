@@ -585,6 +585,11 @@ struct UnifiedMapView: View {
             }
         case .rideEnded:
             NotificationCenter.default.post(name: .rideEnded, object: nil)
+        case .sweeperConfirm:
+            if let sp = try? JSONDecoder().decode(SweeperPayload.self, from: payload.payload) {
+                VoiceAssistant.shared.speak(sp.message)
+                Logger.shared.ride("Sweeper confirmation received: \(sp.message)")
+            }
         default: break
         }
     }
@@ -928,6 +933,44 @@ struct RiderHUD: View {
                 }
             }
 
+            // Sweeper confirmation (only visible to sweepers)
+            if isSweeper && !hasConfirmed {
+                HStack(spacing: 12) {
+                    Button {
+                        AppState.shared.sweeperConfirmAll()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("Todos juntos")
+                        }
+                        .font(.caption).fontWeight(.semibold)
+                        .foregroundColor(.white).padding(.horizontal, 14).padding(.vertical, 10)
+                        .background(Color.green).cornerRadius(20)
+                    }
+
+                    Button {
+                        AppState.shared.sweeperReportMissing()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                            Text("Alguém ficou")
+                        }
+                        .font(.caption).fontWeight(.semibold)
+                        .foregroundColor(.white).padding(.horizontal, 14).padding(.vertical, 10)
+                        .background(Color.red).cornerRadius(20)
+                    }
+                }
+                .padding(.bottom, 4)
+            } else if isSweeper && AppState.shared.sweeperConfirmedAll {
+                Text("✅ Grupo completo")
+                    .font(.caption).fontWeight(.medium).foregroundColor(.green)
+                    .padding(.bottom, 4)
+            } else if isSweeper && AppState.shared.sweeperReportedMissing {
+                Text("⚠️ Reportado")
+                    .font(.caption).fontWeight(.medium).foregroundColor(.red)
+                    .padding(.bottom, 4)
+            }
+
             // End ride
             Button(action: onEndRide) {
                 Text("Encerrar Passeio")
@@ -936,6 +979,17 @@ struct RiderHUD: View {
             }
             .padding(.bottom, 24)
         }
+    }
+
+    private var isSweeper: Bool {
+        guard let profileId = UserDefaults.standard.string(forKey: "riderProfileId"),
+              let participant = AppState.shared.participants.first(where: { $0.riderId == profileId })
+        else { return false }
+        return participant.role == .sweeper
+    }
+
+    private var hasConfirmed: Bool {
+        AppState.shared.sweeperConfirmedAll || AppState.shared.sweeperReportedMissing
     }
 
     private var statusText: String {

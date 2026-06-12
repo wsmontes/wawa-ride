@@ -28,7 +28,24 @@ final class AppState: ObservableObject {
 
     // MARK: - Participant Management
 
+    /// Disambiguate duplicate names by appending a numeric suffix.
+    /// "Pedro", "Pedro" → "Pedro", "Pedro 2"
+    private func disambiguateName(_ name: String, excluding senderId: String? = nil) -> String {
+        let sameName = participants.filter {
+            $0.riderId != (senderId ?? "") && $0.name == name
+        }
+        if sameName.isEmpty { return name }
+
+        // Count how many have this base name (including self)
+        let allWithName = participants.filter {
+            ($0.riderId == (senderId ?? "")) || $0.name.hasPrefix(name)
+        }
+        let next = allWithName.count + 1
+        return "\(name) \(next)"
+    }
+
     func updateParticipant(senderId: String, senderName: String, location: LocationPayload) {
+        let displayName = disambiguateName(senderName, excluding: senderId)
         if let index = participants.firstIndex(where: { $0.riderId == senderId }) {
             participants[index].latitude = location.lat
             participants[index].longitude = location.lng
@@ -52,7 +69,7 @@ final class AppState: ObservableObject {
         } else {
             var participant = RideParticipant(
                 riderId: senderId,
-                name: senderName,
+                name: displayName,
                 bikeModel: nil,
                 role: .rider,
                 isConnected: true,
@@ -130,6 +147,43 @@ final class AppState: ObservableObject {
         if dist < 10 { return "perto" }
         if dist < 1000 { return "\(Int(dist))m" }
         return String(format: "%.1f km", dist / 1000)
+    }
+
+    // MARK: - Sweeper Confirmation
+
+    /// Whether the sweeper has confirmed the group is complete
+    @Published var sweeperConfirmedAll = false
+    @Published var sweeperReportedMissing = false
+
+    func sweeperConfirmAll() {
+        sweeperConfirmedAll = true
+        sweeperReportedMissing = false
+        Logger.shared.ride("Sweeper confirmed: all together")
+
+        // Notify group via mesh
+        sendSweeperConfirmation(message: "✅ Grupo completo. Todos juntos.")
+    }
+
+    func sweeperReportMissing() {
+        sweeperConfirmedAll = false
+        sweeperReportedMissing = true
+        Logger.shared.ride("Sweeper reported: someone missing")
+
+        // Notify group via mesh
+        sendSweeperConfirmation(message: "⚠️ Varredor reportou: alguém ficou para trás!")
+    }
+
+    private func sendSweeperConfirmation(message: String) {
+        let payload = MeshPayload(
+            type: .sweeperConfirm,
+            senderId: UserDefaults.standard.string(forKey: "riderProfileId") ?? "",
+            senderName: UserDefaults.standard.string(forKey: "riderProfileName") ?? "",
+            rideId: currentRideId ?? "",
+            ttl: 3,
+            priority: .high,
+            payload: try! JSONEncoder().encode(SweeperPayload(message: message))
+        )
+        TransportManager.shared.send(payload)
     }
 
     func reset() {
