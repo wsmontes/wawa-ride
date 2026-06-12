@@ -1039,33 +1039,40 @@ struct NavigationHUD: View {
                     .foregroundColor(.white.opacity(0.8))
                 }
                 Spacer()
-                Button { onOverview?() } label: {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.caption).padding(6)
-                        .background(Color.white.opacity(0.2)).clipShape(Circle())
+                // Action buttons — 44pt minimum touch targets
+                HStack(spacing: 10) {
+                    Button { onOverview?() } label: {
+                        Image(systemName: "arrow.up.left.and.arrow.down.right")
+                            .font(.body).frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.2)).clipShape(Circle())
+                    }
+                    .accessibilityLabel("Visão geral da rota")
+                    Button { onStepList?() } label: {
+                        Image(systemName: "list.bullet")
+                            .font(.body).frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.2)).clipShape(Circle())
+                    }
+                    .accessibilityLabel("Lista de passos")
+                    Button {
+                        VoiceAssistant.shared.isMuted.toggle()
+                    } label: {
+                        Image(systemName: VoiceAssistant.shared.isMuted ? "speaker.slash" : "speaker.wave.2")
+                            .font(.body).frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.2)).clipShape(Circle())
+                    }
+                    .accessibilityLabel(VoiceAssistant.shared.isMuted ? "Ativar voz" : "Desativar voz")
+                    // Stop — larger, visually distinct
+                    Button { onStop?() } label: {
+                        Image(systemName: "xmark")
+                            .font(.title3).fontWeight(.bold)
+                            .frame(width: 44, height: 44)
+                            .background(Color.white.opacity(0.25)).clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 2))
+                    }
+                    .accessibilityLabel("Parar navegação")
                 }
-                .accessibilityLabel("Visão geral da rota")
-                Button { onStepList?() } label: {
-                    Image(systemName: "list.bullet")
-                        .font(.caption).padding(6)
-                        .background(Color.white.opacity(0.2)).clipShape(Circle())
-                }
-                .accessibilityLabel("Lista de passos")
-                Button {
-                    VoiceAssistant.shared.isMuted.toggle()
-                } label: {
-                    Image(systemName: VoiceAssistant.shared.isMuted ? "speaker.slash" : "speaker.wave.2")
-                        .font(.caption).padding(6)
-                        .background(Color.white.opacity(0.2)).clipShape(Circle())
-                }
-                .accessibilityLabel(VoiceAssistant.shared.isMuted ? "Ativar voz" : "Desativar voz")
-                Button { onStop?() } label: {
-                    Image(systemName: "xmark").font(.caption).padding(6)
-                        .background(Color.white.opacity(0.2)).clipShape(Circle())
-                }
-                .accessibilityLabel("Parar navegação")
             }
-            .padding(12).background(Color.green.opacity(0.85)).cornerRadius(12).padding(.horizontal, 8)
+            .padding(10).background(Color.green.opacity(0.85)).cornerRadius(12).padding(.horizontal, 8)
         }
     }
 }
