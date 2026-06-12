@@ -40,7 +40,14 @@ struct DirectionsPreviewView: View {
 
             if viewModel.isLoading {
                 Spacer()
-                ProgressView("Calculando rota...")
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.3)
+                    Text("Calculando melhor rota...")
+                        .font(.subheadline).foregroundColor(.secondary)
+                    Text("Usando MapKit para traçar o caminho mais rápido")
+                        .font(.caption).foregroundColor(.secondary.opacity(0.7))
+                }
                 Spacer()
             } else if let error = viewModel.error {
                 Spacer()

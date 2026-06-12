@@ -345,7 +345,7 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					43061D48CAE6F9A1C5F0B28D = {
-						DevelopmentTeam = 955573A4YH;
+						DevelopmentTeam = BU5227WFYX;
 					};
 				};
 			};
@@ -459,7 +459,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/Resources/WAWARide.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 955573A4YH;
+				DEVELOPMENT_TEAM = BU5227WFYX;
 				INFOPLIST_FILE = Sources/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -606,7 +606,7 @@
 				CODE_SIGN_ENTITLEMENTS = Sources/Resources/WAWARide.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 955573A4YH;
+				DEVELOPMENT_TEAM = BU5227WFYX;
 				INFOPLIST_FILE = Sources/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
