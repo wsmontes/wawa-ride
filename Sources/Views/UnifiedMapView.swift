@@ -503,7 +503,7 @@ struct UnifiedMapView: View {
                 trackNameInput = ""
             }
             Button("Descartar", role: .destructive) {
-                RouteService.shared.stopRecording()
+                RouteService.shared.stopRecording(save: false)
             }
             Button("Cancelar", role: .cancel) { showSaveTrackAlert = false }
         } message: {

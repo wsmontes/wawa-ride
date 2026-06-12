@@ -88,7 +88,7 @@ final class RouteService: ObservableObject {
         }
     }
 
-    func stopRecording(name: String? = nil) {
+    func stopRecording(name: String? = nil, save: Bool = true) {
         guard isRecording else { return }
         isRecording = false
         isPaused = false
@@ -104,13 +104,27 @@ final class RouteService: ObservableObject {
             currentRoute?.totalDistance = recordingDistance
         }
 
-        // Save locally
-        if let route = currentRoute {
-            try? LocalStore.shared.saveRoute(route)
+        if save {
+            // Save locally
+            if let route = currentRoute {
+                try? LocalStore.shared.saveRoute(route)
+            }
+            // Send complete route via mesh
+            sendFullRouteToMesh()
+            Logger.shared.ride("Recording saved: '\(currentRoute?.name ?? "")' distance=\(String(format: "%.1f", recordingDistance / 1000))km")
+        } else {
+            Logger.shared.ride("Recording discarded: \(trackPoints.count) points")
         }
 
-        // Send complete route via mesh
-        sendFullRouteToMesh()
+        // Clear state after save or discard
+        trackPoints = []
+        currentRoute = nil
+        recordingStartTime = nil
+        pauseStartTime = nil
+        pausedDuration = 0
+        recordingDistance = 0
+        recordingElapsed = 0
+        recordingAvgSpeed = 0
     }
 
     var recordingStatusText: String {
