@@ -9,6 +9,7 @@ import PhotosUI
 @main
 struct WAWARideApp: App {
     @StateObject private var appState = AppState.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -17,6 +18,34 @@ struct WAWARideApp: App {
                 .preferredColorScheme(.dark)
                 .dynamicTypeSize(.xSmall ... .xxxLarge)  // Support all Dynamic Type sizes
                 .onOpenURL { handleOpenURL($0) }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .background:
+                // Persist active ride ID so we can restore on relaunch
+                if let rideId = appState.currentRideId {
+                    UserDefaults.standard.set(rideId, forKey: "lastActiveRideId")
+                    UserDefaults.standard.set(appState.currentRideName, forKey: "lastActiveRideName")
+                    UserDefaults.standard.set(appState.currentRideCode, forKey: "lastActiveRideCode")
+                    Logger.shared.ride("App backgrounded — ride '\(appState.currentRideName ?? "")' persisted")
+                }
+            case .active:
+                // Restore ride if app was killed and relaunched
+                if appState.currentRideId == nil,
+                   let savedRideId = UserDefaults.standard.string(forKey: "lastActiveRideId"),
+                   let savedRideName = UserDefaults.standard.string(forKey: "lastActiveRideName") {
+                    appState.currentRideId = savedRideId
+                    appState.currentRideName = savedRideName
+                    appState.currentRideCode = UserDefaults.standard.string(forKey: "lastActiveRideCode")
+                    Logger.shared.ride("App relaunched — restoring ride '\(savedRideName)'")
+                    // Clear saved state since we restored it
+                    UserDefaults.standard.removeObject(forKey: "lastActiveRideId")
+                    UserDefaults.standard.removeObject(forKey: "lastActiveRideName")
+                    UserDefaults.standard.removeObject(forKey: "lastActiveRideCode")
+                }
+            default:
+                break
+            }
         }
     }
 

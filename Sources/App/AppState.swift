@@ -215,5 +215,9 @@ final class AppState: ObservableObject {
         hasUnreadMessages = false
         sweeperConfirmedAll = false
         sweeperReportedMissing = false
+        // Clear persisted ride state
+        UserDefaults.standard.removeObject(forKey: "lastActiveRideId")
+        UserDefaults.standard.removeObject(forKey: "lastActiveRideName")
+        UserDefaults.standard.removeObject(forKey: "lastActiveRideCode")
     }
 }
