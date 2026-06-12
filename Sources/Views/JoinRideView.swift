@@ -195,18 +195,23 @@ final class JoinRideViewModel: ObservableObject {
     func createRide(name: String) {
         let profile = LocalStore.shared.loadProfile()
         let leaderName = profile?.name ?? "Líder"
+        let leaderId = profile?.id ?? ""
 
         let rideId = UUID().uuidString
+        let rideCode = generateRideCode()
         AppState.shared.currentRideId = rideId
         AppState.shared.currentRideName = name
+        AppState.shared.currentRideCode = rideCode
+        AppState.shared.rideStartedAt = Date()
 
-        // Start advertising
+        // Start advertising with confirmation code
         mesh.startAdvertising(
             rideId: rideId,
             rideName: name,
             leaderName: leaderName,
             riderCount: 1,
-            roomCount: 2  // Geral + Alertas
+            roomCount: 2,
+            rideCode: rideCode
         )
 
         // Start tracking
@@ -216,10 +221,17 @@ final class JoinRideViewModel: ObservableObject {
         RoomService.shared.createDefaultRooms(rideId: rideId)
 
         // Create ride
-        let ride = Ride(id: rideId, name: name, leaderId: profile?.id ?? "", leaderName: leaderName)
+        let ride = Ride(id: rideId, name: name, leaderId: leaderId, leaderName: leaderName)
         try? LocalStore.shared.saveRide(ride)
+
+        Logger.shared.ride("Ride created via JoinView: '\(name)' code=\(rideCode) leader=\(leaderName)")
 
         // Navigate to live map
         showLiveMap = true
+    }
+
+    private func generateRideCode() -> String {
+        let chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        return String((0..<4).map { _ in chars.randomElement()! })
     }
 }
