@@ -30,6 +30,7 @@ struct UnifiedMapView: View {
     @State private var riderJoinedName: String?
     @State private var showRiderJoined = false
     @State private var showFirstTimeHint = false
+    @State private var periodicUpdateTimer: Timer?
 
     let isInRide: Bool
 
@@ -566,6 +567,8 @@ struct UnifiedMapView: View {
             }
         }
         .onDisappear {
+            periodicUpdateTimer?.invalidate()
+            periodicUpdateTimer = nil
             mapVM.stopBrowsing()
             if !isInRide { MeshService.shared.stopAutoPresence() }
         }
@@ -759,7 +762,9 @@ struct UnifiedMapView: View {
     }
 
     private func startPeriodicUpdates() {
-        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
+        // Prevent duplicate timers — invalidate existing before creating new
+        periodicUpdateTimer?.invalidate()
+        periodicUpdateTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
             Task { @MainActor in
                 rideVM.updateParticipants(AppState.shared.participants)
                 rideVM.updateAlerts(HazardService.shared.activeAlerts)

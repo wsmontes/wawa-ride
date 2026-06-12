@@ -52,6 +52,10 @@ final class LocationService: NSObject, ObservableObject, CLLocationManagerDelega
             return
         }
         isTracking = true
+        // Use best accuracy for active rides, degraded for auto-presence only
+        let isInRide = AppState.shared.currentRideId != nil
+        manager.desiredAccuracy = isInRide ? kCLLocationAccuracyBest : kCLLocationAccuracyNearestTenMeters
+        manager.distanceFilter = isInRide ? 3 : 10
         manager.startUpdatingLocation()
         manager.startUpdatingHeading()
         scheduleAdaptiveUpdates()
