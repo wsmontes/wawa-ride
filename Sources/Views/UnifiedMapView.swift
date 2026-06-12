@@ -472,6 +472,7 @@ struct UnifiedMapView: View {
                         Task { @MainActor in
                             if let pending = pendingHazard {
                                 HazardService.shared.markHazard(type: pending.type, at: pending.coordinate)
+                                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                                 Logger.shared.ride("Hazard sent: \(pending.type)")
                             }
                             pendingHazard = nil
@@ -527,6 +528,8 @@ struct UnifiedMapView: View {
         .onReceive(NotificationCenter.default.publisher(for: .meshPeerConnected)) { notif in
             if let peerID = notif.object as? MCPeerID {
                 mapVM.nearbyPeers.append(peerID.displayName)
+                // Haptic + visual feedback for rider joined
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
                 // Show rider-joined banner briefly
                 riderJoinedName = peerID.displayName
                 withAnimation(.spring(response: 0.3)) { showRiderJoined = true }

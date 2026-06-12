@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import MapKit
+import UIKit
 
 // MARK: - Route Service
 
@@ -39,6 +40,7 @@ final class RouteService: ObservableObject {
         recordingDistance = 0
         recordingElapsed = 0
         recordingAvgSpeed = 0
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
     }
 
     func pauseRecording() {
