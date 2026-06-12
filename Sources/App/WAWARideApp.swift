@@ -113,12 +113,12 @@ struct ContentView: View {
                         .tabItem { Label("Mapa", systemImage: "map") }
                         .tag(0)
 
-                    RoutesLibraryView()
-                        .tabItem { Label("Rotas", systemImage: "point.topleft.down.curvedto.point.bottomright.up") }
-                        .tag(1)
-
                     RidesListView(showCreateRide: $showCreateRide)
                         .tabItem { Label("Passeios", systemImage: "motorcycle") }
+                        .tag(1)
+
+                    RoutesLibraryView()
+                        .tabItem { Label("Rotas", systemImage: "point.topleft.down.curvedto.point.bottomright.up") }
                         .tag(2)
 
                     ProfileTabView()
