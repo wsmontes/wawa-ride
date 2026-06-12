@@ -59,6 +59,8 @@ struct RideParticipant: Codable, Identifiable {
     var isMoving: Bool
     var batteryLevel: Float?
     var offlineSince: Date?
+    var lastMovingAt: Date?       // When rider was last above walking speed
+    var stoppedNotified: Bool = false  // Already notified about stop
 
     // Rooms
     var activeRooms: [String]

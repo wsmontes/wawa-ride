@@ -596,6 +596,16 @@ struct UnifiedMapView: View {
                 rideVM.updateAlerts(HazardService.shared.activeAlerts)
                 rideVM.offRouteDistance = NavigationEngine.shared.offRouteDistance
                 rideVM.updateNavigationFromEngine()
+
+                // Check for stopped riders (2+ min immobile)
+                let stopped = AppState.shared.checkStoppedRiders()
+                for rider in stopped {
+                    let name = rider.name
+                    let dist = AppState.shared.distanceString(rider)
+                    VoiceAssistant.shared.speak("\(name) está parado há mais de 2 minutos, a \(dist)")
+                    AppState.shared.markStoppedNotified(rider.riderId)
+                    Logger.shared.ride("Stopped rider notified: \(name) at \(dist)")
+                }
             }
         }
     }

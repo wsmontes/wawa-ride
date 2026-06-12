@@ -135,7 +135,19 @@ final class LiveMapViewModel: ObservableObject {
             let eta = formatDuration(route.expectedTravelTime)
             return "\(Int(speed)) km/h • \(String(format: "%.1f", km)) km • \(eta)"
         }
-        return "\(Int(speed)) km/h"
+        // Show speed + closest rider distance
+        var parts: [String] = []
+        if speed > 0 { parts.append("\(Int(speed)) km/h") }
+        let connected = AppState.shared.participantsByDistance()
+        if let (closest, dist) = connected.first, closest.riderId != UserDefaults.standard.string(forKey: "riderProfileId") {
+            if dist < 1000 {
+                parts.append("\(closest.name) \(Int(dist))m")
+            } else {
+                parts.append("\(closest.name) \(String(format: "%.1f", dist / 1000))km")
+            }
+        }
+        if parts.isEmpty { parts.append("WAWA Ride") }
+        return parts.joined(separator: " • ")
     }
 
     var navigationStatusText: String {
