@@ -33,6 +33,9 @@ struct HazardMenuView: View {
                             .background(Color(.systemGray5))
                             .cornerRadius(16)
                         }
+                        .accessibilityLabel(type.displayName)
+                        .accessibilityHint("Marca um alerta de \(type.displayName) no mapa")
+                        .accessibilityAddTraits(.isButton)
                     }
                 }
                 .padding(.horizontal)
