@@ -39,7 +39,7 @@ final class MeshService: NSObject, ObservableObject {
     private(set) var lastPeerName = "—"
 
     // Callbacks
-    var onPayloadReceived: ((MeshPayload) -> Void)?
+    var onPayloadReceived: ((MeshPayload, MCPeerID) -> Void)?
     var onPeerConnected: ((MCPeerID) -> Void)?
     var onPeerDisconnected: ((MCPeerID) -> Void)?
 
@@ -231,8 +231,8 @@ final class MeshService: NSObject, ObservableObject {
         lastPayloadType = String(describing: payload.type)
         Logger.shared.mesh("RECV \(payload.type) from \(payload.senderName) (TTL:\(payload.ttl) size:\(data.count)B)")
 
-        // Dispatch to handler
-        onPayloadReceived?(payload)
+        // Dispatch to handler with peerID for identity mapping
+        onPayloadReceived?(payload, peerID)
 
         // Forward with TTL-1 if applicable
         // Clamp TTL to prevent infinite flooding (max 10 hops)

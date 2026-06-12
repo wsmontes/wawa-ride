@@ -545,6 +545,9 @@ struct UnifiedMapView: View {
         .onReceive(NotificationCenter.default.publisher(for: .meshPeerDisconnected)) { notif in
             if let peerID = notif.object as? MCPeerID {
                 mapVM.nearbyPeers.removeAll { $0 == peerID.displayName }
+                // Mark participant as offline using peer→senderId mapping
+                AppState.shared.setParticipantOffline(byPeerName: peerID.displayName)
+                rideVM.updateParticipants(AppState.shared.participants)
             }
         }
         .onAppear {
@@ -644,8 +647,8 @@ struct UnifiedMapView: View {
         }
 
         // Process incoming payloads
-        MeshService.shared.onPayloadReceived = { payload in
-            Task { @MainActor in handleMeshPayload(payload) }
+        MeshService.shared.onPayloadReceived = { payload, peerID in
+            Task { @MainActor in handleMeshPayload(payload, from: peerID) }
         }
 
         MeshService.shared.onPeerConnected = { _ in
@@ -694,10 +697,12 @@ struct UnifiedMapView: View {
         ))
     }
 
-    private func handleMeshPayload(_ payload: MeshPayload) {
+    private func handleMeshPayload(_ payload: MeshPayload, from peerID: MCPeerID) {
         switch payload.type {
         case .locationUpdate:
             if let loc = try? JSONDecoder().decode(LocationPayload.self, from: payload.payload) {
+                // Map peer displayName → senderId for offline detection
+                AppState.shared.mapPeerToSender(peerName: peerID.displayName, senderId: payload.senderId)
                 AppState.shared.updateParticipant(senderId: payload.senderId, senderName: payload.senderName, location: loc)
                 rideVM.updateParticipants(AppState.shared.participants)
                 // Also update auto-presence peers list

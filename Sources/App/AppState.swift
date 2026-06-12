@@ -22,6 +22,9 @@ final class AppState: ObservableObject {
     @Published var activeRooms: [Room] = []
     @Published var hasUnreadMessages = false
 
+    // Maps MCPeerID displayName → senderId for offline detection
+    private var peerToSenderId: [String: String] = [:]
+
     // Pending navigation (from ExploreMapView)
     @Published var pendingNavigationRoute: MKRoute?
 
@@ -96,6 +99,21 @@ final class AppState: ObservableObject {
 
     func removeParticipant(_ riderId: String) {
         participants.removeAll { $0.riderId == riderId }
+    }
+
+    /// Store MCPeerID displayName → senderId mapping for offline detection
+    func mapPeerToSender(peerName: String, senderId: String) {
+        peerToSenderId[peerName] = senderId
+    }
+
+    /// Mark participant as offline by MCPeerID displayName
+    func setParticipantOffline(byPeerName peerName: String) {
+        guard let senderId = peerToSenderId[peerName],
+              let index = participants.firstIndex(where: { $0.riderId == senderId })
+        else { return }
+        participants[index].isConnected = false
+        participants[index].offlineSince = Date()
+        Logger.shared.mesh("Participant offline: \(participants[index].name) (peer: \(peerName))")
     }
 
     func setParticipantOffline(_ riderId: String) {
