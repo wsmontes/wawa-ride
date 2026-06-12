@@ -211,7 +211,7 @@ struct SearchBarView: View {
 
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(highlightMatch(in: completion.title, query: searchText))
-                                            .font(.system(size: 16))
+                                            .font(.system(size: 17, weight: .semibold))
                                             .foregroundColor(.primary)
                                             .lineLimit(1)
 
