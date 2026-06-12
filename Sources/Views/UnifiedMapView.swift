@@ -793,8 +793,18 @@ struct UnifiedMapView: View {
     }
 
     private func stopNavWithSummary() {
-        endNavDistance = rideVM.remainingDistance
-        endNavDuration = rideVM.estimatedTimeRemaining
+        // Calculate actual traveled distance, not remaining
+        if let route = NavigationEngine.shared.activeRoute {
+            endNavDistance = route.distance - NavigationEngine.shared.remainingDistance
+        } else {
+            endNavDistance = 0
+        }
+        // Use ride elapsed time, not ETA
+        if let startedAt = AppState.shared.rideStartedAt {
+            endNavDuration = Date().timeIntervalSince(startedAt)
+        } else {
+            endNavDuration = 0
+        }
         rideVM.stopNavigation()
         withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
             showEndNavSummary = true
