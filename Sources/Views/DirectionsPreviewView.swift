@@ -53,6 +53,23 @@ struct DirectionsPreviewView: View {
             } else if !viewModel.routes.isEmpty {
                 ScrollView {
                     VStack(spacing: 12) {
+                        // Mini route snapshot — shows selected route inside the card
+                        if let snapshot = viewModel.routeSnapshot {
+                            Image(uiImage: snapshot)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(maxHeight: 160)
+                                .cornerRadius(12)
+                                .padding(.horizontal)
+                                .onAppear {
+                                    // Generate snapshot on appear if not yet done
+                                    if viewModel.routeSnapshot == nil, let route = viewModel.selectedRoute {
+                                        Task { await viewModel.generateSnapshot(for: route) }
+                                    }
+                                }
+                        }
+
+                        // Route options
                         // Route options
                         ForEach(Array(viewModel.routes.enumerated()), id: \.offset) { index, route in
                             RouteOptionCard(
@@ -202,6 +219,7 @@ final class DirectionsPreviewViewModel: ObservableObject {
     @Published var selectedIndex = 0
     @Published var isLoading = true
     @Published var error: String?
+    @Published var routeSnapshot: UIImage?
 
     private let directionsService = DirectionsService.shared
 
@@ -221,6 +239,9 @@ final class DirectionsPreviewViewModel: ObservableObject {
         do {
             routes = try await directionsService.calculateRoute(from: source, to: destination, alternateRoutes: true)
             if routes.isEmpty { error = "Nenhuma rota encontrada" }
+            else if let first = routes.first {
+                await generateSnapshot(for: first)
+            }
         } catch {
             self.error = "Erro ao calcular rota: \(error.localizedDescription)"
         }
@@ -230,5 +251,42 @@ final class DirectionsPreviewViewModel: ObservableObject {
     func selectRoute(_ index: Int) {
         guard index < routes.count else { return }
         selectedIndex = index
+        Task { await generateSnapshot(for: routes[index]) }
+    }
+
+    func generateSnapshot(for route: MKRoute) async {
+        let polyline = route.polyline
+        let rect = polyline.boundingMapRect
+        let options = MKMapSnapshotter.Options()
+        options.mapRect = rect
+        options.size = CGSize(width: 360, height: 160)
+        options.scale = UIScreen.main.scale
+        options.mapType = .mutedStandard
+        options.showsBuildings = true
+
+        let snapshotter = MKMapSnapshotter(options: options)
+        do {
+            let snapshot = try await snapshotter.start()
+            let image = await UIGraphicsImageRenderer(size: options.size).image { ctx in
+                snapshot.image.draw(at: .zero)
+                // Draw the route polyline on the snapshot
+                let points = polyline.points()
+                let path = UIBezierPath()
+                for i in 0..<polyline.pointCount {
+                    let point = points[i]
+                    let cgPoint = snapshot.point(for: point.coordinate)
+                    if i == 0 { path.move(to: cgPoint) }
+                    else { path.addLine(to: cgPoint) }
+                }
+                path.lineWidth = 4
+                path.lineCapStyle = .round
+                path.lineJoinStyle = .round
+                UIColor.systemBlue.setStroke()
+                path.stroke()
+            }
+            self.routeSnapshot = image
+        } catch {
+            Logger.shared.nav("Snapshot failed: \(error.localizedDescription)")
+        }
     }
 }

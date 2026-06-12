@@ -32,6 +32,12 @@ final class MeshService: NSObject, ObservableObject {
     private var isAutoPresenceActive = false
     let presenceId: String
 
+    // Stats for diagnostics
+    private(set) var messagesProcessed = 0
+    private(set) var messagesDeduped = 0
+    private(set) var lastPayloadType = "—"
+    private(set) var lastPeerName = "—"
+
     // Callbacks
     var onPayloadReceived: ((MeshPayload) -> Void)?
     var onPeerConnected: ((MCPeerID) -> Void)?
@@ -88,7 +94,10 @@ final class MeshService: NSObject, ObservableObject {
     /// Start advertising AND browsing simultaneously.
     /// Any two devices with the app open will discover each other automatically.
     func startAutoPresence(name: String) {
-        guard !isAutoPresenceActive else { return }
+        guard !isAutoPresenceActive else {
+            Logger.shared.mesh("Auto-presence already active, skipping restart")
+            return
+        }
         isAutoPresenceActive = true
         currentRiderName = name
 
@@ -105,12 +114,14 @@ final class MeshService: NSObject, ObservableObject {
         advertiser.start(with: info)
         browser.start()
         meshState = .browsing
+        Logger.shared.mesh("Auto-presence started: presenceId=\(presenceId.prefix(8)) name=\(name) advertising+[\(Self.serviceType)]")
     }
 
     func stopAutoPresence() {
         isAutoPresenceActive = false
         advertiser.stop()
         browser.stop()
+        Logger.shared.mesh("Auto-presence stopped")
     }
 
     var hasNearbyPeers: Bool {
@@ -168,20 +179,24 @@ final class MeshService: NSObject, ObservableObject {
     // MARK: - Sending
 
     func send(_ payload: MeshPayload) {
-        guard !session.connectedPeers.isEmpty else { return }
+        guard !session.connectedPeers.isEmpty else {
+            Logger.shared.mesh("SEND dropped (no peers): \(payload.type)")
+            return
+        }
 
         let encoded: Data
         do {
             encoded = try JSONEncoder().encode(payload)
         } catch {
-            print("🔗 Mesh encode error: \(error)")
+            Logger.shared.mesh("Encode error: \(error.localizedDescription)")
             return
         }
 
         do {
             try session.send(encoded, toPeers: session.connectedPeers, with: .reliable)
+            Logger.shared.mesh("SEND \(payload.type) to \(session.connectedPeers.count) peers (TTL:\(payload.ttl) size:\(encoded.count)B)")
         } catch {
-            print("🔗 Mesh send error: \(error)")
+            Logger.shared.mesh("Send error: \(error.localizedDescription)")
         }
     }
 
@@ -203,13 +218,19 @@ final class MeshService: NSObject, ObservableObject {
 
     private func handleReceivedData(_ data: Data, from peerID: MCPeerID) {
         guard let payload = try? JSONDecoder().decode(MeshPayload.self, from: data) else {
-            print("🔗 Mesh decode error")
+            Logger.shared.mesh("Decode error from \(peerID.displayName)")
             return
         }
 
         // Dedup
-        guard !relay.hasSeen(payload.id) else { return }
+        guard !relay.hasSeen(payload.id) else {
+            messagesDeduped += 1
+            return
+        }
         relay.markSeen(payload.id)
+
+        lastPayloadType = String(describing: payload.type)
+        Logger.shared.mesh("RECV \(payload.type) from \(payload.senderName) (TTL:\(payload.ttl) size:\(data.count)B)")
 
         // Dispatch to handler
         onPayloadReceived?(payload)
@@ -225,8 +246,9 @@ final class MeshService: NSObject, ObservableObject {
         do {
             let encoded = try JSONEncoder().encode(forwardPayload)
             try session.send(encoded, toPeers: forwardTo, with: .reliable)
+            Logger.shared.mesh("FORWARD \(payload.type) to \(forwardTo.count) peers (TTL:\(forwardPayload.ttl))")
         } catch {
-            print("🔗 Mesh forward error: \(error)")
+            Logger.shared.mesh("Forward error: \(error.localizedDescription)")
         }
     }
 }
@@ -242,6 +264,8 @@ extension MeshService: MCSessionDelegate {
                     self.connectedPeers.append(peerID)
                 }
                 self.meshState = .connected
+                self.lastPeerName = peerID.displayName
+                Logger.shared.mesh("Peer CONNECTED: \(peerID.displayName) (total: \(self.connectedPeers.count))")
                 self.onPeerConnected?(peerID)
                 NotificationCenter.default.post(name: .meshPeerConnected, object: peerID)
 
@@ -250,15 +274,18 @@ extension MeshService: MCSessionDelegate {
 
             case .notConnected:
                 self.connectedPeers.removeAll { $0.displayName == peerID.displayName }
+                Logger.shared.mesh("Peer DISCONNECTED: \(peerID.displayName) (total: \(self.connectedPeers.count))")
                 self.onPeerDisconnected?(peerID)
                 NotificationCenter.default.post(name: .meshPeerDisconnected, object: peerID)
 
                 // MCSession will auto-reconnect when back in range
 
             case .connecting:
+                Logger.shared.mesh("Peer connecting: \(peerID.displayName)")
                 break
 
             @unknown default:
+                Logger.shared.mesh("Peer unknown state: \(peerID.displayName)")
                 break
             }
         }
@@ -266,6 +293,7 @@ extension MeshService: MCSessionDelegate {
 
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         DispatchQueue.main.async {
+            self.messagesProcessed += 1
             self.handleReceivedData(data, from: peerID)
         }
     }
@@ -301,13 +329,22 @@ extension MeshService: MeshAdvertiserDelegate {
 
 extension MeshService: MeshBrowserDelegate {
     func browser(_ browser: MeshBrowser, didFind peerID: MCPeerID, with discoveryInfo: [String: String]?) {
-        guard let info = MeshDiscoveryInfo.from(discoveryInfo) else { return }
+        guard let info = MeshDiscoveryInfo.from(discoveryInfo) else {
+            Logger.shared.mesh("Found peer but failed to parse discoveryInfo")
+            return
+        }
 
         // Don't connect to self
-        if info.rideId == presenceId || info.rideId == currentRideId { return }
+        if info.rideId == presenceId || info.rideId == currentRideId {
+            Logger.shared.mesh("Ignoring self: rid=\(info.rideId.prefix(8))")
+            return
+        }
+
+        Logger.shared.mesh("FOUND peer: \(peerID.displayName) ride=\(info.rideName) status=\(info.rideStatus)")
 
         // Auto-invite: connect immediately when we find another presence
         if isAutoPresenceActive && !connectedPeers.contains(where: { $0.displayName == peerID.displayName }) {
+            Logger.shared.mesh("AUTO-INVITING \(peerID.displayName)")
             browser.invite(peerID, to: session)
         }
 

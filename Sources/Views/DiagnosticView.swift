@@ -140,9 +140,13 @@ final class DiagnosticState: ObservableObject {
         bluetoothPermission = "OK" // CBManager can't check without instance; assume OK for now
         bluetoothState = "— (check Settings)"
 
-        // Mesh
-        peerCount = MeshService.shared.connectedPeers.count
-        lastPeerName = MeshService.shared.connectedPeers.last?.displayName ?? "—"
+        // Mesh — read live stats from instrumented service
+        let mesh = MeshService.shared
+        peerCount = mesh.connectedPeers.count
+        lastPeerName = mesh.connectedPeers.last?.displayName ?? mesh.lastPeerName
+        lastPayloadType = mesh.lastPayloadType
+        messagesProcessed = mesh.messagesProcessed
+        messagesDeduped = mesh.messagesDeduped
     }
 }
 
