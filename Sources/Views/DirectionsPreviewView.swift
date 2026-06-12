@@ -250,7 +250,12 @@ final class DirectionsPreviewViewModel: ObservableObject {
                 await generateSnapshot(for: first)
             }
         } catch {
-            self.error = "Erro ao calcular rota: \(error.localizedDescription)"
+            let nsError = error as NSError
+            if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorNotConnectedToInternet {
+                self.error = "Sem conexão à internet.\nAs rotas precisam de internet para serem calculadas."
+            } else {
+                self.error = "Não foi possível calcular a rota.\nVerifique sua conexão e tente novamente."
+            }
         }
         isLoading = false
     }
