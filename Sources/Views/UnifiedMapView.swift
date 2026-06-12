@@ -669,11 +669,23 @@ struct UnifiedMapView: View {
                 VoiceAssistant.shared.speak(VoiceAssistant.sosReceived(name: payload.senderName, reason: sos.reason))
             }
         case .rideEnded:
-            NotificationCenter.default.post(name: .rideEnded, object: nil)
+            // Only the ride leader can end the ride
+            let leaderId = UserDefaults.standard.string(forKey: "riderProfileId") ?? ""
+            if payload.senderId == leaderId || AppState.shared.participants.contains(where: { $0.riderId == payload.senderId && $0.role == .leader }) {
+                NotificationCenter.default.post(name: .rideEnded, object: nil)
+                Logger.shared.ride("Ride ended by leader: \(payload.senderName)")
+            } else {
+                Logger.shared.mesh("Rejected rideEnded from non-leader: \(payload.senderName)")
+            }
         case .sweeperConfirm:
-            if let sp = try? JSONDecoder().decode(SweeperPayload.self, from: payload.payload) {
-                VoiceAssistant.shared.speak(sp.message)
-                Logger.shared.ride("Sweeper confirmation received: \(sp.message)")
+            // Only accept sweeper confirmations from the actual sweeper
+            if AppState.shared.participants.contains(where: { $0.riderId == payload.senderId && $0.role == .sweeper }) {
+                if let sp = try? JSONDecoder().decode(SweeperPayload.self, from: payload.payload) {
+                    VoiceAssistant.shared.speak(sp.message)
+                    Logger.shared.ride("Sweeper confirmation received: \(sp.message)")
+                }
+            } else {
+                Logger.shared.mesh("Rejected sweeperConfirm from non-sweeper: \(payload.senderName)")
             }
         default: break
         }

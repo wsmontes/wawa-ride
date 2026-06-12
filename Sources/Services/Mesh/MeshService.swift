@@ -235,8 +235,9 @@ final class MeshService: NSObject, ObservableObject {
         onPayloadReceived?(payload)
 
         // Forward with TTL-1 if applicable
+        // Clamp TTL to prevent infinite flooding (max 10 hops)
         var forwardPayload = payload
-        forwardPayload.ttl -= 1
+        forwardPayload.ttl = min(forwardPayload.ttl, 10) - 1
         guard forwardPayload.ttl > 0 else { return }
 
         let forwardTo = session.connectedPeers.filter { $0 != peerID }
