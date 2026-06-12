@@ -11,6 +11,7 @@ struct CreateRideView: View {
             Form {
                 Section("Nome do passeio") {
                     TextField("Ex: Serra do Rio do Rastro", text: $viewModel.rideName)
+                        .submitLabel(.done)
                         .accessibilityLabel("Nome do passeio")
                         .accessibilityHint("Dê um nome para o passeio que os riders próximos verão")
                 }
