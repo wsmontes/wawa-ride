@@ -1117,30 +1117,44 @@ struct RiderHUD: View {
                 }
                 .accessibilityLabel("Marcar perigo")
 
-                Button {} label: {
-                    VStack(spacing: 4) {
-                        Image(systemName: isPTTActive ? "mic.fill" : "mic").font(.title)
-                        Text(isPTTActive ? "FALANDO" : "FALAR").font(.caption)
+                if FeatureFlags.shared.walkieTalkie {
+                    Button {} label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: isPTTActive ? "mic.fill" : "mic").font(.title)
+                            Text(isPTTActive ? "FALANDO" : "FALAR").font(.caption)
+                        }
+                        .frame(width: isPTTActive ? 110 : 90, height: isPTTActive ? 110 : 90)
+                        .background(isPTTActive ? Color.green : Color.black.opacity(0.7))
+                        .cornerRadius(isPTTActive ? 55 : 45)
                     }
-                    .frame(width: isPTTActive ? 110 : 90, height: isPTTActive ? 110 : 90)
-                    .background(isPTTActive ? Color.green : Color.black.opacity(0.7))
-                    .cornerRadius(isPTTActive ? 55 : 45)
-                }
-                .accessibilityLabel(isPTTActive ? "Parar de falar" : "Falar no grupo")
-                .accessibilityHint("Segure para falar, solte para parar")
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 0)
-                        .onChanged { _ in
-                            if !isPTTActive {
-                                if AVAudioSession.sharedInstance().recordPermission == .denied {
-                                    onPTTBlocked?()
-                                } else {
-                                    startPTT()
+                    .accessibilityLabel(isPTTActive ? "Parar de falar" : "Falar no grupo")
+                    .accessibilityHint("Segure para falar, solte para parar")
+                    .simultaneousGesture(
+                        DragGesture(minimumDistance: 0)
+                            .onChanged { _ in
+                                if !isPTTActive {
+                                    if AVAudioSession.sharedInstance().recordPermission == .denied {
+                                        onPTTBlocked?()
+                                    } else {
+                                        startPTT()
+                                    }
                                 }
                             }
+                            .onEnded { _ in stopPTT() }
+                    )
+                } else {
+                    // Walkie-talkie disabled — show placeholder
+                    Button {} label: {
+                        VStack(spacing: 4) {
+                            Image(systemName: "mic.slash").font(.title).foregroundColor(.secondary)
+                            Text("OFF").font(.caption).foregroundColor(.secondary)
                         }
-                        .onEnded { _ in stopPTT() }
-                )
+                        .frame(width: 90, height: 90)
+                        .background(Color.black.opacity(0.7))
+                        .cornerRadius(45)
+                    }
+                    .disabled(true)
+                }
 
                 if FeatureFlags.shared.rooms {
                     Button { showRooms = true } label: {
