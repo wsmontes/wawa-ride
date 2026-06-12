@@ -303,6 +303,16 @@ struct RouteDetailView: View {
             .sheet(isPresented: $showShare) {
                 if let url = RouteService.shared.exportGPX(for: route) {
                     ShareSheet(items: [url])
+                } else {
+                    VStack {
+                        Text("Erro ao exportar")
+                            .font(.headline)
+                        Text("Não foi possível gerar o arquivo GPX.")
+                            .font(.subheadline).foregroundColor(.secondary)
+                        Button("OK") { showShare = false }
+                            .padding(.top)
+                    }
+                    .padding()
                 }
             }
         }

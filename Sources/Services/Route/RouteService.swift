@@ -203,9 +203,22 @@ final class RouteService: ObservableObject {
     }
 
     func exportGPX(for route: Route) -> URL? {
-        let gpxString = GPXExporter.export(route: route, trackPoints: trackPoints)
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(route.name).gpx")
-        try? gpxString.write(to: tempURL, atomically: true, encoding: .utf8)
+        // Use route's stored track if available; fall back to live recording
+        let exportTrack = route.simplifiedTrack ?? (trackPoints.isEmpty ? nil : trackPoints) ?? []
+        let gpxString = GPXExporter.export(route: route, trackPoints: exportTrack)
+        // Sanitize filename — route names may contain filesystem-invalid chars
+        let safeName = route.name
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: ":", with: "-")
+            .trimmingCharacters(in: .whitespaces)
+        let filename = safeName.isEmpty ? "rota" : safeName
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(filename).gpx")
+        do {
+            try gpxString.write(to: tempURL, atomically: true, encoding: .utf8)
+        } catch {
+            Logger.shared.log("GPX export write failed: \(error.localizedDescription)", category: "route")
+            return nil
+        }
         return tempURL
     }
 
