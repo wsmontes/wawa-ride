@@ -16,7 +16,8 @@ struct WAWARideApp: App {
             ContentView()
                 .onAppear { setupApp() }
                 .preferredColorScheme(.dark)
-                .dynamicTypeSize(.xSmall ... .xxxLarge)  // Support all Dynamic Type sizes
+                .dynamicTypeSize(.xSmall ... .xxxLarge)
+                .scrollDismissesKeyboard(.immediately)  // Support all Dynamic Type sizes
                 .onOpenURL { handleOpenURL($0) }
         }
         .onChange(of: scenePhase) { _, newPhase in
