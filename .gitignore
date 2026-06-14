@@ -1,0 +1,20 @@
+# Credentials
+.env
+
+# Xcode
+*.xcuserdata
+*.xcworkspace/xcuserdata
+DerivedData/
+*.xcuserstate
+*.xcscmblueprint
+
+# Swift Package Manager
+.build/
+Packages/
+*.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+
+# CocoaPods
+Pods/
+
+# macOS
+.DS_Store
