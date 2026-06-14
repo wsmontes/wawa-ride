@@ -1,5 +1,6 @@
 # Credentials
 .env
+Sources/Config/TURNConfig.plist
 
 # Xcode
 *.xcuserdata
