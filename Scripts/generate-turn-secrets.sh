@@ -2,6 +2,9 @@
 # Generates TURNSecrets.generated.swift from TURNConfig.plist.
 # Falls back to empty stub if plist is missing.
 
+# SRCROOT is set by Xcode at build time; fall back to script location
+: "${SRCROOT:=$(cd "$(dirname "$0")/.." && pwd)}"
+
 PLIST="${SRCROOT}/Sources/Config/TURNConfig.plist"
 OUTPUT="${SRCROOT}/Sources/Config/TURNSecrets.generated.swift"
 
