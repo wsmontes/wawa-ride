@@ -3,6 +3,7 @@ import MultipeerConnectivity
 
 struct PairingView: View {
     let multipeer: MultipeerService
+    let errorMessage: String?
     let onStartRide: () -> Void
 
     var body: some View {
@@ -19,60 +20,47 @@ struct PairingView: View {
                     .font(.largeTitle)
                     .fontWeight(.bold)
 
-                Text(multipeer.isAdvertising || multipeer.isBrowsing
-                     ? "Procurando motociclistas..."
-                     : "Pronto para parear")
+                Text(statusText)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
 
-            // Nearby Peers
+            // Error message
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .padding()
+                    .background(.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            // Nearby Peers list
             if !multipeer.nearbyPeers.isEmpty || !multipeer.connectedPeers.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Dispositivos próximos")
+                    Text("Dispositivos proximos")
                         .font(.headline)
+                        .padding(.horizontal)
 
-                    ForEach(multipeer.nearbyPeers, id: \.self) { peer in
-                        HStack {
-                            Circle()
-                                .fill(.yellow)
-                                .frame(width: 10, height: 10)
-                            Text(peer.displayName)
-                            Spacer()
-                            Button("Convidar") {
-                                multipeer.invite(peer: peer)
+                    ScrollView {
+                        VStack(spacing: 8) {
+                            ForEach(multipeer.nearbyPeers, id: \.self) { peer in
+                                peerRow(peer: peer, isConnected: false)
                             }
-                            .buttonStyle(.borderedProminent)
-                            .controlSize(.small)
+                            ForEach(multipeer.connectedPeers, id: \.self) { peer in
+                                peerRow(peer: peer, isConnected: true)
+                            }
                         }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
                     }
-
-                    ForEach(multipeer.connectedPeers, id: \.self) { peer in
-                        HStack {
-                            Circle()
-                                .fill(.green)
-                                .frame(width: 10, height: 10)
-                            Text(peer.displayName)
-                            Spacer()
-                            Text("Conectado")
-                                .font(.caption)
-                                .foregroundStyle(.green)
-                        }
-                        .padding(.horizontal)
-                        .padding(.vertical, 8)
-                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-                    }
+                    .frame(maxHeight: 250)
                 }
                 .padding(.horizontal)
             }
 
             Spacer()
 
-            // Action Button
+            // Action buttons
             VStack(spacing: 16) {
+                // Start Ride button — only visible when peers connected
                 if !multipeer.connectedPeers.isEmpty {
                     Button(action: onStartRide) {
                         Label("Iniciar Passeio", systemImage: "map.fill")
@@ -82,6 +70,7 @@ struct PairingView: View {
                     .controlSize(.large)
                 }
 
+                // Pairing toggle
                 Button {
                     if multipeer.isAdvertising {
                         multipeer.stopPairing()
@@ -90,8 +79,10 @@ struct PairingView: View {
                     }
                 } label: {
                     Label(
-                        multipeer.isAdvertising ? "Parar Pareamento" : "Começar Pareamento",
-                        systemImage: multipeer.isAdvertising ? "antenna.radiowaves.left.and.right.slash" : "antenna.radiowaves.left.and.right"
+                        multipeer.isAdvertising ? "Parar Pareamento" : "Comecar Pareamento",
+                        systemImage: multipeer.isAdvertising
+                            ? "antenna.radiowaves.left.and.right.slash"
+                            : "antenna.radiowaves.left.and.right"
                     )
                     .frame(maxWidth: .infinity)
                 }
@@ -102,11 +93,46 @@ struct PairingView: View {
             .padding(.bottom, 40)
         }
     }
+
+    private var statusText: String {
+        if multipeer.isAdvertising {
+            return "Procurando motociclistas..."
+        } else if !multipeer.connectedPeers.isEmpty {
+            return "\(multipeer.connectedPeers.count) motociclista(s) conectado(s)"
+        } else {
+            return "Pronto para parear"
+        }
+    }
+
+    private func peerRow(peer: MCPeerID, isConnected: Bool) -> some View {
+        HStack {
+            Circle()
+                .fill(isConnected ? Color.green : Color.yellow)
+                .frame(width: 10, height: 10)
+            Text(peer.displayName)
+            Spacer()
+            if isConnected {
+                Text("Conectado")
+                    .font(.caption)
+                    .foregroundStyle(.green)
+            } else {
+                Button("Convidar") {
+                    multipeer.invite(peer: peer)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
 }
 
 #Preview {
     PairingView(
         multipeer: MultipeerService(),
+        errorMessage: nil,
         onStartRide: {}
     )
 }

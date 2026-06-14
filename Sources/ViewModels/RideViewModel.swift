@@ -9,19 +9,19 @@ import os.log
 @Observable
 final class RideViewModel {
 
-    // MARK: - Services (multiPeer is non-private for PairingView access)
+    // MARK: - Services
 
     let multipeer = MultipeerService()
     private let locationService = LocationService()
     private var webRTC: WebRTCService!
 
-    // MARK: - State
+    // MARK: - Published state
 
     var currentRiders: [Rider] = []
     var isPairing = false
     var isRideActive = false
-    var authorizationStatus: CLAuthorizationStatus = .notDetermined
     var localRiderID: String = ""
+    var errorMessage: String?
 
     private let log = Logger(subsystem: "com.wawaride", category: "ViewModel")
 
@@ -30,21 +30,51 @@ final class RideViewModel {
     init() {
         localRiderID = loadOrCreateRiderID()
         webRTC = WebRTCService(localRiderID: localRiderID)
+        setupSignalingBridge()
+    }
+
+    // MARK: - Bridge Setup
+
+    private func setupSignalingBridge() {
+        // MC → WebRTC: signaling data received via Bluetooth
+        multipeer.onSignalingData = { [weak self] data, peerID in
+            self?.webRTC.onSignalingReceived(data, from: peerID.displayName)
+        }
+
+        // WebRTC → MC: outgoing signaling (SDP/ICE) needs to go to peer
+        webRTC.onOutgoingSignaling = { [weak self] data, riderID in
+            guard let self else { return }
+            if let peer = self.multipeer.connectedPeers.first(where: { $0.displayName == riderID }) {
+                self.multipeer.sendSignaling(data, to: peer)
+            } else {
+                self.log.warning("No MC peer found for riderID: \(riderID)")
+            }
+        }
+
+        // WebRTC DataChannel: remote location updates received
+        webRTC.onDataReceived = { [weak self] data, riderID in
+            guard let self, let update = LocationUpdate.decode(data) else { return }
+            self.applyLocationUpdate(update)
+        }
+
+        // MC peer connected → create WebRTC offer
+        multipeer.onPeerConnected = { [weak self] peerID in
+            self?.webRTC.createOffer(for: peerID.displayName)
+        }
+
+        // MC peer disconnected → clean up WebRTC
+        multipeer.onPeerDisconnected = { [weak self] peerID in
+            self?.webRTC.disconnect(peer: peerID.displayName)
+            self?.currentRiders.removeAll { $0.id == peerID.displayName }
+        }
     }
 
     // MARK: - Pairing
 
     func startPairing() {
         isPairing = true
+        errorMessage = nil
         multipeer.startPairing()
-        multipeer.startBrowsing()
-
-        // When signaling data arrives via MC, forward to WebRTC
-        multipeer.onSignalingData = { [weak self] data, peerID in
-            guard let self else { return }
-            let riderID = peerID.displayName
-            self.webRTC.onSignalingReceived(data, from: riderID)
-        }
     }
 
     func stopPairing() {
@@ -59,24 +89,15 @@ final class RideViewModel {
     // MARK: - Ride
 
     func startRide() {
+        guard !multipeer.connectedPeers.isEmpty else {
+            errorMessage = "Nenhum motociclista pareado. Faça o pareamento primeiro."
+            return
+        }
+
         isRideActive = true
+        errorMessage = nil
         locationService.requestPermission()
         locationService.startUpdating()
-
-        // Wire WebRTC → MC signaling
-        webRTC.onOutgoingSignaling = { [weak self] data, riderID in
-            guard let self else { return }
-            // Find the MCPeerID matching this riderID and send
-            if let peer = self.multipeer.connectedPeers.first(where: { $0.displayName == riderID }) {
-                self.multipeer.sendSignaling(data, to: peer)
-            }
-        }
-
-        // Wire WebRTC data received
-        webRTC.onDataReceived = { [weak self] data, riderID in
-            guard let self, let update = LocationUpdate.decode(data) else { return }
-            self.applyLocationUpdate(update)
-        }
 
         // Stream local location → WebRTC broadcast
         Task { [weak self] in
@@ -88,17 +109,30 @@ final class RideViewModel {
                 }
             }
         }
+
+        log.info("Ride started with \(self.multipeer.connectedPeers.count) peers")
     }
 
     func stopRide() {
         isRideActive = false
         locationService.stopUpdating()
         currentRiders.removeAll()
+
+        // Disconnect all WebRTC peers but keep MC connections
+        for rider in currentRiders {
+            webRTC.disconnect(peer: rider.id)
+        }
     }
 
     // MARK: - WebRTC peer management
 
     func connectToRider(_ riderID: String) {
+        webRTC.createOffer(for: riderID)
+    }
+
+    /// Retry a failed WebRTC connection.
+    func retryConnection(to riderID: String) {
+        webRTC.disconnect(peer: riderID)
         webRTC.createOffer(for: riderID)
     }
 

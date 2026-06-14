@@ -20,6 +20,17 @@ final class MultipeerService: NSObject, ObservableObject, @unchecked Sendable {
     @Published var connectedPeers: [MCPeerID] = []
     @Published var pairingError: String?
 
+    // MARK: - Callbacks
+
+    /// Called when a new peer connects via MC (trigger WebRTC offer).
+    var onPeerConnected: ((MCPeerID) -> Void)?
+
+    /// Called when a peer disconnects from MC.
+    var onPeerDisconnected: ((MCPeerID) -> Void)?
+
+    /// Called when WebRTC signaling data (SDP / ICE) arrives over MC.
+    var onSignalingData: ((Data, MCPeerID) -> Void)?
+
     // MARK: - Properties
 
     private let serviceType = "wawaride-pair"
@@ -27,9 +38,6 @@ final class MultipeerService: NSObject, ObservableObject, @unchecked Sendable {
     private let session: MCSession
     private var advertiser: MCNearbyServiceAdvertiser?
     private var browser: MCNearbyServiceBrowser?
-
-    /// Called when WebRTC signaling data (SDP / ICE) arrives over MC.
-    var onSignalingData: ((Data, MCPeerID) -> Void)?
 
     private let log = Logger(subsystem: "com.wawaride", category: "Multipeer")
 
@@ -77,15 +85,13 @@ final class MultipeerService: NSObject, ObservableObject, @unchecked Sendable {
         advertiser?.delegate = self
         advertiser?.startAdvertisingPeer()
         isAdvertising = true
-        log.info("Started advertising for pairing")
-    }
 
-    func startBrowsing() {
         browser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: serviceType)
         browser?.delegate = self
         browser?.startBrowsingForPeers()
         isBrowsing = true
-        log.info("Started browsing for peers")
+
+        log.info("Pairing started — advertising + browsing")
     }
 
     func stopPairing() {
@@ -96,6 +102,10 @@ final class MultipeerService: NSObject, ObservableObject, @unchecked Sendable {
         browser?.stopBrowsingForPeers()
         browser = nil
         isBrowsing = false
+
+        session.disconnect()
+        connectedPeers.removeAll()
+        nearbyPeers.removeAll()
     }
 
     func invite(peer: MCPeerID) {
@@ -135,12 +145,16 @@ extension MultipeerService: MCSessionDelegate {
         DispatchQueue.main.async {
             switch state {
             case .connected:
-                self.connectedPeers.append(peerID)
+                if !self.connectedPeers.contains(peerID) {
+                    self.connectedPeers.append(peerID)
+                }
                 self.nearbyPeers.removeAll { $0 == peerID }
                 self.log.info("Peer connected: \(peerID.displayName)")
+                self.onPeerConnected?(peerID)
             case .notConnected:
                 self.connectedPeers.removeAll { $0 == peerID }
                 self.log.info("Peer disconnected: \(peerID.displayName)")
+                self.onPeerDisconnected?(peerID)
             case .connecting:
                 self.log.info("Peer connecting: \(peerID.displayName)")
             @unknown default: break
@@ -185,7 +199,6 @@ extension MultipeerService: MCNearbyServiceAdvertiserDelegate {
         invitationHandler: @escaping (Bool, MCSession?) -> Void
     ) {
         log.info("Received invitation from: \(peerID.displayName)")
-        // Auto-accept all invitations for MVP.
         invitationHandler(true, session)
     }
 }

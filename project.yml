@@ -34,6 +34,9 @@ targets:
     dependencies:
       - package: WebRTC
     preBuildScripts:
+      - name: "Generate TURNSecrets from plist"
+        script: bash "${SRCROOT}/Scripts/generate-turn-secrets.sh"
+        basedOnDependencyAnalysis: false
       - name: "SwiftLint"
         script: |
           if which swiftlint > /dev/null; then

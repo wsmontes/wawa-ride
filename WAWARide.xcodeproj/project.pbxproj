@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		12679B036CE206C31031872F /* TURNSecrets.generated.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37F74426E4DE5C2432F97BF /* TURNSecrets.generated.swift */; };
 		30B7E9D375164C80D3BA7102 /* RideGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62B0D06A7D287498E7F6E927 /* RideGroup.swift */; };
 		3404A754C40DF4CE01FEF191 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3D444A40FD0F9516E489F9 /* LocationService.swift */; };
 		3E828D4AB0D0E3BAD3F59A1E /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 33FCCF124F4B1B682DB61958 /* WebRTC */; };
@@ -16,8 +17,10 @@
 		5A824FBDD746384D07937599 /* PairingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B316CE9B1A13F03D876F2FE /* PairingView.swift */; };
 		62C9B2B06EC28D2C94322EBB /* LocationUpdate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 954BAC02E44D05C6A12DFED3 /* LocationUpdate.swift */; };
 		7FD2E7043CF44B04EBFC63EA /* WAWARideApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */; };
+		C40CEBDC3C9CC6F415A5B4EE /* TURNConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = F5FC95C07A311F8F6B91C58C /* TURNConfig.plist */; };
 		C5AE25367E9F723F5DEB67AC /* TURNConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = E752C239C52141427D8EAEBC /* TURNConfig.swift */; };
 		C5D4F718FE3D6E5F9B20D6D7 /* PeerIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7630C62A26E804AE8BE7A937 /* PeerIdentity.swift */; };
+		D7573C0A47C5A7F807D88885 /* TURNConfig.template.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B6EEAF46AA287F77DAC5076 /* TURNConfig.template.plist */; };
 		DEDE946E5C1AFEEB20B4B108 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F58E122763AB75E8E506E6B /* MapView.swift */; };
 		F6CF1ED6292E859AEE85DD0A /* RideViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90FB24CE9055BD88988A815 /* RideViewModel.swift */; };
 		FAE5BEFA3D912C8ABDD6EA4A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29280EDB473BF28C4106DF45 /* ContentView.swift */; };
@@ -31,14 +34,17 @@
 		29280EDB473BF28C4106DF45 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		2B316CE9B1A13F03D876F2FE /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PairingView.swift; sourceTree = "<group>"; };
 		30D7886496319347E91CD84C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		3B6EEAF46AA287F77DAC5076 /* TURNConfig.template.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = TURNConfig.template.plist; sourceTree = "<group>"; };
 		4E3D444A40FD0F9516E489F9 /* LocationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationService.swift; sourceTree = "<group>"; };
 		62B0D06A7D287498E7F6E927 /* RideGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideGroup.swift; sourceTree = "<group>"; };
 		7630C62A26E804AE8BE7A937 /* PeerIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerIdentity.swift; sourceTree = "<group>"; };
 		7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WAWARideApp.swift; sourceTree = "<group>"; };
 		954BAC02E44D05C6A12DFED3 /* LocationUpdate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationUpdate.swift; sourceTree = "<group>"; };
+		A37F74426E4DE5C2432F97BF /* TURNSecrets.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TURNSecrets.generated.swift; sourceTree = "<group>"; };
 		CC6207D4F969FB00792BF03E /* MultipeerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerService.swift; sourceTree = "<group>"; };
 		D90FB24CE9055BD88988A815 /* RideViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideViewModel.swift; sourceTree = "<group>"; };
 		E752C239C52141427D8EAEBC /* TURNConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TURNConfig.swift; sourceTree = "<group>"; };
+		F5FC95C07A311F8F6B91C58C /* TURNConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = TURNConfig.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -128,7 +134,10 @@
 		C26220262643B9549179B28F /* Config */ = {
 			isa = PBXGroup;
 			children = (
+				F5FC95C07A311F8F6B91C58C /* TURNConfig.plist */,
 				E752C239C52141427D8EAEBC /* TURNConfig.swift */,
+				3B6EEAF46AA287F77DAC5076 /* TURNConfig.template.plist */,
+				A37F74426E4DE5C2432F97BF /* TURNSecrets.generated.swift */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -177,8 +186,10 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 7B8F69CC4A64253240F5EFF3 /* Build configuration list for PBXNativeTarget "WAWARide" */;
 			buildPhases = (
+				D85BF80BCFAD553CBA6FADD3 /* Generate TURNSecrets from plist */,
 				355F13F782AD37442A1F8F59 /* SwiftLint */,
 				92F95C37D42D65B4498BD475 /* Sources */,
+				2FD31904384BE1580AE33966 /* Resources */,
 				457F39CA74AA32853D2DCC7A /* Frameworks */,
 				D55CB70FF55ACBA61A1F1F60 /* Copy .env to Bundle */,
 			);
@@ -230,6 +241,18 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		2FD31904384BE1580AE33966 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C40CEBDC3C9CC6F415A5B4EE /* TURNConfig.plist in Resources */,
+				D7573C0A47C5A7F807D88885 /* TURNConfig.template.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXShellScriptBuildPhase section */
 		355F13F782AD37442A1F8F59 /* SwiftLint */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -269,6 +292,25 @@
 			shellPath = /bin/sh;
 			shellScript = "if [ -f \"${SRCROOT}/../.env\" ]; then\n  cp \"${SRCROOT}/../.env\" \"${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/.env\"\nfi\n";
 		};
+		D85BF80BCFAD553CBA6FADD3 /* Generate TURNSecrets from plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Generate TURNSecrets from plist";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "bash \"${SRCROOT}/Scripts/generate-turn-secrets.sh\"";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -287,6 +329,7 @@
 				F6CF1ED6292E859AEE85DD0A /* RideViewModel.swift in Sources */,
 				44390CA654A1048366169A9F /* Rider.swift in Sources */,
 				C5AE25367E9F723F5DEB67AC /* TURNConfig.swift in Sources */,
+				12679B036CE206C31031872F /* TURNSecrets.generated.swift in Sources */,
 				7FD2E7043CF44B04EBFC63EA /* WAWARideApp.swift in Sources */,
 				47ECA99070DF738E9C8A506F /* WebRTCService.swift in Sources */,
 			);
