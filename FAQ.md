@@ -596,3 +596,10 @@ Se alguém alterar data/local/rota, a assinatura invalida.
 | MVP | PeerID random 8 bytes. Sem Ed25519. Cleartext. |
 | Fase 2 | Ed25519 keypair. RiderCard assinado. ClubBadge verificável. |
 | Fase 5 | Noise_XX (session keys BLE). OpenMLS (group encryption). NIP-44 (Nostr DMs). |
+
+### Um passeio organizado pelo presidente do clube confirma tanto a pessoa quanto o clube?
+**Sim. Dupla assinatura no QR:**
+- `creatorSignature`: prova que o rider (presidente) criou o passeio
+- `clubSignature`: prova que o clube (Brazoocas) autoriza
+
+Qualquer receptor verifica ambos localmente. Um membro comum pode criar passeios pessoais (só rider signature), mas não pode assinar em nome do clube sem a `clubPrivKey`.
