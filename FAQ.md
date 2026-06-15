@@ -226,3 +226,44 @@ Apenas o mínimo para o grupo funcionar:
 
 ### Princípio de design
 **Compartilhar o mínimo para o grupo funcionar.** Localização em tempo real é o core. Todo o resto é local ou eventual.
+
+---
+
+## Comunicação entre Riders
+
+### O app tem mensagens ou voz?
+**No MVP, não.** O app comunica por meio de dados, não palavras:
+- **Presença no mapa** — "estou aqui" (automático, 1 Hz)
+- **Trail do líder** — "segue por aqui" (automático)
+- **Alertas visuais** — "fulano saiu da rota" (automático, vibração)
+- **Waypoints** — líder marca ponto "parar aqui" (1 toque)
+
+Motociclistas com capacete e luvas não conseguem digitar texto nem ler mensagens. O app comunica com dados visuais e hápticos.
+
+### Terá walkie-talkie (voice PTT)?
+**Sim, na fase 4.** Botão push-to-talk grande na tela. Pressiona, fala, solta.
+
+| Aspecto | Detalhe |
+|---------|---------|
+| Canal | MultipeerConnectivity (Wi-Fi Direct) — não BLE (sem bandwidth para áudio) |
+| Codec | Opus, 8 kHz mono, 8-12 kbps |
+| Latência | <500ms |
+| Alcance | ~100m (Wi-Fi Direct entre phones) |
+| Internet necessária? | Não (P2P direto) |
+| Background? | Não — app precisa estar em foreground |
+| Grupo? | Sim — todos ouvem quem fala |
+
+### Por que não voz no MVP?
+Complexidade de audio pipeline (capture → Opus encode → transmit → decode → playback) é significativa. Validamos a malha de localização primeiro, depois adicionamos voz.
+
+### Por que não BLE para voz?
+BLE transfere ~Kbps. Opus a 8 kbps precisa de throughput constante que BLE não garante com fragmentação e relay. MultipeerKit (Wi-Fi Direct) oferece Mbps — suficiente para áudio sem esforço.
+
+### Terá mensagens de texto?
+**Não.** Impossível digitar com luva + capacete. Alternativa futura: "quick comms" — botões predefinidos (🛑 Parar, ⛽ Combustível, ☕ Pausa, ⚠️ Atenção, 👍 OK). Cada um é 1 byte via mesh.
+
+### O que NÃO teremos?
+- Chat de texto (impraticável com luva)
+- Chamada VoIP contínua (bateria + vento no mic)
+- Notificações push (sem servidor)
+- Histórico de mensagens (não é um messenger)
