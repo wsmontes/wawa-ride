@@ -1,11 +1,10 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var viewModel = RideViewModel()
+    @State private var viewModel = AppServices.shared.viewModel
 
     var body: some View {
         ZStack {
-            Color.clear.onAppear { viewModel.onAppLaunch() }
             if viewModel.isRideActive {
                 MapView(
                     riders: viewModel.currentRiders,
@@ -77,6 +76,7 @@ struct ContentView: View {
             .padding(.leading, 8)
             .zIndex(3)
         }
+        .onAppear { viewModel.onAppLaunch() }
     }
 }
 

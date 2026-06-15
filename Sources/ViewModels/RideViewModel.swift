@@ -13,6 +13,7 @@ final class RideViewModel {
     // MARK: - Services
 
     let multipeer = MultipeerService()
+    let blePairing = BLEPairingService()
     let locationService = LocationService()
     private(set) var webRTC: WebRTCService!
 
@@ -28,6 +29,8 @@ final class RideViewModel {
 
     /// Tracks whether we've already initiated a WebRTC connection for a peer.
     private var webrtcInitiatedFor: Set<String> = []
+    /// Chunk reassembly buffer: riderID → [chunkIndex: payload]
+    private var chunkBuffers: [String: [Int: Data]] = [:]
 
     // MARK: - Init
 
@@ -38,9 +41,11 @@ final class RideViewModel {
     }
 
     func onAppLaunch() {
+        AppLogger.shared.info("App launched — starting BLE + MC")
         locationService.requestPermission()
         forceLocalNetwork()
         multipeer.startPairing()
+        blePairing.start()
     }
 
     /// Workaround: dummy NWBrowser to trigger local network permission on iOS 18
@@ -64,12 +69,27 @@ final class RideViewModel {
             self?.webRTC.onSignalingReceived(data, from: peerID.displayName)
         }
 
-        // WebRTC → MC: outgoing signaling (dispatched to main for thread safety)
+        // WebRTC → BLE: outgoing signaling with chunking
         webRTC.onOutgoingSignaling = { [weak self] data, riderID in
             guard let self else { return }
             DispatchQueue.main.async {
-                if let peer = self.multipeer.connectedPeers.first(where: { $0.displayName == riderID }) {
-                    self.multipeer.sendSignaling(data, to: peer)
+                if data.count <= 500 {
+                    // Small — send directly
+                    self.blePairing.send(data)
+                    AppLogger.shared.info("BLE sent \(data.count)b (single)")
+                } else {
+                    // Large — split into chunks
+                    let chunkSize = 500
+                    let total = data.count
+                    let chunks = (total + chunkSize - 1) / chunkSize
+                    for i in 0..<chunks {
+                        let start = i * chunkSize
+                        let end = min(start + chunkSize, total)
+                        var header = Data([UInt8(chunks), UInt8(i)])
+                        header.append(contentsOf: data[start..<end])
+                        self.blePairing.send(header)
+                    }
+                    AppLogger.shared.info("BLE sent \(total)b in \(chunks) chunks")
                 }
             }
         }
@@ -94,6 +114,48 @@ final class RideViewModel {
             self?.webRTC.disconnect(peer: riderID)
             self?.currentRiders.removeAll { $0.id == riderID }
             self?.webrtcInitiatedFor.remove(riderID)
+        }
+
+        // BLE connected → ping test first, then WebRTC
+        blePairing.onPeerConnected = { [weak self] riderID in
+            guard let self, !self.webrtcInitiatedFor.contains(riderID) else { return }
+            self.webrtcInitiatedFor.insert(riderID)
+            // Send ping to verify BLE data flow
+            let ping = "PING:\(self.localRiderID)".data(using: .utf8)!
+            self.blePairing.send(ping)
+            AppLogger.shared.info("BLE PING sent to \(riderID)")
+            // Create WebRTC offer after short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                AppLogger.shared.info("Creating WebRTC offer for \(riderID)")
+                self.webRTC.createOffer(for: riderID)
+            }
+        }
+
+        // BLE data received — check for PING/PONG, then route to WebRTC or chunk buffer
+        blePairing.onDataReceived = { [weak self] data, riderID in
+            guard let self else { return }
+            let str = String(data: data, encoding: .utf8) ?? ""
+            if str.hasPrefix("PING:") {
+                AppLogger.shared.info("BLE PING received from \(riderID), sending PONG")
+                let pong = "PONG:\(self.localRiderID)".data(using: .utf8)!
+                self.blePairing.send(pong)
+                return
+            }
+            if str.hasPrefix("PONG:") {
+                AppLogger.shared.info("BLE PONG received from \(riderID) — data flow CONFIRMED ✅")
+                return
+            }
+            // WebRTC signaling — detect chunked vs direct
+            if data.count >= 2 && data[0] > 1 {
+                // Multi-chunk: byte 0 = total chunks, byte 1 = chunk index
+                let totalChunks = Int(data[0])
+                let chunkIndex = Int(data[1])
+                let payload = Data(data.dropFirst(2))
+                self.reassembleChunk(chunk: chunkIndex, total: totalChunks, payload: payload, from: riderID)
+            } else {
+                // Single message (or PING/PONG handled above)
+                self.webRTC.onSignalingReceived(data, from: riderID)
+            }
         }
     }
 
@@ -207,6 +269,20 @@ final class RideViewModel {
                 lastUpdate: Date(timeIntervalSince1970: update.timestamp),
                 isConnected: true
             ))
+        }
+    }
+
+    private func reassembleChunk(chunk: Int, total: Int, payload: Data, from riderID: String) {
+        if chunkBuffers[riderID] == nil { chunkBuffers[riderID] = [:] }
+        chunkBuffers[riderID]?[chunk] = payload
+        if chunkBuffers[riderID]?.count == total {
+            // All chunks received — reassemble
+            var full = Data()
+            for i in 0..<total {
+                if let c = chunkBuffers[riderID]?[i] { full.append(c) }
+            }
+            chunkBuffers.removeValue(forKey: riderID)
+            webRTC.onSignalingReceived(full, from: riderID)
         }
     }
 

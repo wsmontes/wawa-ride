@@ -9,6 +9,7 @@ struct DebugOverlay: View {
     let localRiderID: String
 
     @State private var expanded = true
+    @State private var logServerURL: String = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -35,19 +36,23 @@ struct DebugOverlay: View {
             }
 
             if expanded {
-                VStack(alignment: .leading, spacing: 4) {
-                    mcSection
-                    Divider()
-                    webrtcSection
-                    Divider()
-                    locationSection
-                    Divider()
-                    turnSection
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 4) {
+                        mcSection
+                        Divider()
+                        webrtcSection
+                        Divider()
+                        locationSection
+                        Divider()
+                        turnSection
+                        Divider()
+                        logSection
+                    }
                 }
                 .font(.system(size: 10, design: .monospaced))
                 .padding(8)
                 .background(.ultraThinMaterial.opacity(0.95))
-                .frame(maxHeight: 320)
+                .frame(maxHeight: 400)
             }
         }
         .frame(width: 280)
@@ -137,6 +142,27 @@ struct DebugOverlay: View {
 
     private func stateColor(_ s: WebRTCService.PeerState) -> Color {
         switch s { case .connecting: .orange; case .connected: .green; case .failed: .red }
+    }
+
+    private var logSection: some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text("📜 LOG").fontWeight(.bold)
+            let lines = AppLogger.shared.recentText
+            if lines.isEmpty {
+                Text("  (sem eventos)").foregroundStyle(.secondary)
+            } else {
+                Text(lines)
+                    .lineLimit(30)
+            }
+            // Manual log server button
+            Button {
+                LogServer.shared.start()
+                logServerURL = LogServer.shared.url
+            } label: {
+                Text(logServerURL.isEmpty ? "🔗 Iniciar Log Server" : "📡 \(logServerURL)")
+                    .font(.system(size: 9))
+            }
+        }
     }
 
     private func authLabel(_ status: CLAuthorizationStatus) -> String {

@@ -81,6 +81,8 @@ final class MultipeerService: NSObject, ObservableObject, @unchecked Sendable {
     func startPairing() {
         stopPairing()
 
+        AppLogger.shared.info("MC: starting advertiser + browser")
+
         advertiser = MCNearbyServiceAdvertiser(
             peer: myPeerID,
             discoveryInfo: nil,
@@ -211,6 +213,7 @@ extension MultipeerService: MCNearbyServiceAdvertiserDelegate {
         didNotStartAdvertisingPeer error: Error
     ) {
         log.error("❌ Advertiser failed: \(error.localizedDescription)")
+        AppLogger.shared.error("MC Advertiser: \(error.localizedDescription)")
         DispatchQueue.main.async {
             self.pairingError = "MC Advertiser: \(error.localizedDescription)"
             self.isAdvertising = false
