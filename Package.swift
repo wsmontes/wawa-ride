@@ -12,25 +12,17 @@ let package = Package(
     dependencies: [
         .package(url: "https://github.com/maplibre/maplibre-gl-native-distribution", from: "6.27.0"),
         .package(url: "https://github.com/stadiamaps/ferrostar", from: "0.51.0"),
-        .package(url: "https://github.com/GigaBitcoin/secp256k1.swift", from: "0.21.1"),
     ],
     targets: [
-        // MARK: - WawaMesh (BLE multi-hop + Nostr fallback)
-        .target(
-            name: "WawaMesh",
-            dependencies: [.product(name: "secp256k1", package: "secp256k1.swift")],
-            path: "Sources/WawaMesh"
-        ),
+        .target(name: "WawaMesh", path: "Sources/WawaMesh"),
         .testTarget(name: "WawaMeshTests", dependencies: ["WawaMesh"], path: "Tests/WawaMeshTests"),
 
-        // MARK: - WawaMap (MapLibre offline map rendering)
         .target(
             name: "WawaMap",
             dependencies: [.product(name: "MapLibre", package: "maplibre-gl-native-distribution")],
             path: "Sources/WawaMap"
         ),
 
-        // MARK: - WawaNavigation (Ferrostar + Valhalla routing)
         .target(
             name: "WawaNavigation",
             dependencies: [
@@ -41,7 +33,6 @@ let package = Package(
             path: "Sources/WawaNavigation"
         ),
 
-        // MARK: - App target
         .executableTarget(
             name: "WawaRideApp",
             dependencies: ["WawaMesh", "WawaMap", "WawaNavigation"],

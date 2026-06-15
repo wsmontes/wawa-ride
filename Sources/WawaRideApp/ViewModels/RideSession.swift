@@ -16,8 +16,10 @@ final class RideSession: ObservableObject {
     @Published var riders: [RiderAnnotation] = []
     @Published var routeCoords: [CLLocationCoordinate2D] = []
     @Published var phase: Phase = .idle
+    @Published var pairingPIN: String = ""
+    private var staleTimer: Timer?
 
-    enum Phase { case idle, riding, navigating }
+    enum Phase { case idle, pairing, riding, navigating }
 
     init() {
         let valhallaBase = URL(string: "http://localhost:8002")!
@@ -32,11 +34,32 @@ final class RideSession: ObservableObject {
         }
     }
 
+    func startPairing() {
+        phase = .pairing
+        pairingPIN = String(format: "%04d", Int.random(in: 0...9999))
+        mesh.start()
+    }
+
+    func joinWithPIN(_ pin: String) {
+        // In MVP, PIN matching is validated by including the PIN in the announce payload.
+        // Peers with same PIN are accepted into the group.
+        let payload = "JOIN:\(pin)".data(using: .utf8)!
+        let packet = MeshPacket(type: .groupControl, senderID: mesh.ble.localPeerID, payload: payload)
+        mesh.send(packet)
+    }
+
+    func confirmPairing() {
+        startRide()
+    }
+
     func startRide() {
         phase = .riding
         mesh.start()
         locationTracker.start { [weak self] location in
             self?.broadcastLocation(location)
+        }
+        staleTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.purgeStaleRiders() }
         }
     }
 
@@ -44,8 +67,14 @@ final class RideSession: ObservableObject {
         phase = .idle
         mesh.stop()
         locationTracker.stop()
+        staleTimer?.invalidate()
+        staleTimer = nil
         riders.removeAll()
         routeCoords.removeAll()
+    }
+
+    private func purgeStaleRiders() {
+        riders.removeAll { Date().timeIntervalSince($0.lastSeen) > MeshConfig.riderRemoveTimeout }
     }
 
     private func broadcastLocation(_ location: CLLocation) {
@@ -71,9 +100,10 @@ final class RideSession: ObservableObject {
                 riders[idx].coordinate = coord
                 riders[idx].heading = p.heading
                 riders[idx].speed = p.speed
+                riders[idx].lastSeen = Date()
             } else {
                 riders.append(RiderAnnotation(id: id, displayName: "Rider \(id.prefix(4))", coordinate: coord,
-                                              heading: p.heading, speed: p.speed))
+                                              heading: p.heading, speed: p.speed, lastSeen: Date()))
             }
             groupNav.appendLeaderPosition(coord)
         case .routeShare:

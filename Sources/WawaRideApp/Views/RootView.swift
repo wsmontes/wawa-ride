@@ -9,6 +9,8 @@ struct RootView: View {
             switch session.phase {
             case .idle:
                 StartView()
+            case .pairing:
+                PairingView()
             case .riding, .navigating:
                 RideView()
             }
@@ -28,8 +30,8 @@ struct StartView: View {
                 .font(.largeTitle.bold())
             Text("Mesh · Offline · Livre")
                 .foregroundStyle(.secondary)
-            Button { session.startRide() } label: {
-                Label("Iniciar Passeio", systemImage: "play.fill")
+            Button { session.startPairing() } label: {
+                Label("Parear Grupo", systemImage: "antenna.radiowaves.left.and.right")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding()

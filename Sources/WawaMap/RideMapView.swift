@@ -23,6 +23,8 @@ public struct RideMapView: UIViewRepresentable {
         map.delegate = context.coordinator
         map.showsUserLocation = true
         map.userTrackingMode = .followWithHeading
+        map.attributionButtonPosition = .bottomLeft
+        map.logoView.isHidden = false  // MapLibre logo includes OSM attribution
         return map
     }
 
@@ -41,7 +43,16 @@ public struct RideMapView: UIViewRepresentable {
             style.addSource(riderSource)
             let riderLayer = MLNCircleStyleLayer(identifier: "riders-layer", source: riderSource)
             riderLayer.circleRadius = NSExpression(forConstantValue: 14)
-            riderLayer.circleColor = NSExpression(forConstantValue: UIColor.systemOrange)
+            riderLayer.circleColor = NSExpression(
+                forConditional: NSPredicate(format: "stale == YES"),
+                trueExpression: NSExpression(forConstantValue: UIColor.systemGray),
+                falseExpression: NSExpression(forConstantValue: UIColor.systemOrange)
+            )
+            riderLayer.circleOpacity = NSExpression(
+                forConditional: NSPredicate(format: "stale == YES"),
+                trueExpression: NSExpression(forConstantValue: 0.5),
+                falseExpression: NSExpression(forConstantValue: 1.0)
+            )
             riderLayer.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
             riderLayer.circleStrokeWidth = NSExpression(forConstantValue: 2.5)
             style.addLayer(riderLayer)
@@ -63,7 +74,7 @@ public struct RideMapView: UIViewRepresentable {
             let features = riders.map { r -> MLNPointFeature in
                 let f = MLNPointFeature()
                 f.coordinate = r.coordinate
-                f.attributes = ["name": r.displayName]
+                f.attributes = ["name": r.displayName, "stale": r.isStale]
                 return f
             }
             src.shape = MLNShapeCollectionFeature(shapes: features)
@@ -86,10 +97,14 @@ public struct RiderAnnotation: Identifiable, Sendable {
     public var heading: Double?
     public var speed: Double?
     public var isLeader: Bool
+    public var lastSeen: Date
+
+    public var isStale: Bool { Date().timeIntervalSince(lastSeen) > 15 }
 
     public init(id: String, displayName: String, coordinate: CLLocationCoordinate2D,
-                heading: Double? = nil, speed: Double? = nil, isLeader: Bool = false) {
+                heading: Double? = nil, speed: Double? = nil, isLeader: Bool = false,
+                lastSeen: Date = Date()) {
         self.id = id; self.displayName = displayName; self.coordinate = coordinate
-        self.heading = heading; self.speed = speed; self.isLeader = isLeader
+        self.heading = heading; self.speed = speed; self.isLeader = isLeader; self.lastSeen = lastSeen
     }
 }
