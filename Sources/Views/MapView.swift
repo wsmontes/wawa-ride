@@ -7,34 +7,58 @@ struct MapView: View {
 
     @State private var position: MapCameraPosition = .automatic
     @State private var selectedRider: Rider?
+    @State private var mapLoaded = false
 
     var body: some View {
-        Map(position: $position, selection: $selectedRider) {
-            ForEach(riders) { rider in
-                Annotation(
-                    rider.displayName,
-                    coordinate: rider.coordinate,
-                    anchor: .bottom
-                ) {
-                    RiderAnnotationView(
-                        displayName: rider.displayName,
-                        isLocal: rider.id == localRiderID,
-                        heading: rider.heading
-                    )
+        ZStack {
+            Map(position: $position, selection: $selectedRider) {
+                ForEach(riders) { rider in
+                    Annotation(
+                        rider.displayName,
+                        coordinate: rider.coordinate,
+                        anchor: .bottom
+                    ) {
+                        RiderAnnotationView(
+                            displayName: rider.displayName,
+                            isLocal: rider.id == localRiderID,
+                            heading: rider.heading
+                        )
+                    }
+                    .tag(rider)
                 }
-                .tag(rider)
             }
-        }
-        .mapStyle(.standard(pointsOfInterest: .excludingAll))
-        .mapControls {
-            MapCompass()
-            MapScaleView()
-        }
-        .onAppear {
-            updateCamera()
-        }
-        .onChange(of: riders.count) { _, _ in
-            updateCamera()
+            .mapStyle(.standard(pointsOfInterest: .excludingAll))
+            .mapControls {
+                MapCompass()
+                MapScaleView()
+            }
+            .onAppear {
+                updateCamera()
+                mapLoaded = true
+            }
+            .onChange(of: riders) { _, newRiders in
+                if mapLoaded, let first = newRiders.first {
+                    withAnimation {
+                        position = .region(MKCoordinateRegion(
+                            center: first.coordinate,
+                            latitudinalMeters: 500,
+                            longitudinalMeters: 500
+                        ))
+                    }
+                }
+            }
+
+            // Empty state
+            if riders.isEmpty {
+                VStack(spacing: 12) {
+                    ProgressView()
+                    Text("Aguardando localizacao...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(24)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            }
         }
     }
 
@@ -96,15 +120,6 @@ struct RiderAnnotationView: View {
                 coordinate: CLLocationCoordinate2D(latitude: -23.5505, longitude: -46.6333),
                 heading: 45,
                 speed: 60,
-                lastUpdate: Date(),
-                isConnected: true
-            ),
-            Rider(
-                id: "rider-2",
-                displayName: "Amigo",
-                coordinate: CLLocationCoordinate2D(latitude: -23.5510, longitude: -46.6340),
-                heading: 90,
-                speed: 55,
                 lastUpdate: Date(),
                 isConnected: true
             )

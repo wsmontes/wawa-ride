@@ -11,11 +11,11 @@ struct ContentView: View {
                     localRiderID: viewModel.localRiderID
                 )
                 .ignoresSafeArea()
+                .zIndex(0)
 
-                // Ride overlay — stop button + peer status
+                // Ride overlay — stop + peer count
                 VStack {
                     HStack {
-                        // Peer count pill
                         Text("\(viewModel.multipeer.connectedPeers.count) conectado(s)")
                             .font(.caption)
                             .padding(.horizontal, 12)
@@ -35,15 +35,17 @@ struct ContentView: View {
                     .padding(.top, 8)
                     Spacer()
                 }
+                .zIndex(1)
             } else {
                 PairingView(
                     multipeer: viewModel.multipeer,
                     errorMessage: viewModel.errorMessage,
                     onStartRide: { viewModel.startRide() }
                 )
+                .zIndex(0)
             }
 
-            // Error overlay
+            // Error toast
             if let error = viewModel.errorMessage {
                 VStack {
                     Text(error)
@@ -60,10 +62,9 @@ struct ContentView: View {
                     Spacer()
                 }
                 .padding(.top, 60)
-                .transition(.move(edge: .top).combined(with: .opacity))
+                .zIndex(2)
             }
         }
-        .animation(.easeInOut(duration: 0.4), value: viewModel.isRideActive)
     }
 }
 

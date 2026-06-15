@@ -113,15 +113,40 @@ final class RideViewModel {
             return
         }
 
-        isRideActive = true
         errorMessage = nil
         locationService.requestPermission()
+
+        // Add local rider immediately so map has something to show
+        if let loc = locationService.currentLocation {
+            currentRiders = [
+                Rider(
+                    id: localRiderID,
+                    displayName: "Voce",
+                    coordinate: loc.coordinate,
+                    heading: loc.course >= 0 ? loc.course : nil,
+                    speed: loc.speed >= 0 ? loc.speed : nil,
+                    lastUpdate: Date(),
+                    isConnected: true
+                )
+            ]
+        }
+
+        // Transition to map first...
+        isRideActive = true
         locationService.startUpdating()
 
-        // Stream local location → WebRTC broadcast
-        Task { [weak self] in
+        // Then start broadcasting after a small delay
+        Task { @MainActor [weak self] in
             guard let self else { return }
             for await location in self.locationService.locationUpdates {
+                // Update local rider position
+                if let idx = self.currentRiders.firstIndex(where: { $0.id == self.localRiderID }) {
+                    self.currentRiders[idx].coordinate = location.coordinate
+                    self.currentRiders[idx].heading = location.course >= 0 ? location.course : nil
+                    self.currentRiders[idx].speed = location.speed >= 0 ? location.speed : nil
+                    self.currentRiders[idx].lastUpdate = location.timestamp
+                }
+                // Broadcast to remote peers via WebRTC
                 let update = LocationUpdate(riderID: self.localRiderID, location: location)
                 if let encoded = update.encode() {
                     self.webRTC.broadcast(encoded)
