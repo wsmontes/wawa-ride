@@ -518,3 +518,36 @@ O hash é de 8 bytes (SHA256 truncado) — suficiente para match local mas inút
 - Sem DM fora do passeio (use WhatsApp)
 - Friend badges são opt-in (privacidade)
 - Ninguém edita o card de outra pessoa
+
+---
+
+## Motoclubes (Club Badge)
+
+### Posso mostrar que sou membro de um motoclube?
+**Sim.** O RiderCard inclui um `ClubBadge` — nome do clube + role + assinatura criptográfica do clube verificando que você é membro.
+
+### Como o clube é criado?
+1 rider cria o clube no app → gera par de chaves (clubPubKey/clubPrivKey). A chave privada fica com o presidente (ou diretoria). Publicação opcional no Nostr para que outros riders descubram clubes na região.
+
+### Como membros são adicionados?
+Presidente escaneia QR do rider → assina (riderPubKey + nome do clube + role) com a chave privada do clube → rider recebe o ClubBadge assinado para incluir no seu card.
+
+### Como outros riders verificam que é real?
+No handshake BLE, quem recebe o card verifica a assinatura do ClubBadge contra a clubPubKey. Se válida, é membro confirmado. **Impossível falsificar** sem a chave privada do presidente.
+
+### Como aparece no mapa?
+- Membros verificados de um clube: pin com badge/ícone do clube
+- Quando ≥3 membros do mesmo clube estão juntos: label "BRAZOOCAS MC" aparece sobre o grupo
+- Riders de fora veem: "aquele grupo ali é o Brazoocas"
+
+### Hierarquia de roles?
+| Role | Quem define |
+|------|-------------|
+| Presidente | Criador do clube |
+| Membro | Presidente assina |
+| Prospect | Presidente assina com role diferente |
+| Convidado | Membro pode assinar (se habilitado) |
+
+### No MVP vs Futuro?
+- **MVP:** ClubBadge como string no card (sem verificação crypto — confiança social)
+- **Fase 2+:** Ed25519 signature verification (impossível falsificar)
