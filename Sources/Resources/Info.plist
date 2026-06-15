@@ -44,6 +44,10 @@
 	<string>Wawa Ride usa Bluetooth para pareamento inicial com outros dispositivos do grupo.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Wawa Ride usa a rede local para comunicação peer-to-peer com motociclistas próximos.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_wawaride-pair._tcp</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>

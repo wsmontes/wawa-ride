@@ -12,7 +12,7 @@ enum PairingState {
 }
 
 struct PairingView: View {
-    let multipeer: MultipeerService
+    @ObservedObject var multipeer: MultipeerService
     let errorMessage: String?
     let onStartRide: () -> Void
 
