@@ -21,6 +21,7 @@ final class RideSession: ObservableObject {
     @Published var routeCoords: [CLLocationCoordinate2D] = []
     @Published var phase: Phase = .idle
     @Published var pairingPIN: String = ""
+    @Published var isLeader = false
     private var staleTimer: Timer?
     private var currentRide: Ride?
 
@@ -48,11 +49,18 @@ final class RideSession: ObservableObject {
         }
     }
 
-    // MARK: - Pairing
+    // MARK: - Pairing (simplified: leader creates, follower joins)
 
-    func startPairing() {
+    func startAsLeader() {
+        isLeader = true
         phase = .pairing
         pairingPIN = String(format: "%04d", Int.random(in: 0...9999))
+        mesh.start()
+    }
+
+    func startAsFollower() {
+        isLeader = false
+        phase = .pairing
         mesh.start()
     }
 
