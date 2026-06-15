@@ -5,15 +5,25 @@ import Foundation
 /// Transport selection strategy (derived from BitChat's dual-transport architecture):
 /// https://github.com/permissionlesstech/bitchat/blob/main/bitchat/Services/Transport.swift
 ///
+/// ⚠️ CRITICAL iOS LIMITATION (confirmed by DP-3T and Apple docs):
+/// BLE background-to-background does NOT work on iOS. Two iPhones both in background
+/// CANNOT discover each other via CoreBluetooth. At least one peer must be in foreground.
+/// Reference: https://github.com/DP-3T/dp3t-sdk-ios (prestandard branch findings)
+/// Apple: "A peripheral device in the background advertises only in the overflow area"
+///
+/// Implication for Wawa Ride:
+/// - MultipeerKit (Wi-Fi Direct) is the PRIMARY channel while app is in foreground
+/// - BLE mesh works for: foreground-to-foreground, foreground-to-background(restored)
+/// - If ALL riders background the app simultaneously, mesh goes silent until one reopens
+/// - State restoration (CBCentralManagerOptionRestoreIdentifierKey) can relaunch the app
+///   when a previously-connected peripheral comes back in range — but ONLY if iOS killed
+///   the app (not user swipe-to-kill)
+/// - Mitigation: encourage riders to keep app in foreground (screen on, mounted on handlebar)
+///
 /// Priority order:
 /// 1. MultipeerKit (Wi-Fi Direct): if peers connected → use it (fast, Codable, reliable)
-/// 2. BLE mesh: always active as fallback (works in background, multi-hop)
-/// 3. Offline queue: if both transports have 0 peers → enqueue for later
-///
-/// In practice during a ride:
-/// - Foreground: both MC and BLE are active. Location goes via MC (fast) AND BLE (resilient).
-/// - Background: only BLE active (MC dies when backgrounded). BLE handles location relay.
-/// - No peers at all: packets queue in GRDB's pendingPacket table until connectivity returns.
+/// 2. BLE mesh: always active as fallback (works foreground-to-any, multi-hop)
+/// 3. Offline queue: if both transports have 0 peers → enqueue for later (GRDB pendingPacket)
 ///
 /// Why send on BOTH when both available?
 /// - MC is point-to-point (1 hop). BLE mesh relays to peers beyond MC range.

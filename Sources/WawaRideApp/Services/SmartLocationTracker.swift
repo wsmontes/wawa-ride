@@ -12,6 +12,13 @@ import CoreLocation
 /// 3. Background location indicator (blue bar) to inform user
 /// 4. `pausesLocationUpdatesAutomatically = false` for continuous ride tracking
 ///
+/// ⚠️ IMPORTANT: This tracker keeps GPS active continuously during a ride.
+/// This is intentional — unlike OwnTracks (which waits for significant changes),
+/// riders need real-time position sharing at 0.5-2 Hz.
+/// The blue status bar ("Wawa Ride is using your location") is expected and desired:
+/// it reminds riders the app is active, which is important because BLE mesh
+/// requires at least one peer in foreground to work (iOS BLE background limitation).
+///
 /// Rate adaptation:
 /// - Stopped/walking (0-5 m/s): every 5 seconds
 /// - Slow riding (5-20 m/s): every 1 second
@@ -21,7 +28,7 @@ import CoreLocation
 /// Battery considerations:
 /// - GPS at 1 Hz with best accuracy ≈ 3-5% battery/hour (iPhone 14+)
 /// - Acceptable for a 2-4 hour motorcycle ride
-/// - Could reduce to significant-location-change-only for longer tours
+/// - For longer tours (8h+): consider dropping to significantLocationChange mode
 ///
 /// See also:
 /// - Apple docs: https://developer.apple.com/documentation/corelocation/cllocationmanager/allowsbackgroundlocationupdates

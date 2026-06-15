@@ -5,6 +5,28 @@ import MapLibre
 
 /// Ride map using MapLibre SwiftUI-DSL (official wrapper).
 /// Supports PMTiles via local file:// style URL.
+///
+/// MapLibre SwiftUI-DSL: https://github.com/maplibre/swiftui-dsl (BSD-3, 105 stars)
+/// Provides declarative MapView, camera bindings, layer DSL, and CarPlay support.
+///
+/// PMTiles integration (confirmed working MapLibre iOS v6.10+):
+/// - Style JSON references local file: `"url": "pmtiles://basemap.pmtiles"`
+/// - File must be in app bundle or Documents directory
+/// - MapLibre reads tiles directly from the flat binary (no server needed)
+/// - Reference: https://docs.protomaps.com/pmtiles/maplibre
+///
+/// Rider annotations use data-driven styling:
+/// - Active riders: orange circles (full opacity)
+/// - Stale riders (>15s no update): gray circles at 50% opacity
+/// - Leader: blue circle with star icon
+/// Pattern inspired by Meshtastic Apple (GPL — UX only, no code copied):
+/// - Direct vs multi-hop node distinction on map
+/// - Connection quality indicators
+/// Reference: https://github.com/meshtastic/Meshtastic-Apple
+///
+/// OSM Attribution (ODbL legal requirement):
+/// Must display "© OpenStreetMap contributors" when using OSM-derived tiles.
+/// Reference: https://www.openstreetmap.org/copyright
 public struct RideMapView: View {
     @Binding var riders: [RiderAnnotation]
     @Binding var routeCoords: [CLLocationCoordinate2D]
