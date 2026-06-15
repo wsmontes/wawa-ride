@@ -390,3 +390,41 @@ O QR contém:
 
 ### E se eu quiser revogar o convite?
 Invalide o secret (o app do criador gera um novo). Quem tinha o secret antigo não consegue mais conectar na mesh (validação no handshake). Funciona porque o secret é verificado no momento da conexão, não no momento do scan.
+
+---
+
+## Alertas de Perigo (Hazard Beacons)
+
+### Um rider pode reportar um perigo na pista para todos?
+**Sim.** Com 1 toque no botão 🚨, o app registra o perigo (localização + hora + categoria) e propaga para:
+- Riders do mesmo grupo (BLE mesh, imediato)
+- **Qualquer rider WawaMesh** na região (via Nostr, sem limite de grupo)
+
+### Como a propagação funciona sem limite de grupo?
+Hazards são diferentes de location updates:
+- **Sem TTL** — relay infinito no BLE (não decrementa, retransmite sempre)
+- **Sem filtro de groupID** — todos recebem (é segurança pública)
+- **Persiste no Nostr** com tag de geohash — riders que passam horas depois ainda veem
+- **Expira automaticamente** (ex: 2h para óleo, 24h para buraco)
+
+### Que tipos de perigo existem?
+| Botão | Categoria | Expiração padrão |
+|-------|-----------|------------------|
+| 🛢️ | Óleo/líquido na pista | 2h |
+| 🕳️ | Buraco/desnível | 24h |
+| 🪨 | Detritos/objeto na pista | 4h |
+| 🦌 | Animal na via | 1h |
+| 🚔 | Fiscalização/radar | 2h |
+| ⚠️ | Perigo genérico | 2h |
+
+### Riders que passam depois são avisados?
+**Sim.** Mesmo sem ter visto o rider que reportou:
+1. App subscribe ao geohash da minha posição via Nostr
+2. Recebe hazards ativos na região
+3. Quando me aproximo (500m), vibração forte + pin vermelho no mapa + banner de alerta
+
+### Posso confirmar ou descartar um alerta?
+**Sim.** 1 toque: "✓ Resolvido" ou "🚨 Confirmo". Cada voto é publicado no Nostr. Mais confirmações = mais confiável. Mais "resolvido" = desaparece antes da expiração.
+
+### É um Waze descentralizado?
+Essencialmente sim — mas sem conta, sem servidor, sem tracking. Os alertas vivem na rede Nostr (relays públicos) e na mesh BLE local. Qualquer rider contribui e beneficia.
