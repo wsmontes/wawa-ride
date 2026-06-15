@@ -551,3 +551,48 @@ No handshake BLE, quem recebe o card verifica a assinatura do ClubBadge contra a
 ### No MVP vs Futuro?
 - **MVP:** ClubBadge como string no card (sem verificação crypto — confiança social)
 - **Fase 2+:** Ed25519 signature verification (impossível falsificar)
+
+---
+
+## Modelo Criptográfico e Chaves
+
+### Cada rider tem chave pública e privada?
+**Sim.** Par Ed25519 gerado 1x na primeira abertura do app. A chave privada nunca sai do Keychain do iOS. A pública é compartilhada em todo handshake BLE.
+
+`PeerID = SHA256(riderPubKey)[0..8]` → 8 bytes usados nos pacotes mesh.
+
+### Cada motoclube tem chave pública e privada?
+**Sim.** Par Ed25519 gerado quando o presidente cria o clube. A privada fica com o presidente (Keychain). A pública é incluída em todos os ClubBadges e publicada no Nostr.
+
+### Os QR codes usam isso para confirmar remetente?
+**Sim.** Todo QR contém `creatorPubKey` + `signature(payload, privKey)`. Qualquer receptor verifica sem internet:
+```
+verify(payload, signature, creatorPubKey) → true/false
+```
+Se alguém alterar data/local/rota, a assinatura invalida.
+
+### O app guarda todas as pubKeys que encontra?
+**Sim.** Tabela GRDB `knownIdentity` (pubKey, peerID, nickname, firstSeen, lastSeen). Cresce a cada handshake. É o "contato" persistente — próxima vez que encontrar aquele rider, já sabe quem é.
+
+### O que cada chave protege?
+| Chave | Protege | Ataque prevenido |
+|-------|---------|------------------|
+| riderPrivKey | Minha identidade | Ninguém se faz passar por mim |
+| clubPrivKey | Membership do clube | Ninguém finge ser membro |
+| QR signature | Integridade do convite | Ninguém altera o passeio |
+| rideSecret (simétrica) | Acesso à mesh | Só convidados entram |
+
+### Onde ficam armazenadas?
+| Chave | Armazenamento | Backup |
+|-------|---------------|--------|
+| riderPrivKey | iOS Keychain | iCloud Keychain (se habilitado) |
+| clubPrivKey | iOS Keychain do presidente | Exportável via QR criptografado |
+| pubKeys de outros | GRDB (SQLite) | Backup automático |
+| rideSecret | GRDB | Efêmera (descartada após ride) |
+
+### Quando cada camada de crypto entra?
+| Fase | O que é ativo |
+|------|---------------|
+| MVP | PeerID random 8 bytes. Sem Ed25519. Cleartext. |
+| Fase 2 | Ed25519 keypair. RiderCard assinado. ClubBadge verificável. |
+| Fase 5 | Noise_XX (session keys BLE). OpenMLS (group encryption). NIP-44 (Nostr DMs). |
