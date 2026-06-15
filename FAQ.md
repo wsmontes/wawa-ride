@@ -290,3 +290,29 @@ BLE reconecta. Automerge CRDT sincroniza as posições que faltavam. Trail preen
 
 ### Qualquer rider pode ser bridge?
 **Sim.** Não é um papel atribuído. Qualquer phone que tenha internet E mesh ativo age como gateway automaticamente. Se vários riders têm internet, dedup previne duplicação.
+
+---
+
+## Grupos Grandes (>7 riders)
+
+### Posso ter 20 riders num único grupo?
+**Não diretamente.** BLE suporta ~6 conexões simultâneas por device. 20 riders num único mesh saturaria os links (20 × 1 Hz = 20 pacotes/segundo flooding).
+
+### Como resolver para grupos grandes?
+**Sub-grupos encadeados com sub-líderes.** Exemplo com 20 riders:
+
+- Grupo A: Marcos (líder) + 6 riders + Pedro
+- Grupo B: Pedro (líder) + 6 riders + Ana
+- Grupo C: Ana (líder) + 5 riders
+
+Pedro segue Marcos. Seu sub-grupo segue ele. Ana segue Pedro. É uma corrente.
+
+### Um líder pode ser membro do grupo de outro líder?
+**No MVP:** Não. Um phone = 1 grupo por vez.  
+**Fase futura (Caravana Mode):** Sim. Sub-líderes participam de 2 grupos simultaneamente — recebem trail do líder-mestre e repassam para seu sub-grupo. Escala para 20+ riders.
+
+### O que cada sub-grupo vê?
+Cada rider vê apenas seu líder direto + peers do seu sub-grupo. Sub-líderes veem o líder acima + seus seguidores. Ninguém é sobrecarregado com 20 pins no mapa.
+
+### Por que não simplesmente aumentar as conexões BLE?
+Limitação de hardware (Apple). O chip BLE do iPhone não suporta mais de ~7 conexões estáveis. Além disso, flooding num grupo de 20 = 20 packets/segundo × TTL=5 hops = até 100 retransmissões/segundo — devastaria a bateria.
