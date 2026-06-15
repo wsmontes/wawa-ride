@@ -5,6 +5,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
+            Color.clear.onAppear { viewModel.onAppLaunch() }
             if viewModel.isRideActive {
                 MapView(
                     riders: viewModel.currentRiders,

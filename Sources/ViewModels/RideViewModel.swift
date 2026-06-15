@@ -34,7 +34,9 @@ final class RideViewModel {
         localRiderID = loadOrCreateRiderID()
         webRTC = WebRTCService(localRiderID: localRiderID)
         setupSignalingBridge()
-        // Request GPS permission immediately on first launch
+    }
+
+    func onAppLaunch() {
         locationService.requestPermission()
     }
 

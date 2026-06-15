@@ -11,6 +11,7 @@
 		30B7E9D375164C80D3BA7102 /* RideGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62B0D06A7D287498E7F6E927 /* RideGroup.swift */; };
 		3404A754C40DF4CE01FEF191 /* LocationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3D444A40FD0F9516E489F9 /* LocationService.swift */; };
 		3E828D4AB0D0E3BAD3F59A1E /* WebRTC in Frameworks */ = {isa = PBXBuildFile; productRef = 33FCCF124F4B1B682DB61958 /* WebRTC */; };
+		40BDE54E46A5992F259DC7B1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E7D22EF2084FC2E41EC2D18D /* Assets.xcassets */; };
 		44390CA654A1048366169A9F /* Rider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26FD5C640B481B968070BFC5 /* Rider.swift */; };
 		44A8C3A935B92010DC8122AF /* MultipeerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC6207D4F969FB00792BF03E /* MultipeerService.swift */; };
 		47ECA99070DF738E9C8A506F /* WebRTCService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 013AC7E5AAA8188239AA3F27 /* WebRTCService.swift */; };
@@ -20,6 +21,7 @@
 		C40CEBDC3C9CC6F415A5B4EE /* TURNConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = F5FC95C07A311F8F6B91C58C /* TURNConfig.plist */; };
 		C5AE25367E9F723F5DEB67AC /* TURNConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = E752C239C52141427D8EAEBC /* TURNConfig.swift */; };
 		C5D4F718FE3D6E5F9B20D6D7 /* PeerIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7630C62A26E804AE8BE7A937 /* PeerIdentity.swift */; };
+		CF9525FC875F0B16814AC628 /* DebugOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7D3AA6C82F7CC18C29A8BC6 /* DebugOverlay.swift */; };
 		D7573C0A47C5A7F807D88885 /* TURNConfig.template.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B6EEAF46AA287F77DAC5076 /* TURNConfig.template.plist */; };
 		DEDE946E5C1AFEEB20B4B108 /* MapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F58E122763AB75E8E506E6B /* MapView.swift */; };
 		F6CF1ED6292E859AEE85DD0A /* RideViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D90FB24CE9055BD88988A815 /* RideViewModel.swift */; };
@@ -41,9 +43,11 @@
 		7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WAWARideApp.swift; sourceTree = "<group>"; };
 		954BAC02E44D05C6A12DFED3 /* LocationUpdate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationUpdate.swift; sourceTree = "<group>"; };
 		A37F74426E4DE5C2432F97BF /* TURNSecrets.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TURNSecrets.generated.swift; sourceTree = "<group>"; };
+		B7D3AA6C82F7CC18C29A8BC6 /* DebugOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugOverlay.swift; sourceTree = "<group>"; };
 		CC6207D4F969FB00792BF03E /* MultipeerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerService.swift; sourceTree = "<group>"; };
 		D90FB24CE9055BD88988A815 /* RideViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideViewModel.swift; sourceTree = "<group>"; };
 		E752C239C52141427D8EAEBC /* TURNConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TURNConfig.swift; sourceTree = "<group>"; };
+		E7D22EF2084FC2E41EC2D18D /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		F5FC95C07A311F8F6B91C58C /* TURNConfig.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = TURNConfig.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -62,6 +66,7 @@
 		309424743B3BD121B07A5E0A /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				E7D22EF2084FC2E41EC2D18D /* Assets.xcassets */,
 				30D7886496319347E91CD84C /* Info.plist */,
 			);
 			path = Resources;
@@ -154,6 +159,7 @@
 			isa = PBXGroup;
 			children = (
 				29280EDB473BF28C4106DF45 /* ContentView.swift */,
+				B7D3AA6C82F7CC18C29A8BC6 /* DebugOverlay.swift */,
 				0F58E122763AB75E8E506E6B /* MapView.swift */,
 				2B316CE9B1A13F03D876F2FE /* PairingView.swift */,
 			);
@@ -215,6 +221,7 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					43061D48CAE6F9A1C5F0B28D = {
+						DevelopmentTeam = 955573A4YH;
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -246,6 +253,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				40BDE54E46A5992F259DC7B1 /* Assets.xcassets in Resources */,
 				C40CEBDC3C9CC6F415A5B4EE /* TURNConfig.plist in Resources */,
 				D7573C0A47C5A7F807D88885 /* TURNConfig.template.plist in Resources */,
 			);
@@ -319,6 +327,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FAE5BEFA3D912C8ABDD6EA4A /* ContentView.swift in Sources */,
+				CF9525FC875F0B16814AC628 /* DebugOverlay.swift in Sources */,
 				3404A754C40DF4CE01FEF191 /* LocationService.swift in Sources */,
 				62C9B2B06EC28D2C94322EBB /* LocationUpdate.swift in Sources */,
 				DEDE946E5C1AFEEB20B4B108 /* MapView.swift in Sources */,
@@ -344,6 +353,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 955573A4YH;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = Sources/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -487,6 +497,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 955573A4YH;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = Sources/Resources/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
