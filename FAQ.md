@@ -428,3 +428,46 @@ Hazards são diferentes de location updates:
 
 ### É um Waze descentralizado?
 Essencialmente sim — mas sem conta, sem servidor, sem tracking. Os alertas vivem na rede Nostr (relays públicos) e na mesh BLE local. Qualquer rider contribui e beneficia.
+
+---
+
+## Ride Beacons (Convites Abertos / Eventos Recorrentes)
+
+### Posso criar um convite aberto que qualquer rider na região veja?
+**Sim.** "Ride Beacons" são convites públicos geolocalizado. Funcionam como hazards invertidos: em vez de "cuidado aqui", é "venha aqui".
+
+Exemplo: "Toda terça 18h — Posto Shell Centro — role livre com quem aparecer."
+
+### Como funciona?
+Mesmo mecanismo do hazard:
+- Publicado no Nostr com geohash tag (região)
+- Qualquer rider WawaMesh na área vê um pin dourado 📍 no mapa
+- Suporta recorrência (iCal RRULE: toda terça, todo sábado, etc.)
+- Não expira enquanto o criador não deletar
+
+### No dia do evento, como o grupo se forma?
+O beacon contém um `rideSecret`. Quem faz RSVP ("Vou!") recebe o secret. No dia:
+1. Riders chegam no local
+2. App ativa mesh automaticamente com o secret do beacon como groupID
+3. Todos se veem no mapa
+4. Alguém sai na frente → vira líder → trail cresce
+
+### Qual a diferença de um passeio agendado (QR) vs Ride Beacon?
+| | Passeio QR | Ride Beacon |
+|--|---|---|
+| Quem vê | Só quem recebeu o QR | Qualquer rider na região |
+| Distribuição | Manual (share) | Automática (geohash) |
+| Frequência | Evento único | Pode ser recorrente |
+| Descoberta | Precisa receber convite | Aparece no mapa sozinho |
+| Tipo | Grupo fechado | Semi-aberto |
+
+### Como fica o mapa de um rider qualquer?
+```
+🔵 Eu
+🟠 Meu grupo (passeio de hoje)
+🟢 Riders de outros grupos (public visibility)
+📍🟡 "Role de Terça" (beacon, convite aberto)
+📍🟡 "Sáb Serra do Rio" (beacon, próximo evento)
+⚠️🔴 "Óleo — Rua Augusta" (hazard)
+```
+Tudo descentralizado, tudo no mesmo protocolo WawaMesh + Nostr, tudo sem servidor.
