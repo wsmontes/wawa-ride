@@ -4,7 +4,7 @@ import CoreLocation
 import MultipeerConnectivity
 import os.log
 
-/// Central ViewModel that orchestrates MultipeerConnectivity, WebRTC, and Location services.
+/// Central ViewModel orchestrating MultipeerConnectivity, WebRTC, and Location.
 @MainActor
 @Observable
 final class RideViewModel {
@@ -25,6 +25,9 @@ final class RideViewModel {
 
     private let log = Logger(subsystem: "com.wawaride", category: "ViewModel")
 
+    /// Tracks whether we've already initiated a WebRTC connection for a peer.
+    private var webrtcInitiatedFor: Set<String> = []
+
     // MARK: - Init
 
     init() {
@@ -41,31 +44,46 @@ final class RideViewModel {
             self?.webRTC.onSignalingReceived(data, from: peerID.displayName)
         }
 
-        // WebRTC → MC: outgoing signaling (SDP/ICE) needs to go to peer
+        // WebRTC → MC: outgoing signaling (SDP/ICE)
         webRTC.onOutgoingSignaling = { [weak self] data, riderID in
             guard let self else { return }
             if let peer = self.multipeer.connectedPeers.first(where: { $0.displayName == riderID }) {
                 self.multipeer.sendSignaling(data, to: peer)
-            } else {
-                self.log.warning("No MC peer found for riderID: \(riderID)")
             }
         }
 
-        // WebRTC DataChannel: remote location updates received
+        // WebRTC DataChannel: remote location updates
         webRTC.onDataReceived = { [weak self] data, riderID in
             guard let self, let update = LocationUpdate.decode(data) else { return }
             self.applyLocationUpdate(update)
         }
 
-        // MC peer connected → create WebRTC offer
+        // MC peer connected → wait briefly then init WebRTC if no incoming offer
         multipeer.onPeerConnected = { [weak self] peerID in
-            self?.webRTC.createOffer(for: peerID.displayName)
+            guard let self else { return }
+            let riderID = peerID.displayName
+            guard !self.webrtcInitiatedFor.contains(riderID) else { return }
+            self.webrtcInitiatedFor.insert(riderID)
+
+            // Polite delay: give the other side time to send an offer first.
+            // The peer with the lexicographically greater name waits longer.
+            let isPolite = self.localRiderID > riderID
+            let delay: UInt64 = isPolite ? 1_500_000_000 : 500_000_000
+
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: delay)
+                // Only create offer if peer is still connected and hasn't already
+                // sent us an offer (which would have created a connection already)
+                self.webRTC.createOffer(for: riderID)
+            }
         }
 
-        // MC peer disconnected → clean up WebRTC
+        // MC peer disconnected → clean up
         multipeer.onPeerDisconnected = { [weak self] peerID in
-            self?.webRTC.disconnect(peer: peerID.displayName)
-            self?.currentRiders.removeAll { $0.id == peerID.displayName }
+            let riderID = peerID.displayName
+            self?.webRTC.disconnect(peer: riderID)
+            self?.currentRiders.removeAll { $0.id == riderID }
+            self?.webrtcInitiatedFor.remove(riderID)
         }
     }
 
@@ -80,6 +98,7 @@ final class RideViewModel {
     func stopPairing() {
         isPairing = false
         multipeer.stopPairing()
+        webrtcInitiatedFor.removeAll()
     }
 
     func invitePeer(_ peer: MCPeerID) {
@@ -90,7 +109,7 @@ final class RideViewModel {
 
     func startRide() {
         guard !multipeer.connectedPeers.isEmpty else {
-            errorMessage = "Nenhum motociclista pareado. Faça o pareamento primeiro."
+            errorMessage = "Nenhum motociclista pareado."
             return
         }
 
@@ -117,23 +136,10 @@ final class RideViewModel {
         isRideActive = false
         locationService.stopUpdating()
         currentRiders.removeAll()
-
-        // Disconnect all WebRTC peers but keep MC connections
-        for rider in currentRiders {
-            webRTC.disconnect(peer: rider.id)
+        for riderID in webrtcInitiatedFor {
+            webRTC.disconnect(peer: riderID)
         }
-    }
-
-    // MARK: - WebRTC peer management
-
-    func connectToRider(_ riderID: String) {
-        webRTC.createOffer(for: riderID)
-    }
-
-    /// Retry a failed WebRTC connection.
-    func retryConnection(to riderID: String) {
-        webRTC.disconnect(peer: riderID)
-        webRTC.createOffer(for: riderID)
+        webrtcInitiatedFor.removeAll()
     }
 
     // MARK: - Helpers
@@ -145,7 +151,7 @@ final class RideViewModel {
             currentRiders[index].speed = update.speed
             currentRiders[index].lastUpdate = Date(timeIntervalSince1970: update.timestamp)
         } else {
-            let rider = Rider(
+            currentRiders.append(Rider(
                 id: update.riderID,
                 displayName: update.riderID,
                 coordinate: update.coordinate,
@@ -153,8 +159,7 @@ final class RideViewModel {
                 speed: update.speed,
                 lastUpdate: Date(timeIntervalSince1970: update.timestamp),
                 isConnected: true
-            )
-            currentRiders.append(rider)
+            ))
         }
     }
 

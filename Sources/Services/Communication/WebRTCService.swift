@@ -2,8 +2,7 @@ import Foundation
 @preconcurrency import WebRTC
 import os.log
 
-/// Manages WebRTC peer connections for internet-routable P2P communication.
-/// Signaling is exchanged via MultipeerConnectivity (zero server).
+/// Manages WebRTC peer connections. All internal state is protected by a serial queue.
 final class WebRTCService: NSObject, ObservableObject, @unchecked Sendable {
 
     // MARK: - Published
@@ -19,14 +18,16 @@ final class WebRTCService: NSObject, ObservableObject, @unchecked Sendable {
     private let localRiderID: String
     private let log = Logger(subsystem: "com.wawaride", category: "WebRTC")
 
-    /// One RTCPeerConnection per remote peer.
+    /// Serial queue protecting all mutable state.
+    private let queue = DispatchQueue(label: "com.wawaride.webrtc")
+
     private var connections: [String: RTCPeerConnection] = [:]
     private var dataChannels: [String: RTCDataChannel] = [:]
 
-    /// Called when a DataChannel message is received.
-    var onDataReceived: ((Data, String) -> Void)?
+    /// Track which peers we've already set up to avoid duplicate offers.
+    private var pendingSetup: Set<String> = []
 
-    /// Called when SDP/ICE needs to be sent to a peer via the signaling channel.
+    var onDataReceived: ((Data, String) -> Void)?
     var onOutgoingSignaling: ((Data, String) -> Void)?
 
     // MARK: - Init
@@ -36,126 +37,139 @@ final class WebRTCService: NSObject, ObservableObject, @unchecked Sendable {
         factory = RTCPeerConnectionFactory()
 
         var servers: [RTCIceServer] = []
-
-        // STUN servers (always included)
         for url in TURNConfig.stunURLs {
             servers.append(RTCIceServer(urlStrings: [url]))
         }
-
-        // TURN server (fallback)
         servers.append(RTCIceServer(
             urlStrings: TURNConfig.turnURLs,
             username: TURNConfig.turnUsername,
             credential: TURNConfig.turnCredential
         ))
-
         iceServers = servers
-        log.info("WebRTC configured with \(servers.count) ICE servers")
         super.init()
+        log.info("WebRTC configured (\(servers.count) ICE servers)")
     }
 
     // MARK: - Public API
 
-    /// Create a peer connection for a new rider and initiate the offer.
     func createOffer(for riderID: String) {
-        peers[riderID] = .connecting
-
-        let config = RTCConfiguration()
-        config.iceServers = iceServers
-        config.continualGatheringPolicy = .gatherContinually
-        config.sdpSemantics = .unifiedPlan
-
-        let constraints = RTCMediaConstraints(
-            mandatoryConstraints: nil,
-            optionalConstraints: ["DtlsSrtpKeyAgreement": "true"]
-        )
-
-        guard let pc = factory.peerConnection(
-            with: config,
-            constraints: constraints,
-            delegate: nil
-        ) else {
-            log.error("Failed to create peer connection for \(riderID)")
-            peers[riderID] = .failed
-            return
-        }
-
-        pc.delegate = self
-        connections[riderID] = pc
-
-        // Create DataChannel
-        let dcConfig = RTCDataChannelConfiguration()
-        dcConfig.isOrdered = false
-        dcConfig.isNegotiated = false
-
-        if let dc = pc.dataChannel(forLabel: "wawa-location", configuration: dcConfig) {
-            dc.delegate = self
-            dataChannels[riderID] = dc
-        }
-
-        // Create offer
-        let offerConstraints = RTCMediaConstraints(
-            mandatoryConstraints: ["OfferToReceiveAudio": "false", "OfferToReceiveVideo": "false"],
-            optionalConstraints: nil
-        )
-
-        pc.offer(for: offerConstraints) { [weak self] sdp, error in
+        queue.async { [weak self] in
             guard let self else { return }
-            guard let sdp else {
-                self.log.error("Offer failed: \(error?.localizedDescription ?? "unknown")")
-                self.peers[riderID] = .failed
+
+            // Guard against duplicate setup
+            guard !self.pendingSetup.contains(riderID),
+                  self.connections[riderID] == nil
+            else {
+                self.log.debug("Offer already pending/active for \(riderID)")
                 return
             }
-            let handler: (Error?) -> Void = { err in
-                if let err { self.log.error("setLocalDescription: \(err.localizedDescription)") }
+            self.pendingSetup.insert(riderID)
+
+            DispatchQueue.main.async {
+                self.peers[riderID] = .connecting
             }
-            pc.setLocalDescription(sdp, completionHandler: handler)
-            // Send SDP via signaling channel
-            if let data = sdp.sdp.data(using: .utf8) {
-                var payload = "OFFER:".data(using: .utf8) ?? Data()
-                payload.append(data)
-                self.onOutgoingSignaling?(payload, riderID)
+
+            let config = RTCConfiguration()
+            config.iceServers = self.iceServers
+            config.continualGatheringPolicy = .gatherContinually
+            config.sdpSemantics = .unifiedPlan
+
+            let constraints = RTCMediaConstraints(
+                mandatoryConstraints: nil,
+                optionalConstraints: ["DtlsSrtpKeyAgreement": "true"]
+            )
+
+            guard let pc = self.factory.peerConnection(
+                with: config, constraints: constraints, delegate: nil
+            ) else {
+                self.log.error("Failed to create peer connection for \(riderID)")
+                self.pendingSetup.remove(riderID)
+                DispatchQueue.main.async { self.peers[riderID] = .failed }
+                return
+            }
+
+            pc.delegate = self
+            self.connections[riderID] = pc
+
+            let dcConfig = RTCDataChannelConfiguration()
+            dcConfig.isOrdered = false
+            if let dc = pc.dataChannel(forLabel: "wawa-location", configuration: dcConfig) {
+                dc.delegate = self
+                self.dataChannels[riderID] = dc
+            }
+
+            let offerConstraints = RTCMediaConstraints(
+                mandatoryConstraints: [
+                    "OfferToReceiveAudio": "false",
+                    "OfferToReceiveVideo": "false"
+                ],
+                optionalConstraints: nil
+            )
+
+            pc.offer(for: offerConstraints) { [weak self] sdp, error in
+                guard let self else { return }
+                guard let sdp else {
+                    self.log.error("Offer failed for \(riderID): \(error?.localizedDescription ?? "unknown")")
+                    self.pendingSetup.remove(riderID)
+                    DispatchQueue.main.async { self.peers[riderID] = .failed }
+                    return
+                }
+                pc.setLocalDescription(sdp) { err in
+                    if let err { self.log.error("setLocalDescription: \(err.localizedDescription)") }
+                }
+                if let data = sdp.sdp.data(using: .utf8) {
+                    var payload = "OFFER:".data(using: .utf8) ?? Data()
+                    payload.append(data)
+                    self.onOutgoingSignaling?(payload, riderID)
+                }
             }
         }
     }
 
-    /// Handle incoming signaling data from MultipeerConnectivity.
     func onSignalingReceived(_ data: Data, from riderID: String) {
-        guard let text = String(data: data, encoding: .utf8) else { return }
+        queue.async { [weak self] in
+            guard let self else { return }
+            guard let text = String(data: data, encoding: .utf8) else { return }
 
-        if text.hasPrefix("OFFER:") {
-            handleOffer(String(text.dropFirst(7)), from: riderID)
-        } else if text.hasPrefix("ANSWER:") {
-            handleAnswer(String(text.dropFirst(7)), from: riderID)
-        } else if text.hasPrefix("ICE:") {
-            handleICECandidate(String(text.dropFirst(4)), from: riderID)
+            if text.hasPrefix("OFFER:") {
+                self.handleOffer(String(text.dropFirst(7)), from: riderID)
+            } else if text.hasPrefix("ANSWER:") {
+                self.handleAnswer(String(text.dropFirst(7)), from: riderID)
+            } else if text.hasPrefix("ICE:") {
+                self.handleICECandidate(String(text.dropFirst(4)), from: riderID)
+            }
         }
     }
 
-    /// Send data to a specific peer via DataChannel.
     func send(_ data: Data, to riderID: String) {
-        guard let dc = dataChannels[riderID] else {
-            log.warning("No DataChannel for \(riderID)")
-            return
+        queue.async { [weak self] in
+            guard let self, let dc = self.dataChannels[riderID] else {
+                self?.log.warning("No DataChannel for \(riderID)")
+                return
+            }
+            dc.sendData(RTCDataBuffer(data: data, isBinary: true))
         }
-        let buffer = RTCDataBuffer(data: data, isBinary: true)
-        dc.sendData(buffer)
     }
 
-    /// Broadcast data to all connected peers.
     func broadcast(_ data: Data) {
-        for (_, dc) in dataChannels where dc.readyState == .open {
-            let buffer = RTCDataBuffer(data: data, isBinary: true)
-            dc.sendData(buffer)
+        queue.async { [weak self] in
+            guard let self else { return }
+            for (_, dc) in self.dataChannels where dc.readyState == .open {
+                dc.sendData(RTCDataBuffer(data: data, isBinary: true))
+            }
         }
     }
 
     func disconnect(peer riderID: String) {
-        dataChannels[riderID]?.close()
-        dataChannels.removeValue(forKey: riderID)
-        connections[riderID]?.close()
-        connections.removeValue(forKey: riderID)
-        peers.removeValue(forKey: riderID)
+        queue.async { [weak self] in
+            guard let self else { return }
+            self.dataChannels[riderID]?.close()
+            self.dataChannels.removeValue(forKey: riderID)
+            self.connections[riderID]?.close()
+            self.connections.removeValue(forKey: riderID)
+            self.pendingSetup.remove(riderID)
+            DispatchQueue.main.async { self.peers.removeValue(forKey: riderID) }
+        }
     }
 }
 
@@ -163,40 +177,34 @@ final class WebRTCService: NSObject, ObservableObject, @unchecked Sendable {
 
 private extension WebRTCService {
 
-    func makeBaseConfig() -> RTCConfiguration {
-        let config = RTCConfiguration()
-        config.iceServers = iceServers
-        config.continualGatheringPolicy = .gatherContinually
-        return config
-    }
-
     func emptyConstraints() -> RTCMediaConstraints {
         RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
     }
 
     func handleOffer(_ sdp: String, from riderID: String) {
-        peers[riderID] = .connecting
+        pendingSetup.insert(riderID)
+        DispatchQueue.main.async { self.peers[riderID] = .connecting }
 
-        guard let pc = factory.peerConnection(
-            with: makeBaseConfig(),
-            constraints: emptyConstraints(),
-            delegate: nil
-        ) else {
-            peers[riderID] = .failed
+        let config = RTCConfiguration()
+        config.iceServers = iceServers
+        config.continualGatheringPolicy = .gatherContinually
+
+        guard let pc = factory.peerConnection(with: config, constraints: emptyConstraints(), delegate: nil) else {
+            pendingSetup.remove(riderID)
+            DispatchQueue.main.async { self.peers[riderID] = .failed }
             return
         }
         pc.delegate = self
         connections[riderID] = pc
 
-        let offerSDP = RTCSessionDescription(type: .offer, sdp: sdp)
-
-        pc.setRemoteDescription(offerSDP) { [weak self] err in
+        pc.setRemoteDescription(RTCSessionDescription(type: .offer, sdp: sdp)) { [weak self] err in
             guard let self else { return }
             if let err { self.log.error("setRemoteDescription: \(err.localizedDescription)") }
 
-            pc.answer(for: emptyConstraints()) { answerSDP, error in
+            pc.answer(for: self.emptyConstraints()) { answerSDP, error in
                 guard let answerSDP else {
-                    self.peers[riderID] = .failed
+                    self.pendingSetup.remove(riderID)
+                    DispatchQueue.main.async { self.peers[riderID] = .failed }
                     return
                 }
                 pc.setLocalDescription(answerSDP) { _ in }
@@ -210,10 +218,12 @@ private extension WebRTCService {
     }
 
     func handleAnswer(_ sdp: String, from riderID: String) {
-        let answerSDP = RTCSessionDescription(type: .answer, sdp: sdp)
-        connections[riderID]?.setRemoteDescription(answerSDP) { [weak self] err in
-            guard let self else { return }
-            if let err { self.log.error("setRemoteDescription answer: \(err.localizedDescription)") }
+        connections[riderID]?.setRemoteDescription(
+            RTCSessionDescription(type: .answer, sdp: sdp)
+        ) { [weak self] err in
+            if let self, let err {
+                self.log.error("setRemoteDescription answer: \(err.localizedDescription)")
+            }
         }
     }
 
@@ -228,8 +238,9 @@ private extension WebRTCService {
 
         let candidate = RTCIceCandidate(sdp: sdp, sdpMLineIndex: sdpMLineIndex, sdpMid: sdpMid)
         connections[riderID]?.add(candidate) { [weak self] err in
-            guard let self else { return }
-            if let err { self.log.error("addICECandidate: \(err.localizedDescription)") }
+            if let self, let err {
+                self.log.error("addICE: \(err.localizedDescription)")
+            }
         }
     }
 }
@@ -237,28 +248,27 @@ private extension WebRTCService {
 // MARK: - RTCPeerConnectionDelegate
 
 extension WebRTCService: RTCPeerConnectionDelegate {
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange state: RTCPeerConnectionState) {
-        if let entry = connections.first(where: { $0.value == peerConnection }) {
-            let riderID = entry.key
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                switch state {
-                case .connected:
-                    self.peers[riderID] = .connected
-                    self.log.info("WebRTC connected: \(riderID)")
-                case .failed, .disconnected:
-                    self.peers[riderID] = .failed
-                    self.log.warning("WebRTC \(state.rawValue): \(riderID)")
-                case .connecting:
-                    self.peers[riderID] = .connecting
-                default: break
-                }
+    func peerConnection(_ pc: RTCPeerConnection, didChange state: RTCPeerConnectionState) {
+        guard let entry = connections.first(where: { $0.value == pc }) else { return }
+        let riderID = entry.key
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            switch state {
+            case .connected:
+                self.peers[riderID] = .connected
+                self.log.info("WebRTC connected: \(riderID)")
+            case .failed, .disconnected:
+                self.peers[riderID] = .failed
+                self.log.warning("WebRTC \(state.rawValue): \(riderID)")
+            case .connecting:
+                self.peers[riderID] = .connecting
+            default: break
             }
         }
     }
 
-    func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
-        guard let entry = connections.first(where: { $0.value == peerConnection }) else { return }
+    func peerConnection(_ pc: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
+        guard let entry = connections.first(where: { $0.value == pc }) else { return }
         let dict: [String: String] = [
             "sdp": candidate.sdp,
             "sdpMLineIndex": "\(candidate.sdpMLineIndex)",
@@ -272,14 +282,14 @@ extension WebRTCService: RTCPeerConnectionDelegate {
         }
     }
 
-    func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection) {}
-    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
-    func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
-    func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
-    func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCSignalingState) {}
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState) {}
-    func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) {}
+    func peerConnectionShouldNegotiate(_ pc: RTCPeerConnection) {}
+    func peerConnection(_ pc: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
+    func peerConnection(_ pc: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
+    func peerConnection(_ pc: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
+    func peerConnection(_ pc: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
+    func peerConnection(_ pc: RTCPeerConnection, didChange newState: RTCSignalingState) {}
+    func peerConnection(_ pc: RTCPeerConnection, didChange newState: RTCIceConnectionState) {}
+    func peerConnection(_ pc: RTCPeerConnection, didChange newState: RTCIceGatheringState) {}
 }
 
 // MARK: - RTCDataChannelDelegate
@@ -292,6 +302,6 @@ extension WebRTCService: RTCDataChannelDelegate {
     }
 
     func dataChannelDidChangeState(_ dataChannel: RTCDataChannel) {
-        log.debug("DataChannel state: \(dataChannel.readyState.rawValue)")
+        log.debug("DataChannel: \(dataChannel.readyState.rawValue)")
     }
 }
