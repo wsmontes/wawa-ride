@@ -1,90 +1,85 @@
 import SwiftUI
-import MapLibre
 import CoreLocation
+import MapLibreSwiftUI
+import MapLibre
 
-/// MapLibre-based ride map showing riders, route line, and waypoints.
-public struct RideMapView: UIViewRepresentable {
+/// Ride map using MapLibre SwiftUI-DSL (official wrapper).
+/// Supports PMTiles via local file:// style URL.
+public struct RideMapView: View {
     @Binding var riders: [RiderAnnotation]
     @Binding var routeCoords: [CLLocationCoordinate2D]
+    @State private var camera: MapViewCamera = .trackUserLocation(zoom: 14, pitch: .free)
+
     let styleURL: URL
 
     public init(riders: Binding<[RiderAnnotation]>,
                 routeCoords: Binding<[CLLocationCoordinate2D]>,
-                styleURL: URL = URL(string: "https://demotiles.maplibre.org/style.json")!) {
+                styleURL: URL = defaultStyleURL()) {
         _riders = riders
         _routeCoords = routeCoords
         self.styleURL = styleURL
     }
 
-    public func makeCoordinator() -> Coordinator { Coordinator() }
-
-    public func makeUIView(context: Context) -> MLNMapView {
-        let map = MLNMapView(frame: .zero, styleURL: styleURL)
-        map.delegate = context.coordinator
-        map.showsUserLocation = true
-        map.userTrackingMode = .followWithHeading
-        map.attributionButtonPosition = .bottomLeft
-        map.logoView.isHidden = false  // MapLibre logo includes OSM attribution
-        return map
-    }
-
-    public func updateUIView(_ map: MLNMapView, context: Context) {
-        guard map.style != nil else { return }
-        context.coordinator.updateRiders(map: map, riders: riders)
-        context.coordinator.updateRoute(map: map, coords: routeCoords)
-    }
-
-    public class Coordinator: NSObject, MLNMapViewDelegate {
-        private var layersReady = false
-
-        public func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
-            // Rider circles source + layer
-            let riderSource = MLNShapeSource(identifier: "riders", shape: nil, options: nil)
-            style.addSource(riderSource)
-            let riderLayer = MLNCircleStyleLayer(identifier: "riders-layer", source: riderSource)
-            riderLayer.circleRadius = NSExpression(forConstantValue: 14)
-            riderLayer.circleColor = NSExpression(
-                forConditional: NSPredicate(format: "stale == YES"),
-                trueExpression: NSExpression(forConstantValue: UIColor.systemGray),
-                falseExpression: NSExpression(forConstantValue: UIColor.systemOrange)
-            )
-            riderLayer.circleOpacity = NSExpression(
-                forConditional: NSPredicate(format: "stale == YES"),
-                trueExpression: NSExpression(forConstantValue: 0.5),
-                falseExpression: NSExpression(forConstantValue: 1.0)
-            )
-            riderLayer.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
-            riderLayer.circleStrokeWidth = NSExpression(forConstantValue: 2.5)
-            style.addLayer(riderLayer)
-
-            // Route line source + layer
-            let routeSource = MLNShapeSource(identifier: "route", shape: nil, options: nil)
-            style.addSource(routeSource)
-            let routeLayer = MLNLineStyleLayer(identifier: "route-line", source: routeSource)
-            routeLayer.lineColor = NSExpression(forConstantValue: UIColor.systemBlue)
-            routeLayer.lineWidth = NSExpression(forConstantValue: 4)
-            routeLayer.lineCap = NSExpression(forConstantValue: "round")
-            style.addLayer(routeLayer)
-
-            layersReady = true
-        }
-
-        func updateRiders(map: MLNMapView, riders: [RiderAnnotation]) {
-            guard layersReady, let src = map.style?.source(withIdentifier: "riders") as? MLNShapeSource else { return }
-            let features = riders.map { r -> MLNPointFeature in
-                let f = MLNPointFeature()
-                f.coordinate = r.coordinate
-                f.attributes = ["name": r.displayName, "stale": r.isStale]
-                return f
+    public var body: some View {
+        MapView(styleURL: styleURL, camera: $camera) {
+            // Route polyline
+            if !routeCoords.isEmpty {
+                MapPolyline(coordinates: routeCoords)
+                    .stroke(.blue, lineWidth: 4)
             }
-            src.shape = MLNShapeCollectionFeature(shapes: features)
+            // Rider markers
+            ForEvery(riders) { rider in
+                MapMarker(coordinate: rider.coordinate) {
+                    RiderBadge(name: rider.displayName, isStale: rider.isStale, isLeader: rider.isLeader)
+                }
+            }
         }
+        .mapControls {
+            CompassView()
+            UserLocationButton()
+        }
+        .ignoresSafeArea()
+        // OSM attribution (ODbL requirement)
+        .overlay(alignment: .bottomTrailing) {
+            Text("© OpenStreetMap")
+                .font(.system(size: 9))
+                .foregroundStyle(.secondary)
+                .padding(4)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 4))
+                .padding(8)
+        }
+    }
 
-        func updateRoute(map: MLNMapView, coords: [CLLocationCoordinate2D]) {
-            guard layersReady, let src = map.style?.source(withIdentifier: "route") as? MLNShapeSource else { return }
-            guard !coords.isEmpty else { src.shape = nil; return }
-            var c = coords
-            src.shape = MLNPolyline(coordinates: &c, count: UInt(c.count))
+    /// Default style URL — uses bundled PMTiles if available, otherwise demo tiles.
+    public static func defaultStyleURL() -> URL {
+        if let local = Bundle.main.url(forResource: "style", withExtension: "json") {
+            return local
+        }
+        return URL(string: "https://demotiles.maplibre.org/style.json")!
+    }
+}
+
+/// Compact rider badge for map annotations.
+struct RiderBadge: View {
+    let name: String
+    let isStale: Bool
+    let isLeader: Bool
+
+    var body: some View {
+        VStack(spacing: 2) {
+            Circle()
+                .fill(isStale ? .gray : (isLeader ? .blue : .orange))
+                .opacity(isStale ? 0.5 : 1.0)
+                .frame(width: 28, height: 28)
+                .overlay {
+                    Image(systemName: isLeader ? "star.fill" : "motorcycle")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.white)
+                }
+            Text(name)
+                .font(.system(size: 9, weight: .medium))
+                .padding(.horizontal, 4)
+                .background(.ultraThinMaterial, in: Capsule())
         }
     }
 }

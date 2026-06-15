@@ -3,36 +3,52 @@ import CoreLocation
 import WawaMesh
 import WawaMap
 import WawaNavigation
+import WawaPersistence
+import Automerge
 
 @MainActor
 final class RideSession: ObservableObject {
     let mesh = TransportCoordinator()
-    let tileManager: OfflineTileManager
+    let tileManager = OfflineTileManager()
     let routeService: RouteService
     let mapMatching: MapMatchingService
     let groupNav: GroupNavigationCoordinator
-    let locationTracker: SmartLocationTracker
+    let locationTracker = SmartLocationTracker()
+    let db: AppDatabase
+    let syncDoc: RideSyncDocument
 
     @Published var riders: [RiderAnnotation] = []
     @Published var routeCoords: [CLLocationCoordinate2D] = []
     @Published var phase: Phase = .idle
     @Published var pairingPIN: String = ""
     private var staleTimer: Timer?
+    private var currentRide: Ride?
 
     enum Phase { case idle, pairing, riding, navigating }
 
     init() {
         let valhallaBase = URL(string: "http://localhost:8002")!
-        tileManager = OfflineTileManager(styleURL: URL(string: "https://demotiles.maplibre.org/style.json")!)
         routeService = RouteService(baseURL: valhallaBase, profile: "motorcycle")
         mapMatching = MapMatchingService(baseURL: valhallaBase)
         groupNav = GroupNavigationCoordinator(mapMatching: mapMatching)
-        locationTracker = SmartLocationTracker()
+        db = try! AppDatabase()
+        syncDoc = RideSyncDocument(actorId: mesh.ble.localPeerID)
 
+        // BLE mesh packets (location via binary protocol)
         mesh.onPacketReceived = { [weak self] packet in
-            Task { @MainActor in self?.handlePacket(packet) }
+            Task { @MainActor in self?.handleMeshPacket(packet) }
+        }
+        // MultipeerKit location (Codable, fast foreground path)
+        mesh.onLocationReceived = { [weak self] payload, peerName in
+            Task { @MainActor in self?.applyLocation(payload, from: peerName) }
+        }
+        // Automerge sync messages
+        mesh.onSyncMessage = { [weak self] data, peer in
+            Task { @MainActor in self?.handleSync(data, from: peer) }
         }
     }
+
+    // MARK: - Pairing
 
     func startPairing() {
         phase = .pairing
@@ -41,19 +57,17 @@ final class RideSession: ObservableObject {
     }
 
     func joinWithPIN(_ pin: String) {
-        // In MVP, PIN matching is validated by including the PIN in the announce payload.
-        // Peers with same PIN are accepted into the group.
         let payload = "JOIN:\(pin)".data(using: .utf8)!
-        let packet = MeshPacket(type: .groupControl, senderID: mesh.ble.localPeerID, payload: payload)
-        mesh.send(packet)
+        mesh.send(MeshPacket(type: .groupControl, senderID: mesh.ble.localPeerID, payload: payload))
     }
 
-    func confirmPairing() {
-        startRide()
-    }
+    func confirmPairing() { startRide() }
+
+    // MARK: - Ride Lifecycle
 
     func startRide() {
         phase = .riding
+        currentRide = try? db.startRide(isLeader: true)
         mesh.start()
         locationTracker.start { [weak self] location in
             self?.broadcastLocation(location)
@@ -65,6 +79,8 @@ final class RideSession: ObservableObject {
 
     func stopRide() {
         phase = .idle
+        if var ride = currentRide { try? db.endRide(&ride) }
+        currentRide = nil
         mesh.stop()
         locationTracker.stop()
         staleTimer?.invalidate()
@@ -73,9 +89,7 @@ final class RideSession: ObservableObject {
         routeCoords.removeAll()
     }
 
-    private func purgeStaleRiders() {
-        riders.removeAll { Date().timeIntervalSince($0.lastSeen) > MeshConfig.riderRemoveTimeout }
-    }
+    // MARK: - Broadcasting
 
     private func broadcastLocation(_ location: CLLocation) {
         let payload = LocationPayload(
@@ -85,34 +99,54 @@ final class RideSession: ObservableObject {
             accuracy: location.horizontalAccuracy,
             timestamp: location.timestamp.timeIntervalSince1970
         )
-        guard let data = try? JSONEncoder().encode(payload) else { return }
-        let packet = MeshPacket(type: .locationUpdate, senderID: mesh.ble.localPeerID, payload: data)
-        mesh.send(packet)
+        // Fast path: MultipeerKit (Codable, foreground)
+        mesh.broadcastLocation(payload)
+        // Resilient path: BLE mesh (binary, background, multi-hop)
+        if let data = try? JSONEncoder().encode(payload) {
+            mesh.send(MeshPacket(type: .locationUpdate, senderID: mesh.ble.localPeerID, payload: data))
+        }
+        // Update CRDT doc
+        let id = mesh.ble.localPeerID.hex
+        syncDoc.updateRider(id: id, lat: payload.lat, lon: payload.lon,
+                           heading: payload.heading, speed: payload.speed)
     }
 
-    private func handlePacket(_ packet: MeshPacket) {
+    // MARK: - Receiving
+
+    private func handleMeshPacket(_ packet: MeshPacket) {
         switch packet.type {
         case .locationUpdate:
             guard let p = try? JSONDecoder().decode(LocationPayload.self, from: packet.payload) else { return }
-            let id = packet.senderID.hex
-            let coord = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lon)
-            if let idx = riders.firstIndex(where: { $0.id == id }) {
-                riders[idx].coordinate = coord
-                riders[idx].heading = p.heading
-                riders[idx].speed = p.speed
-                riders[idx].lastSeen = Date()
-            } else {
-                riders.append(RiderAnnotation(id: id, displayName: "Rider \(id.prefix(4))", coordinate: coord,
-                                              heading: p.heading, speed: p.speed, lastSeen: Date()))
-            }
-            groupNav.appendLeaderPosition(coord)
+            applyLocation(p, from: packet.senderID.hex)
         case .routeShare:
             if let coords = try? JSONDecoder().decode([[Double]].self, from: packet.payload) {
-                let route = coords.map { CLLocationCoordinate2D(latitude: $0[0], longitude: $0[1]) }
-                routeCoords = route
-                groupNav.setSharedRoute(route)
+                routeCoords = coords.map { CLLocationCoordinate2D(latitude: $0[0], longitude: $0[1]) }
+                groupNav.setSharedRoute(routeCoords)
             }
         default: break
         }
+    }
+
+    private func applyLocation(_ p: LocationPayload, from id: String) {
+        let coord = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lon)
+        if let idx = riders.firstIndex(where: { $0.id == id }) {
+            riders[idx].coordinate = coord
+            riders[idx].heading = p.heading
+            riders[idx].speed = p.speed
+            riders[idx].lastSeen = Date()
+        } else {
+            riders.append(RiderAnnotation(id: id, displayName: "Rider \(id.prefix(4))",
+                                          coordinate: coord, heading: p.heading, speed: p.speed))
+        }
+        groupNav.appendLeaderPosition(coord)
+    }
+
+    private func handleSync(_ data: Data, from peer: String) {
+        // TODO: per-peer SyncState management
+        // For now, just log receipt
+    }
+
+    private func purgeStaleRiders() {
+        riders.removeAll { Date().timeIntervalSince($0.lastSeen) > MeshConfig.riderRemoveTimeout }
     }
 }
