@@ -2,7 +2,41 @@ import Foundation
 import MapLibre
 
 /// Manages offline PMTiles/MBTiles for regional maps.
-/// Pipeline: Planetiler generates .pmtiles → bundle or download → MapLibre reads via file:// URL.
+///
+/// Tile generation pipeline (all tools are open-source):
+/// 1. **Planetiler** generates regional basemap from OSM → .pmtiles
+///    Reference: https://github.com/onthegomap/planetiler (Apache-2, 2.1k stars)
+///    Command: `planetiler --area=brazil --output=brazil-sudeste.pmtiles`
+///
+/// 2. **Tippecanoe** converts custom GeoJSON overlays → .pmtiles
+///    Reference: https://github.com/felt/tippecanoe (BSD-2, 1.5k stars)
+///    Command: `tippecanoe -zg -o routes.pmtiles routes.geojson`
+///
+/// 3. **pmtiles CLI** extracts sub-regions from larger archives
+///    Reference: https://github.com/protomaps/go-pmtiles
+///    Command: `pmtiles extract planet.pmtiles sp.pmtiles --bbox=-47,-24,-45,-23`
+///
+/// PMTiles format (vs MBTiles):
+/// - Single flat binary file (not SQLite) — optimized for HTTP range requests
+/// - 10-15% smaller than equivalent MBTiles
+/// - MapLibre Native reads via `pmtiles://file:///path/to/file.pmtiles`
+/// - No tile server needed — file IS the database
+/// Reference: https://github.com/protomaps/PMTiles (BSD-3, 2.9k stars)
+///
+/// Size estimates for Brazil:
+/// - Full country (z0-z14): ~2-4 GB
+/// - State of São Paulo: ~200-500 MB
+/// - City (São Paulo metro): ~50-150 MB
+/// - Single ride route corridor: ~5-20 MB
+///
+/// MapLibre PMTiles support:
+/// Added in MapLibre Native v6.10.0+. Use `pmtiles://` protocol prefix.
+/// For local files: `"url": "pmtiles://file:///path/to/basemap.pmtiles"`
+/// Reference: MapLibre Android docs (iOS shares same style spec engine)
+///
+/// Pre-built basemaps available from Protomaps (ODbL, global coverage):
+/// https://docs.protomaps.com/basemaps/downloads
+/// https://github.com/protomaps/basemaps
 public final class OfflineTileManager: ObservableObject {
     @Published public var availableRegions: [TileRegion] = []
 
@@ -22,9 +56,12 @@ public final class OfflineTileManager: ObservableObject {
         refresh()
     }
 
-    /// Style JSON pointing to a local PMTiles file.
+    /// Generate a minimal style.json that references a local PMTiles file.
+    /// This style is passed to MapLibre's `styleURL` parameter.
+    ///
+    /// For production, use Protomaps' style generator for full layer definitions:
+    /// https://docs.protomaps.com/basemaps/maplibre
     public func localStyleURL(for region: TileRegion) -> URL? {
-        // Generate a minimal style.json that references the local PMTiles
         let style: [String: Any] = [
             "version": 8,
             "name": "Wawa Ride Offline",
@@ -46,6 +83,7 @@ public final class OfflineTileManager: ObservableObject {
         return nil
     }
 
+    /// Refresh available regions from the tiles directory.
     public func refresh() {
         let fm = FileManager.default
         let files = (try? fm.contentsOfDirectory(at: tilesDir, includingPropertiesForKeys: [.fileSizeKey])) ?? []
@@ -58,7 +96,7 @@ public final class OfflineTileManager: ObservableObject {
             }
     }
 
-    /// Import a PMTiles file from a temporary location (e.g., after download).
+    /// Import a PMTiles file (e.g., after downloading from server or AirDrop).
     public func importTiles(from source: URL, name: String) throws {
         let dest = tilesDir.appendingPathComponent("\(name).pmtiles")
         try FileManager.default.copyItem(at: source, to: dest)
