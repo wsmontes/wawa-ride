@@ -58,24 +58,10 @@ final class RideViewModel {
             self.applyLocationUpdate(update)
         }
 
-        // MC peer connected → wait briefly then init WebRTC if no incoming offer
-        multipeer.onPeerConnected = { [weak self] peerID in
-            guard let self else { return }
-            let riderID = peerID.displayName
-            guard !self.webrtcInitiatedFor.contains(riderID) else { return }
-            self.webrtcInitiatedFor.insert(riderID)
-
-            // Polite delay: give the other side time to send an offer first.
-            // The peer with the lexicographically greater name waits longer.
-            let isPolite = self.localRiderID > riderID
-            let delay: UInt64 = isPolite ? 1_500_000_000 : 500_000_000
-
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: delay)
-                // Only create offer if peer is still connected and hasn't already
-                // sent us an offer (which would have created a connection already)
-                self.webRTC.createOffer(for: riderID)
-            }
+        // MC peer connected → just acknowledge, WebRTC starts on "Iniciar Passeio"
+        multipeer.onPeerConnected = { [weak self] _ in
+            // No WebRTC yet — just MC connection is established.
+            // WebRTC offers are created in startRide() when user taps "Iniciar Passeio".
         }
 
         // MC peer disconnected → clean up
@@ -135,7 +121,15 @@ final class RideViewModel {
         isRideActive = true
         locationService.startUpdating()
 
-        // Then start broadcasting after a small delay
+        // Now create WebRTC offers for each connected MC peer
+        for peer in multipeer.connectedPeers {
+            let riderID = peer.displayName
+            guard !webrtcInitiatedFor.contains(riderID) else { continue }
+            webrtcInitiatedFor.insert(riderID)
+            webRTC.createOffer(for: riderID)
+        }
+
+        // Broadcast local location via WebRTC
         Task { @MainActor [weak self] in
             guard let self else { return }
             for await location in self.locationService.locationUpdates {

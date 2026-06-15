@@ -85,13 +85,17 @@ final class MultipeerService: NSObject, ObservableObject, @unchecked Sendable {
         advertiser?.delegate = self
         advertiser?.startAdvertisingPeer()
         isAdvertising = true
+        log.info("Advertising started")
 
-        browser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: serviceType)
-        browser?.delegate = self
-        browser?.startBrowsingForPeers()
-        isBrowsing = true
-
-        log.info("Pairing started — advertising + browsing")
+        // Start browsing after a short delay so other devices' advertisers are ready
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self, self.isAdvertising else { return }
+            self.browser = MCNearbyServiceBrowser(peer: self.myPeerID, serviceType: self.serviceType)
+            self.browser?.delegate = self
+            self.browser?.startBrowsingForPeers()
+            self.isBrowsing = true
+            self.log.info("Browsing started (delayed)")
+        }
     }
 
     func stopPairing() {
