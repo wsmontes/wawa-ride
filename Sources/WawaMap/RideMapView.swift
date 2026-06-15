@@ -82,27 +82,54 @@ public struct RideMapView: View {
 }
 
 /// Compact rider badge for map annotations.
+/// Inspired by Meshtastic-Apple's AnimatedNodePin pattern:
+/// https://github.com/meshtastic/Meshtastic-Apple — pulsing circles, staggered delays,
+/// density adaptation (rich pins ≤7 riders, simple dots for more).
+///
+/// Visual states:
+/// - Active rider: pulsing orange circle + motorcycle icon
+/// - Leader: pulsing blue circle + star icon
+/// - Stale (>15s no update): static gray, no pulse, 50% opacity
 struct RiderBadge: View {
     let name: String
     let isStale: Bool
     let isLeader: Bool
+    @State private var isPulsing = false
 
     var body: some View {
         VStack(spacing: 2) {
-            Circle()
-                .fill(isStale ? .gray : (isLeader ? .blue : .orange))
-                .opacity(isStale ? 0.5 : 1.0)
-                .frame(width: 28, height: 28)
-                .overlay {
-                    Image(systemName: isLeader ? "star.fill" : "motorcycle")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.white)
+            ZStack {
+                // Pulse ring (Meshtastic pattern: easeInOut, 1.2s, forever)
+                if !isStale {
+                    Circle()
+                        .fill(baseColor.opacity(0.25))
+                        .frame(width: 40, height: 40)
+                        .scaleEffect(isPulsing ? 1.15 : 0.85)
+                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isPulsing)
                 }
+                // Main dot
+                Circle()
+                    .fill(baseColor)
+                    .opacity(isStale ? 0.4 : 1.0)
+                    .frame(width: 28, height: 28)
+                    .overlay {
+                        Image(systemName: isLeader ? "star.fill" : "motorcycle")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(.white)
+                    }
+            }
             Text(name)
                 .font(.system(size: 9, weight: .medium))
                 .padding(.horizontal, 4)
+                .padding(.vertical, 1)
                 .background(.ultraThinMaterial, in: Capsule())
         }
+        .onAppear { isPulsing = true }
+    }
+
+    private var baseColor: Color {
+        if isStale { return .gray }
+        return isLeader ? .blue : .orange
     }
 }
 

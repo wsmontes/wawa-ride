@@ -46,8 +46,10 @@ struct RootView: View {
                     PairingSheet()
                 case .riding:
                     RidingOverlay(showEnd: $showEndConfirmation)
+                        .environmentObject(session)
                 case .navigating:
                     RidingOverlay(showEnd: $showEndConfirmation)
+                        .environmentObject(session)
                 }
             }
         }
@@ -90,26 +92,42 @@ struct PeerBadge: View {
 }
 
 // MARK: - Idle State (two big buttons over map)
-
+/// Inspired by Organic Maps: minimal floating buttons over fullscreen map.
+/// 60pt height minimum for gloved motorcycle use.
 struct IdleButtons: View {
     @EnvironmentObject var session: RideSession
 
     var body: some View {
-        HStack(spacing: 16) {
-            // 60pt minimum touch target for gloved use
-            Button { session.startAsLeader() } label: {
-                Label("Criar", systemImage: "plus.circle.fill")
-                    .font(.system(size: 18, weight: .bold))
-                    .frame(maxWidth: .infinity, minHeight: 60)
-                    .background(.orange, in: RoundedRectangle(cornerRadius: 16))
+        VStack(spacing: 12) {
+            // App name (subtle, disappears once riding)
+            Text("WAWA RIDE")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .kerning(3)
+
+            HStack(spacing: 12) {
+                Button { session.startAsLeader() } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 24))
+                        Text("Criar")
+                            .font(.system(size: 14, weight: .bold))
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 72)
+                    .background(.orange, in: RoundedRectangle(cornerRadius: 18))
                     .foregroundStyle(.white)
-            }
-            Button { session.startAsFollower() } label: {
-                Label("Entrar", systemImage: "arrow.right.circle.fill")
-                    .font(.system(size: 18, weight: .bold))
-                    .frame(maxWidth: .infinity, minHeight: 60)
-                    .background(.blue, in: RoundedRectangle(cornerRadius: 16))
+                }
+                Button { session.startAsFollower() } label: {
+                    VStack(spacing: 4) {
+                        Image(systemName: "arrow.right.circle.fill")
+                            .font(.system(size: 24))
+                        Text("Entrar")
+                            .font(.system(size: 14, weight: .bold))
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 72)
+                    .background(.blue, in: RoundedRectangle(cornerRadius: 18))
                     .foregroundStyle(.white)
+                }
             }
         }
         .padding(.horizontal, 20)
@@ -118,22 +136,42 @@ struct IdleButtons: View {
 }
 
 // MARK: - Pairing Sheet (modal over map, big PIN display)
-
+/// Inspired by:
+/// - SwiftPinput (hadiuzzaman524): individual digit boxes with active border animation
+/// - CodeScanner (twostraws): vibrate on success (haptic feedback pattern)
+/// - UIOnboarding (lascic): large, accessible, Apple-style
 struct PairingSheet: View {
     @EnvironmentObject var session: RideSession
     @State private var inputPIN = ""
+    @State private var pinScale = 1.0
 
     var body: some View {
         VStack(spacing: 20) {
-            // Leader shows PIN
+            // Leader shows PIN (big, pulsing on new peer connect)
             if session.isLeader {
                 Text("Seu PIN")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Text(session.pairingPIN)
-                    .font(.system(size: 56, weight: .heavy, design: .monospaced))
-                    .kerning(12)
-                // Peer counter (visual: filled dots)
+                // Large PIN display (inspired by SwiftPinput style2: rounded boxes)
+                HStack(spacing: 10) {
+                    ForEach(Array(session.pairingPIN), id: \.self) { digit in
+                        Text(String(digit))
+                            .font(.system(size: 44, weight: .heavy, design: .monospaced))
+                            .frame(width: 56, height: 64)
+                            .background(.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(.orange, lineWidth: 2))
+                    }
+                }
+                .scaleEffect(pinScale)
+                .onChange(of: session.mesh.totalPeerCount) { _, _ in
+                    // Pulse PIN when new peer connects (Meshtastic pattern)
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.5)) { pinScale = 1.1 }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        withAnimation(.spring()) { pinScale = 1.0 }
+                    }
+                    haptic(.success)
+                }
+                // Peer counter (visual: filled circles)
                 HStack(spacing: 8) {
                     ForEach(0..<session.mesh.totalPeerCount, id: \.self) { _ in
                         Circle().fill(.green).frame(width: 12, height: 12)
@@ -142,35 +180,40 @@ struct PairingSheet: View {
                         Circle().stroke(.gray, lineWidth: 1.5).frame(width: 12, height: 12)
                     }
                 }
-                // Start button (60pt, only when peers connected)
+                .padding(.top, 4)
+                // Start ride button
                 Button {
                     haptic(.success)
                     session.confirmPairing()
                 } label: {
-                    Text("Partiu!")
+                    Text("Partiu! 🏍️")
                         .font(.system(size: 22, weight: .bold))
                         .frame(maxWidth: .infinity, minHeight: 60)
-                        .background(session.mesh.totalPeerCount > 0 ? .orange : .gray,
+                        .background(session.mesh.totalPeerCount > 0 ? .orange : .gray.opacity(0.5),
                                     in: RoundedRectangle(cornerRadius: 16))
                         .foregroundStyle(.white)
                 }
                 .disabled(session.mesh.totalPeerCount == 0)
             }
-            // Follower enters PIN
+            // Follower enters PIN (custom NumPad, no keyboard)
             else {
                 Text("PIN do líder")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                // Big digit display
+                // Big digit display (SwiftPinput-style individual boxes)
                 HStack(spacing: 12) {
                     ForEach(0..<4, id: \.self) { i in
-                        Text(i < inputPIN.count ? String(inputPIN[inputPIN.index(inputPIN.startIndex, offsetBy: i)]) : "·")
-                            .font(.system(size: 44, weight: .bold, design: .monospaced))
-                            .frame(width: 50, height: 60)
-                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        let hasDigit = i < inputPIN.count
+                        Text(hasDigit ? String(inputPIN[inputPIN.index(inputPIN.startIndex, offsetBy: i)]) : "")
+                            .font(.system(size: 36, weight: .bold, design: .monospaced))
+                            .frame(width: 52, height: 60)
+                            .background(hasDigit ? .blue.opacity(0.15) : .white.opacity(0.05),
+                                        in: RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12)
+                                .stroke(hasDigit ? .blue : .gray.opacity(0.4), lineWidth: 2))
                     }
                 }
-                // Custom numpad (60pt buttons, glove-friendly)
+                // Glove-friendly numpad
                 NumPad(value: $inputPIN, onComplete: {
                     haptic(.success)
                     session.joinWithPIN(inputPIN)
@@ -184,19 +227,55 @@ struct PairingSheet: View {
     }
 }
 
-// MARK: - Riding Overlay (minimal: just swipe-up to end)
-
+// MARK: - Riding Overlay (minimal chrome: speed + distance + hidden end button)
+/// Inspired by:
+/// - GoCycling (AnthonyH93): floating metrics overlay on top of map
+/// - Velik (avdyushin): dark gauges, speed display, split view
+/// - Organic Maps: minimal chrome, glanceable, fullscreen map
 struct RidingOverlay: View {
+    @EnvironmentObject var session: RideSession
     @Binding var showEnd: Bool
 
     var body: some View {
-        // Nearly invisible handle — long press to reveal end button
-        Button { showEnd = true } label: {
-            Capsule()
-                .fill(.white.opacity(0.3))
-                .frame(width: 40, height: 5)
+        VStack(spacing: 0) {
+            // Speed + Distance HUD (glanceable at handlebar distance)
+            HStack(spacing: 24) {
+                // Speed (large, primary info while riding)
+                VStack(spacing: 0) {
+                    Text(speedText)
+                        .font(.system(size: 32, weight: .heavy, design: .monospaced))
+                    Text("km/h")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                // Rider count
+                VStack(spacing: 0) {
+                    Text("\(session.riders.count)")
+                        .font(.system(size: 24, weight: .bold, design: .monospaced))
+                    Text("riders")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .padding(.bottom, 12)
+
+            // Nearly invisible end-ride handle (long press reveals dialog)
+            Button { showEnd = true } label: {
+                Capsule()
+                    .fill(.white.opacity(0.3))
+                    .frame(width: 40, height: 5)
+            }
+            .padding(.bottom, 20)
         }
-        .padding(.bottom, 20)
+    }
+
+    private var speedText: String {
+        guard let speed = session.riders.first(where: { $0.id == session.mesh.ble.localPeerID.hex })?.speed,
+              speed > 0 else { return "--" }
+        return "\(Int(speed * 3.6))" // m/s → km/h
     }
 }
 
