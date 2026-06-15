@@ -329,3 +329,20 @@ Para um motoclube com 20+ riders, sub-grupos fixos são artificiais. Na realidad
 **O que cada rider vê:** Todos os riders alcançáveis por cadeia de hops (tipicamente 10-15 de 20 num pelotão de 2km). Riders muito distantes (>5 hops, sem internet) desaparecem até alguém se aproximar ou internet fazer bridge.
 
 **Implicação técnica:** O código atual já suporta — BLE conecta com qualquer peer do mesmo serviceUUID. Não há sub-grupo no protocolo. Ajustes necessários: TTL adaptativo e teste de carga com 10+ devices.
+
+### A caravana precisa de conexão ativa com o líder?
+**Não.** O líder é uma referência, não um requisito de conectividade. A trail dele é um **dado** (coordenadas acumuladas), não uma conexão. Uma vez recebida, fica no mapa independente de o líder estar alcançável.
+
+O pelotão segue o que já tem no mapa:
+- Trail crescendo = líder ativo, tudo normal
+- Trail parou = líder sem conectividade. Seguem até o último ponto, depois usam a rota combinada (GPX) ou esperam
+
+### E se o líder compartilhou a rota antes de sair?
+Aí a caravana **nunca se perde**, mesmo sem trail em tempo real. A rota (GPX ou Valhalla) está no phone de cada rider. A trail é apenas confirmação visual de que o líder está seguindo o plano.
+
+### Isso replica o comportamento natural de motoclube?
+Exatamente. Motoclubes já funcionam assim sem app: líder na frente, madrinha atrás, rota combinada antes. O app digitaliza:
+- Trail = rastro visual do líder
+- Rota compartilhada = "o combinado"
+- Waypoints = "próxima parada"
+- Mesh = saber que todo mundo está bem, mesmo sem ver
