@@ -346,3 +346,47 @@ Exatamente. Motoclubes já funcionam assim sem app: líder na frente, madrinha a
 - Rota compartilhada = "o combinado"
 - Waypoints = "próxima parada"
 - Mesh = saber que todo mundo está bem, mesmo sem ver
+
+---
+
+## Convites e Passeios Agendados
+
+### Como convido riders para um passeio futuro (ex: domingo que vem)?
+Crie o passeio no app → gera um **QR code** (ou link) que pode ser postado em qualquer lugar (Facebook, WhatsApp, Telegram). Qualquer pessoa que escaneia tem acesso ao passeio.
+
+O QR contém:
+```
+{
+  rideID: "uuid-do-passeio",
+  secret: "32-bytes-shared-key",
+  name: "Passeio Victoria Sunday",
+  date: "2026-06-22T09:00:00-07:00",
+  start: { lat: 48.4284, lon: -123.3656 },
+  waypoints: [...],
+  creatorPubKey: "ed25519-pub-key",
+  signature: "assinatura-do-criador"
+}
+```
+
+### Qualquer pessoa pode repassar o convite?
+**Sim.** É o mesmo QR/link para todos. Daniel escaneia, decide convidar Raj → manda o mesmo QR. Raj escaneia → tem acesso ao passeio. Sem QR "cumulativo" ou cadeia de identidades.
+
+### Por que não QR cumulativo (que acumula quem convidou quem)?
+- **Privacidade:** QR cumulativo expõe identidades a cada hop. Se vaza num grupo aberto, todos sabem quem é quem.
+- **Tamanho:** QR cresce a cada nível. No nível 5, fica ilegível.
+- **Complexidade desnecessária:** Raj não precisa saber sobre você antes do dia. Ele só precisa do secret para entrar na mesh.
+
+### Como sei quem vai antes do dia?
+**RSVP via Nostr (opcional).** Quem escaneia o QR pode publicar "vou!" como evento Nostr com tag do rideID. O criador subscribe a essa tag e vê quem confirmou. Sem servidor, sem cadastro.
+
+### A assinatura garante que o convite é legítimo?
+**Sim.** A `creatorPubKey` + `signature` no QR provam que o convite veio do criador. Se alguém alterar data/local/rota, a assinatura invalida. Verificação é local (sem servidor).
+
+### No dia do passeio, como funciona?
+1. App verifica se tem rides agendados para hoje
+2. Se sim, ativa mesh automaticamente com `groupID = rideID`
+3. Qualquer device BLE próximo com mesmo groupID → conecta
+4. Todos que escanearam o QR se veem no mapa imediatamente
+
+### E se eu quiser revogar o convite?
+Invalide o secret (o app do criador gera um novo). Quem tinha o secret antigo não consegue mais conectar na mesh (validação no handshake). Funciona porque o secret é verificado no momento da conexão, não no momento do scan.
