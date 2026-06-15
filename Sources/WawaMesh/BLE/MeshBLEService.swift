@@ -1,5 +1,5 @@
 import Foundation
-import CoreBluetooth
+import CoreBluetoothMock
 import os.log
 
 /// Dual-role BLE mesh service (Central + Peripheral simultaneously).

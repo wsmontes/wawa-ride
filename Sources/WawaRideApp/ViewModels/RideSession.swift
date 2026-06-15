@@ -101,10 +101,10 @@ final class RideSession: ObservableObject {
         )
         // Fast path: MultipeerKit (Codable, foreground)
         mesh.broadcastLocation(payload)
-        // Resilient path: BLE mesh (binary, background, multi-hop)
-        if let data = try? JSONEncoder().encode(payload) {
-            mesh.send(MeshPacket(type: .locationUpdate, senderID: mesh.ble.localPeerID, payload: data))
-        }
+        // Resilient path: BLE mesh (compact binary 12 bytes, background, multi-hop)
+        let compact = CompactLocation(latitude: payload.lat, longitude: payload.lon,
+                                      heading: payload.heading, speed: payload.speed)
+        mesh.send(MeshPacket(type: .locationUpdate, senderID: mesh.ble.localPeerID, payload: compact.encode()))
         // Update CRDT doc
         let id = mesh.ble.localPeerID.hex
         syncDoc.updateRider(id: id, lat: payload.lat, lon: payload.lon,
@@ -116,8 +116,15 @@ final class RideSession: ObservableObject {
     private func handleMeshPacket(_ packet: MeshPacket) {
         switch packet.type {
         case .locationUpdate:
-            guard let p = try? JSONDecoder().decode(LocationPayload.self, from: packet.payload) else { return }
-            applyLocation(p, from: packet.senderID.hex)
+            // Try compact binary first (12 bytes), fall back to JSON
+            if let loc = CompactLocation.decode(packet.payload) {
+                let payload = LocationPayload(lat: loc.latitude, lon: loc.longitude,
+                                              heading: loc.headingDegrees, speed: loc.speedMps,
+                                              accuracy: 10, timestamp: Date().timeIntervalSince1970)
+                applyLocation(payload, from: packet.senderID.hex)
+            } else if let p = try? JSONDecoder().decode(LocationPayload.self, from: packet.payload) {
+                applyLocation(p, from: packet.senderID.hex)
+            }
         case .routeShare:
             if let coords = try? JSONDecoder().decode([[Double]].self, from: packet.payload) {
                 routeCoords = coords.map { CLLocationCoordinate2D(latitude: $0[0], longitude: $0[1]) }

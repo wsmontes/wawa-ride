@@ -56,3 +56,26 @@ final class BinaryCodecTests: XCTestCase {
         XCTAssertEqual(decoded.payload, bigPayload)
     }
 }
+
+
+    func testCompactLocationRoundTrip() throws {
+        let original = CompactLocation(latitude: -23.5505199, longitude: -46.6333094, heading: 275, speed: 13.9)
+        let encoded = original.encode()
+        XCTAssertEqual(encoded.count, 12)  // Always 12 bytes
+
+        let decoded = try XCTUnwrap(CompactLocation.decode(encoded))
+        XCTAssertEqual(decoded.latitude, -23.5505199, accuracy: 0.0000002)  // ~2cm precision
+        XCTAssertEqual(decoded.longitude, -46.6333094, accuracy: 0.0000002)
+        XCTAssertEqual(decoded.headingDegrees, 275)
+        XCTAssertEqual(decoded.speedMps, 13.9, accuracy: 0.1)
+    }
+
+    func testCompactLocationSize() {
+        // JSON equivalent would be ~80 bytes. Protobuf-style is 12 bytes = 85% reduction
+        let loc = CompactLocation(latitude: -23.5505, longitude: -46.6333, heading: 180, speed: 27.8)
+        let jsonSize = try! JSONEncoder().encode(LocationPayload(
+            lat: -23.5505, lon: -46.6333, heading: 180, speed: 27.8, accuracy: 10, timestamp: 0
+        )).count
+        XCTAssertEqual(loc.encode().count, 12)
+        XCTAssertGreaterThan(jsonSize, 60)  // JSON is 5-7x larger
+    }
