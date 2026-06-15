@@ -2,7 +2,7 @@ name: WAWARide
 options:
   bundleIdPrefix: com.wawaride
   deploymentTarget:
-    iOS: "18.0"
+    iOS: "16.0"
   xcodeVersion: "26.0"
   generateEmptyDirectories: true
 
@@ -10,13 +10,18 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     TARGETED_DEVICE_FAMILY: "1"
-    INFOPLIST_FILE: Sources/Resources/Info.plist
-    DEVELOPMENT_ASSET_PATHS: ""
+    INFOPLIST_FILE: Sources/WawaRideApp/Resources/Info.plist
 
 packages:
-  WebRTC:
-    url: https://github.com/stasel/WebRTC.git
-    from: "134.0.0"
+  MapLibre:
+    url: https://github.com/maplibre/maplibre-gl-native-distribution
+    from: "6.27.0"
+  Ferrostar:
+    url: https://github.com/stadiamaps/ferrostar
+    from: "0.51.0"
+  secp256k1:
+    url: https://github.com/GigaBitcoin/secp256k1.swift
+    from: "0.21.1"
 
 targets:
   WAWARide:
@@ -26,32 +31,21 @@ targets:
       - path: Sources
         type: group
     resources:
-      - path: Sources/Resources/Assets.xcassets
+      - path: Sources/WawaRideApp/Resources/Assets.xcassets
         type: group
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wawaride.app
-        INFOPLIST_FILE: Sources/Resources/Info.plist
-        CODE_SIGN_ENTITLEMENTS: Sources/Resources/WAWARide.entitlements
+        INFOPLIST_FILE: Sources/WawaRideApp/Resources/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Sources/WawaRideApp/Resources/WawaRide.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 955573A4YH
-        ENABLE_USER_SCRIPT_SANDBOXING: "NO"
     dependencies:
-      - package: WebRTC
-    preBuildScripts:
-      - name: "Generate TURNSecrets from plist"
-        script: bash "${SRCROOT}/Scripts/generate-turn-secrets.sh"
-        basedOnDependencyAnalysis: false
-      - name: "SwiftLint"
-        script: |
-          if which swiftlint > /dev/null; then
-            swiftlint --quiet
-          fi
-        basedOnDependencyAnalysis: false
-    postBuildScripts:
-      - name: "Copy .env to Bundle"
-        script: |
-          if [ -f "${SRCROOT}/../.env" ]; then
-            cp "${SRCROOT}/../.env" "${BUILT_PRODUCTS_DIR}/${PRODUCT_NAME}.app/.env"
-          fi
-        basedOnDependencyAnalysis: false
+      - package: MapLibre
+      - package: Ferrostar
+        product: FerrostarCore
+      - package: Ferrostar
+        product: FerrostarSwiftUI
+      - package: Ferrostar
+        product: FerrostarMapLibreUI
+      - package: secp256k1
