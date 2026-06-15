@@ -12,8 +12,8 @@ final class RideViewModel {
     // MARK: - Services
 
     let multipeer = MultipeerService()
-    private let locationService = LocationService()
-    private var webRTC: WebRTCService!
+    let locationService = LocationService()
+    private(set) var webRTC: WebRTCService!
 
     // MARK: - Published state
 
@@ -44,18 +44,22 @@ final class RideViewModel {
             self?.webRTC.onSignalingReceived(data, from: peerID.displayName)
         }
 
-        // WebRTC → MC: outgoing signaling (SDP/ICE)
+        // WebRTC → MC: outgoing signaling (dispatched to main for thread safety)
         webRTC.onOutgoingSignaling = { [weak self] data, riderID in
             guard let self else { return }
-            if let peer = self.multipeer.connectedPeers.first(where: { $0.displayName == riderID }) {
-                self.multipeer.sendSignaling(data, to: peer)
+            DispatchQueue.main.async {
+                if let peer = self.multipeer.connectedPeers.first(where: { $0.displayName == riderID }) {
+                    self.multipeer.sendSignaling(data, to: peer)
+                }
             }
         }
 
         // WebRTC DataChannel: remote location updates
         webRTC.onDataReceived = { [weak self] data, riderID in
             guard let self, let update = LocationUpdate.decode(data) else { return }
-            self.applyLocationUpdate(update)
+            DispatchQueue.main.async {
+                self.applyLocationUpdate(update)
+            }
         }
 
         // MC peer connected → just acknowledge, WebRTC starts on "Iniciar Passeio"
@@ -125,15 +129,12 @@ final class RideViewModel {
         // Transition to map
         isRideActive = true
 
-        // WebRTC offers — polite: device with alphabetically smaller name offers
-        let myName = multipeer.displayName
+        // WebRTC offers — both sides create offers (WebRTC handles glare)
         for peer in multipeer.connectedPeers {
             let riderID = peer.displayName
             guard !webrtcInitiatedFor.contains(riderID) else { continue }
             webrtcInitiatedFor.insert(riderID)
-            if myName < riderID {
-                webRTC.createOffer(for: riderID)
-            }
+            webRTC.createOffer(for: riderID)
         }
 
         // Stream GPS → map + WebRTC

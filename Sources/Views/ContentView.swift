@@ -13,7 +13,7 @@ struct ContentView: View {
                 .ignoresSafeArea()
                 .zIndex(0)
 
-                // Ride overlay — stop + peer count
+                // Top bar
                 VStack {
                     HStack {
                         Text("\(viewModel.multipeer.connectedPeers.count) conectado(s)")
@@ -53,17 +53,28 @@ struct ContentView: View {
                         .foregroundStyle(.white)
                         .padding()
                         .background(.red.opacity(0.9), in: RoundedRectangle(cornerRadius: 12))
-                        .onAppear {
-                            Task {
-                                try? await Task.sleep(for: .seconds(3))
-                                viewModel.errorMessage = nil
-                            }
-                        }
                     Spacer()
                 }
                 .padding(.top, 60)
                 .zIndex(2)
             }
+
+            // Debug overlay — top-left
+            VStack {
+                HStack {
+                    DebugOverlay(
+                        multipeer: viewModel.multipeer,
+                        webRTC: viewModel.webRTC,
+                        location: viewModel.locationService,
+                        localRiderID: viewModel.localRiderID
+                    )
+                    Spacer()
+                }
+                Spacer()
+            }
+            .padding(.top, 50)
+            .padding(.leading, 8)
+            .zIndex(3)
         }
     }
 }
