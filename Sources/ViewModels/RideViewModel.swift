@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import CoreLocation
 import MultipeerConnectivity
+import Network
 import os.log
 
 /// Central ViewModel orchestrating MultipeerConnectivity, WebRTC, and Location.
@@ -38,6 +39,21 @@ final class RideViewModel {
 
     func onAppLaunch() {
         locationService.requestPermission()
+        forceLocalNetwork()
+        multipeer.startPairing()
+    }
+
+    /// Workaround: dummy NWBrowser to trigger local network permission on iOS 18
+    private func forceLocalNetwork() {
+        let browser = NWBrowser(
+            for: .bonjour(type: "_wawaride-pair._tcp", domain: nil),
+            using: NWParameters()
+        )
+        browser.stateUpdateHandler = { state in
+            if case .ready = state { browser.cancel() }
+        }
+        browser.start(queue: .main)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { browser.cancel() }
     }
 
     // MARK: - Bridge Setup

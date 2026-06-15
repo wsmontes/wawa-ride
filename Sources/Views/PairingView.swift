@@ -245,30 +245,19 @@ struct PairingView: View {
                 .tint(.orange)
             }
 
-            // Pairing toggle
-            Button {
-                if multipeer.isAdvertising {
-                    multipeer.stopPairing()
-                } else {
+            // Force re-pair
+            if !multipeer.isAdvertising || !multipeer.isBrowsing {
+                Button {
                     multipeer.startPairing()
+                } label: {
+                    Label("Forcar Reconexao", systemImage: "arrow.trianglehead.clockwise")
+                        .font(.subheadline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 4)
                 }
-            } label: {
-                HStack {
-                    Image(systemName: multipeer.isAdvertising
-                        ? "antenna.radiowaves.left.and.right.slash"
-                        : "antenna.radiowaves.left.and.right")
-                    Text(multipeer.isAdvertising
-                        ? "Parar Pareamento"
-                        : "Comecar Pareamento")
-                }
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 4)
+                .buttonStyle(.bordered)
+                .tint(.orange)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
-            .tint(multipeer.isAdvertising ? .red : .orange)
         }
     }
 

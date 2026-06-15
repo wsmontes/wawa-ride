@@ -43,6 +43,7 @@
 		7FDE2FDE5F84D1DA97288500 /* WAWARideApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WAWARideApp.swift; sourceTree = "<group>"; };
 		954BAC02E44D05C6A12DFED3 /* LocationUpdate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationUpdate.swift; sourceTree = "<group>"; };
 		A37F74426E4DE5C2432F97BF /* TURNSecrets.generated.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TURNSecrets.generated.swift; sourceTree = "<group>"; };
+		B13D1C114499361DEA5B3E8B /* WAWARide.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WAWARide.entitlements; sourceTree = "<group>"; };
 		B7D3AA6C82F7CC18C29A8BC6 /* DebugOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugOverlay.swift; sourceTree = "<group>"; };
 		CC6207D4F969FB00792BF03E /* MultipeerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerService.swift; sourceTree = "<group>"; };
 		D90FB24CE9055BD88988A815 /* RideViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideViewModel.swift; sourceTree = "<group>"; };
@@ -68,6 +69,7 @@
 			children = (
 				E7D22EF2084FC2E41EC2D18D /* Assets.xcassets */,
 				30D7886496319347E91CD84C /* Info.plist */,
+				B13D1C114499361DEA5B3E8B /* WAWARide.entitlements */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -351,6 +353,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Resources/WAWARide.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 955573A4YH;
@@ -495,6 +498,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Sources/Resources/WAWARide.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 955573A4YH;

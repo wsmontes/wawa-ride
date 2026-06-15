@@ -70,7 +70,7 @@ struct DebugOverlay: View {
                 Text("    • \(p.displayName) 🟢")
             }
             if let err = multipeer.pairingError {
-                Text("  error: \(err)").foregroundStyle(.red)
+                Text("  ❌ \(err)").foregroundStyle(.red)
             }
         }
     }

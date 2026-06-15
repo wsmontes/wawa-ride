@@ -79,10 +79,8 @@ final class MultipeerService: NSObject, ObservableObject, @unchecked Sendable {
     // MARK: - Public API
 
     func startPairing() {
-        // Stop any previous session
         stopPairing()
 
-        // Advertiser
         advertiser = MCNearbyServiceAdvertiser(
             peer: myPeerID,
             discoveryInfo: nil,
@@ -93,7 +91,6 @@ final class MultipeerService: NSObject, ObservableObject, @unchecked Sendable {
         isAdvertising = true
         log.info("Advertising started")
 
-        // Browser — start immediately
         browser = MCNearbyServiceBrowser(peer: myPeerID, serviceType: serviceType)
         browser?.delegate = self
         browser?.startBrowsingForPeers()
@@ -208,6 +205,17 @@ extension MultipeerService: MCNearbyServiceAdvertiserDelegate {
         log.info("Received invitation from: \(peerID.displayName)")
         invitationHandler(true, session)
     }
+
+    func advertiser(
+        _ advertiser: MCNearbyServiceAdvertiser,
+        didNotStartAdvertisingPeer error: Error
+    ) {
+        log.error("❌ Advertiser failed: \(error.localizedDescription)")
+        DispatchQueue.main.async {
+            self.pairingError = "MC Advertiser: \(error.localizedDescription)"
+            self.isAdvertising = false
+        }
+    }
 }
 
 // MARK: - MCNearbyServiceBrowserDelegate
@@ -231,6 +239,17 @@ extension MultipeerService: MCNearbyServiceBrowserDelegate {
         DispatchQueue.main.async {
             self.nearbyPeers.removeAll { $0 == peerID }
             self.log.info("Lost peer: \(peerID.displayName)")
+        }
+    }
+
+    func browser(
+        _ browser: MCNearbyServiceBrowser,
+        didNotStartBrowsingForPeers error: Error
+    ) {
+        log.error("❌ Browser failed: \(error.localizedDescription)")
+        DispatchQueue.main.async {
+            self.pairingError = "MC Browser: \(error.localizedDescription)"
+            self.isBrowsing = false
         }
     }
 }
