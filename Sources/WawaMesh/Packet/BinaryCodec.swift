@@ -1,8 +1,29 @@
 import Foundation
 
 /// Binary encode/decode for MeshPacket.
-/// Wire format: [Version:1][Type:1][TTL:1][Timestamp:8][Flags:1][PayloadLen:4][SenderID:8][...variable...]
+///
+/// Wire format (v2, 16-byte header + variable):
+/// ```
+/// [Version:1][Type:1][TTL:1][Timestamp:8][Flags:1][PayloadLen:4][SenderID:8][...variable...]
+/// ```
+///
+/// Reference implementation: BitChat's BinaryProtocol.swift
+/// https://github.com/permissionlesstech/bitchat/blob/main/localPackages/BitFoundation/Sources/BitFoundation/BinaryProtocol.swift
+///
+/// Key design from BitChat:
+/// - All multi-byte integers are big-endian (network byte order)
+/// - Flags byte uses bitmask for optional fields (saves space)
+/// - PayloadLen is 4 bytes (supports up to 4GB, future-proof)
+/// - SenderID always present (8 bytes, mandatory)
+/// - RecipientID only present if unicast (flag bit 0)
 public enum BinaryCodec {
+
+    // MARK: - Flags (from BitChat's BinaryProtocol)
+    // bit 0 (0x01) = hasRecipient (unicast message)
+    // bit 1 (0x02) = hasSignature (Ed25519, 64 bytes)
+    // bit 2 (0x04) = isCompressed (zlib, not used in MVP)
+    // bit 3 (0x08) = hasRoute (source routing, phase 2)
+    // bit 4 (0x10) = isRSR (request-sync-response, phase 2)
 
     public static func encode(_ packet: MeshPacket) -> Data {
         var d = Data(capacity: 32 + packet.payload.count)

@@ -1,15 +1,37 @@
 import Foundation
 
-/// Fragment/reassembly for packets exceeding BLE MTU.
-/// Header: [0xFE][totalChunks:1][chunkIndex:1][transferID:2]
+/// Fragment/reassembly for packets exceeding BLE MTU (469 bytes).
+///
+/// Reference: BitChat's BLEOutboundFragmentPlanner + BLEFragmentAssemblyBuffer
+/// https://github.com/permissionlesstech/bitchat/blob/main/bitchat/Services/BLE/BLEOutboundFragmentPlanner.swift
+/// https://github.com/permissionlesstech/bitchat/blob/main/bitchat/Services/BLE/BLEFragmentAssemblyBuffer.swift
+///
+/// Fragment header format (5 bytes):
+/// ```
+/// [0xFE magic][totalChunks:1][chunkIndex:1][transferID:2]
+/// ```
+///
+/// Why 0xFE? It's an invalid first byte for both our packet header (version=2)
+/// and JSON (starts with '{'), making fragment detection unambiguous.
+///
+/// BitChat spaces fragments at 30ms intervals to avoid overflowing the
+/// BLE peripheral's notification buffer. See MeshConfig.bleFragmentSpacingMs.
 public enum FragmentCodec {
     private static let headerSize = 5
     private static let magic: UInt8 = 0xFE
 
+    /// Check if data is a fragment (starts with magic byte 0xFE).
     public static func isFragment(_ data: Data) -> Bool {
         data.count >= headerSize && data[0] == magic
     }
 
+    /// Split data into fragments that fit within BLE MTU.
+    /// Each fragment carries a 5-byte header + payload chunk.
+    ///
+    /// - Parameters:
+    ///   - data: The full encoded packet to fragment
+    ///   - maxSize: Max bytes per fragment (default: MeshConfig.bleFragmentSize = 469)
+    /// - Returns: Array of fragment Data to send sequentially with 30ms spacing
     public static func fragment(_ data: Data, maxSize: Int = MeshConfig.bleFragmentSize) -> [Data] {
         let payloadPerChunk = maxSize - headerSize
         let total = (data.count + payloadPerChunk - 1) / payloadPerChunk
@@ -28,7 +50,13 @@ public enum FragmentCodec {
     }
 }
 
-/// Reassembly buffer — stores partial fragment transfers.
+/// Reassembly buffer — stores partial fragment transfers until complete.
+///
+/// Reference: BitChat's BLEFragmentAssemblyBuffer (max 128 concurrent assemblies)
+/// https://github.com/permissionlesstech/bitchat/blob/main/bitchat/Services/BLE/BLEFragmentAssemblyBuffer.swift
+///
+/// Key design: keyed by "{peerUUID}-{transferID}" to support multiple
+/// concurrent transfers from different peers without collision.
 public final class FragmentAssemblyBuffer: @unchecked Sendable {
     private struct Transfer { var chunks: [Int: Data]; let total: Int; let created: Date }
     private var transfers: [String: Transfer] = [:]
@@ -36,7 +64,9 @@ public final class FragmentAssemblyBuffer: @unchecked Sendable {
 
     public init() {}
 
-    /// Returns assembled data when all fragments received, nil otherwise.
+    /// Add a fragment. Returns assembled full data when all chunks received, nil otherwise.
+    ///
+    /// Thread-safe via NSLock. Evicts stale transfers (>30s) when buffer is full.
     public func addFragment(_ data: Data, from peer: UUID) -> Data? {
         guard data.count >= 5, data[0] == 0xFE else { return nil }
         let total = Int(data[1])
@@ -48,7 +78,7 @@ public final class FragmentAssemblyBuffer: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        // Evict stale
+        // Evict stale assemblies to prevent memory exhaustion
         if transfers.count >= MeshConfig.bleMaxInFlightAssemblies {
             let now = Date()
             transfers = transfers.filter { now.timeIntervalSince($0.value.created) < 30 }
