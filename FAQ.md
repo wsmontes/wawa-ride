@@ -471,3 +471,50 @@ O beacon contém um `rideSecret`. Quem faz RSVP ("Vou!") recebe o secret. No dia
 ⚠️🔴 "Óleo — Rua Augusta" (hazard)
 ```
 Tudo descentralizado, tudo no mesmo protocolo WawaMesh + Nostr, tudo sem servidor.
+
+---
+
+## Perfil e Grafo Social (Rider Cards)
+
+### Cada rider tem um perfil?
+**Sim — o "Rider Card".** Troca automaticamente no handshake BLE quando dois riders se conectam. Contém:
+- Nickname ("João Motoca")
+- Avatar (emoji ou cor derivada da pubKey)
+- Modelo da moto ("Tenere 700")
+- Cidade
+- Chave pública (identidade permanente)
+- Assinatura (prova que é dele)
+
+Tamanho: ~100-200 bytes. Cabe num pacote BLE sem fragmentar.
+
+### Como a troca funciona?
+Automática. Quando dois phones se descobrem no BLE:
+1. Ambos enviam `.announce` com seu RiderCard
+2. Ambos salvam o card do outro localmente (GRDB)
+3. "Conhecer" alguém = ter estado na mesma mesh
+
+Nenhuma ação manual necessária para trocar cards.
+
+### Posso marcar alguém como amigo?
+**Sim.** Long-press no pin → "⭐ Marcar como amigo". Salvo **localmente** — a pessoa não sabe. Efeito: próxima vez que aparecer, pin tem borda dourada.
+
+### "Amigo de amigo" funciona?
+**Sim, via confiança transitiva.** Se você optar por incluir uma lista de "friend badges" (hash dos amigos) no seu RiderCard, quando seu amigo encontra um amigo seu, o app avisa: "🤝 Amigo em comum: João".
+
+O hash é de 8 bytes (SHA256 truncado) — suficiente para match local mas inútil para terceiros que não conhecem a pubKey original. Privacidade preservada.
+
+### Níveis de confiança no mapa?
+| Nível | Visual | Como se torna |
+|-------|--------|---------------|
+| Desconhecido | 🟠 (normal) | Default |
+| Conhecido | 🟠 (card salvo) | Automático (handshake) |
+| Amigo | ⭐ (borda dourada) | Manual (1 toque) |
+| Amigo de amigo | 🤝 (badge) | Automático (hash match) |
+| Bloqueado | Invisível | Manual |
+
+### O que NÃO temos (e por quê)?
+- Sem rating/estrelas público (incentivo tóxico)
+- Sem seguidores (não é rede social)
+- Sem DM fora do passeio (use WhatsApp)
+- Friend badges são opt-in (privacidade)
+- Ninguém edita o card de outra pessoa
