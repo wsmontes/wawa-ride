@@ -192,3 +192,37 @@ Não está no roadmap atual. O protocolo WawaMesh é transport-agnostic — pode
 
 ### Mais de 7 riders?
 O limite é de hardware (6 conexões BLE simultâneas). Com multi-hop, grupos de 10+ são possíveis mas não testados. Na fase 5, testamos com 10 devices e ajustamos TTL/dedup conforme necessário.
+
+---
+
+## Dados e Privacidade
+
+### Cada rider guarda seus próprios dados?
+**Sim.** Cada phone armazena localmente (GRDB/SQLite):
+- PeerID (8 bytes, identidade persistente)
+- Histórico de rides (data, duração, distância)
+- Fila offline (pacotes pendentes)
+- Waypoints salvos
+- Mapa offline (PMTiles)
+- Documento Automerge (estado CRDT para sync)
+
+### Quais dados são compartilhados com o grupo?
+Apenas o mínimo para o grupo funcionar:
+
+| Dado | Pacote | Tamanho | Frequência |
+|------|--------|---------|-----------|
+| Posição (lat, lon, heading, speed) | `.locationUpdate` | 12 bytes | 0.5-1 Hz |
+| Apelido | `.announce` | ~20 bytes | 1x ao conectar |
+| PIN de entrada | `.groupControl` | ~9 bytes | 1x ao parear |
+| Rota planejada (líder) | `.routeShare` | ~500B-2KB | 1x ao iniciar |
+| Waypoint compartilhado | `.waypointSync` | ~30 bytes | Sob demanda |
+
+### O que NÃO é compartilhado?
+- Histórico de rides anteriores (privacidade)
+- Velocidade máxima (desnecessário)
+- Nível de bateria (fase futura, talvez)
+- Identidade real (só apelido, sem email/telefone)
+- GPS quando app está idle (só transmite durante ride ativa)
+
+### Princípio de design
+**Compartilhar o mínimo para o grupo funcionar.** Localização em tempo real é o core. Todo o resto é local ou eventual.
