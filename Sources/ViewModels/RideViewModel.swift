@@ -79,6 +79,8 @@ final class RideViewModel {
         isPairing = true
         errorMessage = nil
         multipeer.startPairing()
+        // Request location permission early so GPS is warm when ride starts
+        locationService.requestPermission()
     }
 
     func stopPairing() {
@@ -99,48 +101,58 @@ final class RideViewModel {
             return
         }
 
-        errorMessage = nil
-        locationService.requestPermission()
-
-        // Add local rider immediately so map has something to show
-        if let loc = locationService.currentLocation {
-            currentRiders = [
-                Rider(
-                    id: localRiderID,
-                    displayName: "Voce",
-                    coordinate: loc.coordinate,
-                    heading: loc.course >= 0 ? loc.course : nil,
-                    speed: loc.speed >= 0 ? loc.speed : nil,
-                    lastUpdate: Date(),
-                    isConnected: true
-                )
-            ]
+        let status = locationService.authorizationStatus
+        guard status == .authorizedWhenInUse || status == .authorizedAlways else {
+            locationService.requestPermission()
+            errorMessage = "Permita acesso a localizacao para iniciar o passeio."
+            return
         }
 
-        // Transition to map first...
-        isRideActive = true
+        errorMessage = nil
         locationService.startUpdating()
 
-        // Now create WebRTC offers for each connected MC peer
+        // If we already have a GPS fix, create the local rider now
+        if let loc = locationService.currentLocation {
+            currentRiders = [Rider(
+                id: localRiderID, displayName: "Voce",
+                coordinate: loc.coordinate,
+                heading: loc.course >= 0 ? loc.course : nil,
+                speed: loc.speed >= 0 ? loc.speed : nil,
+                lastUpdate: Date(), isConnected: true
+            )]
+        }
+
+        // Transition to map
+        isRideActive = true
+
+        // WebRTC offers
         for peer in multipeer.connectedPeers {
             let riderID = peer.displayName
             guard !webrtcInitiatedFor.contains(riderID) else { continue }
-            webrtcInitiatedFor.insert(riderID)
-            webRTC.createOffer(for: riderID)
+            if localRiderID < riderID {
+                webrtcInitiatedFor.insert(riderID)
+                webRTC.createOffer(for: riderID)
+            }
         }
 
-        // Broadcast local location via WebRTC
+        // Stream GPS → map + WebRTC
         Task { @MainActor [weak self] in
             guard let self else { return }
             for await location in self.locationService.locationUpdates {
-                // Update local rider position
                 if let idx = self.currentRiders.firstIndex(where: { $0.id == self.localRiderID }) {
                     self.currentRiders[idx].coordinate = location.coordinate
                     self.currentRiders[idx].heading = location.course >= 0 ? location.course : nil
                     self.currentRiders[idx].speed = location.speed >= 0 ? location.speed : nil
                     self.currentRiders[idx].lastUpdate = location.timestamp
+                } else {
+                    self.currentRiders.append(Rider(
+                        id: self.localRiderID, displayName: "Voce",
+                        coordinate: location.coordinate,
+                        heading: location.course >= 0 ? location.course : nil,
+                        speed: location.speed >= 0 ? location.speed : nil,
+                        lastUpdate: location.timestamp, isConnected: true
+                    ))
                 }
-                // Broadcast to remote peers via WebRTC
                 let update = LocationUpdate(riderID: self.localRiderID, location: location)
                 if let encoded = update.encode() {
                     self.webRTC.broadcast(encoded)

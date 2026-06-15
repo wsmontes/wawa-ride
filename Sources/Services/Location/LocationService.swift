@@ -2,49 +2,53 @@ import Foundation
 import CoreLocation
 import os.log
 
-/// Provides real-time GPS updates for the local rider.
-/// Publishes location at configurable frequency for sharing with the group.
 final class LocationService: NSObject, ObservableObject, @unchecked Sendable {
-
-    // MARK: - Published
 
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
     @Published var currentLocation: CLLocation?
     @Published var isUpdating = false
-
-    // MARK: - Properties
+    @Published var error: String?
 
     private let manager = CLLocationManager()
     private let log = Logger(subsystem: "com.wawaride", category: "Location")
-    private var updateContinuation: AsyncStream<CLLocation>.Continuation?
 
-    /// Async stream yielding location updates at the desired frequency.
-    private(set) lazy var locationUpdates = AsyncStream<CLLocation> { continuation in
-        self.updateContinuation = continuation
-    }
-
-    // MARK: - Init
+    let locationUpdates: AsyncStream<CLLocation>
+    private let updateContinuation: AsyncStream<CLLocation>.Continuation
 
     override init() {
+        (locationUpdates, updateContinuation) = AsyncStream<CLLocation>.makeStream()
         super.init()
-        manager.delegate = self
-        manager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
-        manager.distanceFilter = 5
-        manager.pausesLocationUpdatesAutomatically = false
-        manager.allowsBackgroundLocationUpdates = true
-        authorizationStatus = manager.authorizationStatus
+        self.manager.delegate = self
+        self.manager.desiredAccuracy = kCLLocationAccuracyBestForNavigation
+        self.manager.distanceFilter = 5
+        self.manager.pausesLocationUpdatesAutomatically = false
+        authorizationStatus = self.manager.authorizationStatus
+        self.log.info("LocationService init — status: \(self.manager.authorizationStatus.rawValue)")
     }
 
-    // MARK: - Public API
-
     func requestPermission() {
-        manager.requestWhenInUseAuthorization()
+        let status = manager.authorizationStatus
+        log.info("Requesting permission — current status: \(status.rawValue)")
+        if status == .notDetermined {
+            manager.requestWhenInUseAuthorization()
+        }
+        // If already authorized, just start updating
+        if status == .authorizedWhenInUse || status == .authorizedAlways {
+            startUpdating()
+        }
     }
 
     func startUpdating() {
+        let status = manager.authorizationStatus
+        guard status == .authorizedWhenInUse || status == .authorizedAlways else {
+            error = "Permissao de localizacao negada. Va em Ajustes > Wawa Ride > Localizacao."
+            log.warning("Cannot start — not authorized (status: \(status.rawValue))")
+            return
+        }
+        error = nil
         manager.startUpdatingLocation()
         isUpdating = true
-        log.info("Location updates started")
+        log.info("Location updates started (accuracy: navigation, filter: 5m)")
     }
 
     func stopUpdating() {
@@ -59,16 +63,21 @@ final class LocationService: NSObject, ObservableObject, @unchecked Sendable {
 extension LocationService: CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         authorizationStatus = manager.authorizationStatus
-        log.info("Auth status: \(manager.authorizationStatus.rawValue)")
+        log.info("Auth changed → \(manager.authorizationStatus.rawValue)")
+        if manager.authorizationStatus == .authorizedWhenInUse ||
+           manager.authorizationStatus == .authorizedAlways {
+            error = nil
+        }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let latest = locations.last else { return }
         currentLocation = latest
-        updateContinuation?.yield(latest)
+        updateContinuation.yield(latest)
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         log.error("Location error: \(error.localizedDescription)")
+        self.error = error.localizedDescription
     }
 }
