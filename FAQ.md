@@ -316,3 +316,16 @@ Cada rider vê apenas seu líder direto + peers do seu sub-grupo. Sub-líderes v
 
 ### Por que não simplesmente aumentar as conexões BLE?
 Limitação de hardware (Apple). O chip BLE do iPhone não suporta mais de ~7 conexões estáveis. Além disso, flooding num grupo de 20 = 20 packets/segundo × TTL=5 hops = até 100 retransmissões/segundo — devastaria a bateria.
+
+### Caravana Mode: Mesh Fluida (grupos grandes reais)
+Para um motoclube com 20+ riders, sub-grupos fixos são artificiais. Na realidade, quem está do seu lado muda a cada minuto. A solução é **mesh oportunística**:
+
+- Todos compartilham 1 PIN/groupID (uma única caravana)
+- Cada phone conecta automaticamente com quem está no range BLE (~100m)
+- Topologia muda organicamente conforme riders se movem
+- Multi-hop garante que a informação percola pelo pelotão inteiro
+- TTL adaptativo por densidade: muitos vizinhos → TTL baixo (evita flood); poucos vizinhos → TTL alto (tenta alcançar longe)
+
+**O que cada rider vê:** Todos os riders alcançáveis por cadeia de hops (tipicamente 10-15 de 20 num pelotão de 2km). Riders muito distantes (>5 hops, sem internet) desaparecem até alguém se aproximar ou internet fazer bridge.
+
+**Implicação técnica:** O código atual já suporta — BLE conecta com qualquer peer do mesmo serviceUUID. Não há sub-grupo no protocolo. Ajustes necessários: TTL adaptativo e teste de carga com 10+ devices.
