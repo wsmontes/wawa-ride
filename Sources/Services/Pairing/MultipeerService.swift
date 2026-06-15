@@ -33,6 +33,8 @@ final class MultipeerService: NSObject, ObservableObject, @unchecked Sendable {
 
     // MARK: - Properties
 
+    var displayName: String { myPeerID.displayName }
+
     private let serviceType = "wawaride-pair"
     private let myPeerID: MCPeerID
     private let session: MCSession

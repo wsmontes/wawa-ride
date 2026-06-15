@@ -125,12 +125,13 @@ final class RideViewModel {
         // Transition to map
         isRideActive = true
 
-        // WebRTC offers
+        // WebRTC offers — polite: device with alphabetically smaller name offers
+        let myName = multipeer.displayName
         for peer in multipeer.connectedPeers {
             let riderID = peer.displayName
             guard !webrtcInitiatedFor.contains(riderID) else { continue }
-            if localRiderID < riderID {
-                webrtcInitiatedFor.insert(riderID)
+            webrtcInitiatedFor.insert(riderID)
+            if myName < riderID {
                 webRTC.createOffer(for: riderID)
             }
         }

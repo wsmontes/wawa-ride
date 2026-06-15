@@ -249,42 +249,57 @@ private extension WebRTCService {
 
 extension WebRTCService: RTCPeerConnectionDelegate {
     func peerConnection(_ pc: RTCPeerConnection, didChange state: RTCPeerConnectionState) {
-        guard let entry = connections.first(where: { $0.value == pc }) else { return }
-        let riderID = entry.key
-        DispatchQueue.main.async { [weak self] in
+        queue.async { [weak self] in
             guard let self else { return }
-            switch state {
-            case .connected:
-                self.peers[riderID] = .connected
-                self.log.info("WebRTC connected: \(riderID)")
-            case .failed, .disconnected:
-                self.peers[riderID] = .failed
-                self.log.warning("WebRTC \(state.rawValue): \(riderID)")
-            case .connecting:
-                self.peers[riderID] = .connecting
-            default: break
+            guard let entry = self.connections.first(where: { $0.value == pc }) else { return }
+            let riderID = entry.key
+            DispatchQueue.main.async {
+                switch state {
+                case .connected:
+                    self.peers[riderID] = .connected
+                    self.log.info("WebRTC connected: \(riderID)")
+                case .failed, .disconnected:
+                    self.peers[riderID] = .failed
+                    self.log.warning("WebRTC \(state.rawValue): \(riderID)")
+                case .connecting:
+                    self.peers[riderID] = .connecting
+                default: break
+                }
             }
         }
     }
 
     func peerConnection(_ pc: RTCPeerConnection, didGenerate candidate: RTCIceCandidate) {
-        guard let entry = connections.first(where: { $0.value == pc }) else { return }
-        let dict: [String: String] = [
-            "sdp": candidate.sdp,
-            "sdpMLineIndex": "\(candidate.sdpMLineIndex)",
-            "sdpMid": candidate.sdpMid ?? ""
-        ]
-        if let json = try? JSONSerialization.data(withJSONObject: dict),
-           let jsonStr = String(data: json, encoding: .utf8) {
-            var payload = "ICE:".data(using: .utf8) ?? Data()
-            payload.append(jsonStr.data(using: .utf8) ?? Data())
-            onOutgoingSignaling?(payload, entry.key)
+        queue.async { [weak self] in
+            guard let self else { return }
+            guard let entry = self.connections.first(where: { $0.value == pc }) else { return }
+            let dict: [String: String] = [
+                "sdp": candidate.sdp,
+                "sdpMLineIndex": "\(candidate.sdpMLineIndex)",
+                "sdpMid": candidate.sdpMid ?? ""
+            ]
+            if let json = try? JSONSerialization.data(withJSONObject: dict),
+               let jsonStr = String(data: json, encoding: .utf8) {
+                var payload = "ICE:".data(using: .utf8) ?? Data()
+                payload.append(jsonStr.data(using: .utf8) ?? Data())
+                self.onOutgoingSignaling?(payload, entry.key)
+            }
         }
     }
 
     func peerConnectionShouldNegotiate(_ pc: RTCPeerConnection) {}
     func peerConnection(_ pc: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]) {}
-    func peerConnection(_ pc: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {}
+
+    func peerConnection(_ pc: RTCPeerConnection, didOpen dataChannel: RTCDataChannel) {
+        queue.async { [weak self] in
+            guard let self else { return }
+            guard let entry = self.connections.first(where: { $0.value == pc }) else { return }
+            dataChannel.delegate = self
+            self.dataChannels[entry.key] = dataChannel
+            self.log.info("DataChannel opened from remote: \(entry.key)")
+        }
+    }
+
     func peerConnection(_ pc: RTCPeerConnection, didAdd stream: RTCMediaStream) {}
     func peerConnection(_ pc: RTCPeerConnection, didRemove stream: RTCMediaStream) {}
     func peerConnection(_ pc: RTCPeerConnection, didChange newState: RTCSignalingState) {}
@@ -296,8 +311,11 @@ extension WebRTCService: RTCPeerConnectionDelegate {
 
 extension WebRTCService: RTCDataChannelDelegate {
     func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
-        if let entry = dataChannels.first(where: { $0.value == dataChannel }) {
-            onDataReceived?(buffer.data, entry.key)
+        queue.async { [weak self] in
+            guard let self else { return }
+            if let entry = self.dataChannels.first(where: { $0.value == dataChannel }) {
+                self.onDataReceived?(buffer.data, entry.key)
+            }
         }
     }
 
