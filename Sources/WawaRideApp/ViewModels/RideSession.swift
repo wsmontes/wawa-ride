@@ -22,8 +22,10 @@ final class RideSession: ObservableObject {
     @Published var phase: Phase = .idle
     @Published var pairingPIN: String = ""
     @Published var isLeader = false
+    @Published var groupID: String = ""
     private var staleTimer: Timer?
     private var currentRide: Ride?
+    private var peerVisibility: [String: Visibility] = [:]  // peerID → visibility
 
     enum Phase { case idle, pairing, riding, navigating }
 
@@ -41,7 +43,7 @@ final class RideSession: ObservableObject {
         }
         // MultipeerKit location (Codable, fast foreground path)
         mesh.onLocationReceived = { [weak self] payload, peerName in
-            Task { @MainActor in self?.applyLocation(payload, from: peerName) }
+            Task { @MainActor in self?.applyLocation(payload, from: peerName, isMember: true) }
         }
         // Automerge sync messages
         mesh.onSyncMessage = { [weak self] data, peer in
@@ -55,7 +57,9 @@ final class RideSession: ObservableObject {
         isLeader = true
         phase = .pairing
         pairingPIN = String(format: "%04d", Int.random(in: 0...9999))
+        groupID = UUID().uuidString  // unique group per ride
         mesh.start()
+        broadcastAnnounce()
     }
 
     func startAsFollower() {
@@ -70,6 +74,13 @@ final class RideSession: ObservableObject {
     }
 
     func confirmPairing() { startRide() }
+
+    /// Broadcast announce with groupID and visibility (every ~30s during ride).
+    private func broadcastAnnounce() {
+        let announce = AnnouncePayload(nickname: "Rider", groupID: groupID, visibility: .public)
+        guard let data = try? JSONEncoder().encode(announce) else { return }
+        mesh.send(MeshPacket(type: .announce, senderID: mesh.ble.localPeerID, payload: data))
+    }
 
     // MARK: - Ride Lifecycle
 
@@ -122,16 +133,34 @@ final class RideSession: ObservableObject {
     // MARK: - Receiving
 
     private func handleMeshPacket(_ packet: MeshPacket) {
+        let peerID = packet.senderID.hex
+
         switch packet.type {
+        case .announce:
+            // Track peer's group and visibility
+            guard let announce = try? JSONDecoder().decode(AnnouncePayload.self, from: packet.payload) else { return }
+            peerVisibility[peerID] = announce.visibility
+            // If hidden and not our group, ignore completely
+            if announce.visibility == .hidden && announce.groupID != groupID { return }
+            // If groupOnly and not our group, ignore
+            if announce.visibility == .groupOnly && announce.groupID != groupID { return }
+
         case .locationUpdate:
-            // Try compact binary first (12 bytes), fall back to JSON
+            // Visibility filter: check last known visibility for this peer
+            let vis = peerVisibility[peerID] ?? .public
+            if vis == .hidden { return }
+
+            let isMember = peerVisibility[peerID] != nil  // has announced = we know their group
+                && (peerVisibility[peerID] == .public || groupID.isEmpty)  // simplified for MVP
+
+            // Decode compact binary (12 bytes) or JSON fallback
             if let loc = CompactLocation.decode(packet.payload) {
                 let payload = LocationPayload(lat: loc.latitude, lon: loc.longitude,
                                               heading: loc.headingDegrees, speed: loc.speedMps,
                                               accuracy: 10, timestamp: Date().timeIntervalSince1970)
-                applyLocation(payload, from: packet.senderID.hex)
+                applyLocation(payload, from: peerID, isMember: true)
             } else if let p = try? JSONDecoder().decode(LocationPayload.self, from: packet.payload) {
-                applyLocation(p, from: packet.senderID.hex)
+                applyLocation(p, from: peerID, isMember: true)
             }
         case .routeShare:
             if let coords = try? JSONDecoder().decode([[Double]].self, from: packet.payload) {
@@ -142,7 +171,7 @@ final class RideSession: ObservableObject {
         }
     }
 
-    private func applyLocation(_ p: LocationPayload, from id: String) {
+    private func applyLocation(_ p: LocationPayload, from id: String, isMember: Bool = true) {
         let coord = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lon)
         if let idx = riders.firstIndex(where: { $0.id == id }) {
             riders[idx].coordinate = coord
@@ -151,9 +180,10 @@ final class RideSession: ObservableObject {
             riders[idx].lastSeen = Date()
         } else {
             riders.append(RiderAnnotation(id: id, displayName: "Rider \(id.prefix(4))",
-                                          coordinate: coord, heading: p.heading, speed: p.speed))
+                                          coordinate: coord, heading: p.heading, speed: p.speed,
+                                          isMember: isMember))
         }
-        groupNav.appendLeaderPosition(coord)
+        if isMember { groupNav.appendLeaderPosition(coord) }
     }
 
     private func handleSync(_ data: Data, from peer: String) {

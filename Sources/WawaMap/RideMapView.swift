@@ -87,53 +87,62 @@ public struct RideMapView: View {
 /// density adaptation (rich pins ≤7 riders, simple dots for more).
 ///
 /// Visual states:
-/// - Active rider: pulsing orange circle + motorcycle icon
+/// - Member active: pulsing orange circle + motorcycle icon
 /// - Leader: pulsing blue circle + star icon
+/// - External (public, other group): static green circle, no pulse, smaller
 /// - Stale (>15s no update): static gray, no pulse, 50% opacity
 struct RiderBadge: View {
     let name: String
     let isStale: Bool
     let isLeader: Bool
+    let isMember: Bool
     @State private var isPulsing = false
 
     var body: some View {
         VStack(spacing: 2) {
             ZStack {
-                // Pulse ring (Meshtastic pattern: easeInOut, 1.2s, forever)
-                if !isStale {
+                // Pulse ring (only for active members)
+                if !isStale && isMember {
                     Circle()
                         .fill(baseColor.opacity(0.25))
                         .frame(width: 40, height: 40)
                         .scaleEffect(isPulsing ? 1.15 : 0.85)
                         .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isPulsing)
                 }
-                // Main dot
+                // Main dot (smaller for externals)
                 Circle()
                     .fill(baseColor)
                     .opacity(isStale ? 0.4 : 1.0)
-                    .frame(width: 28, height: 28)
+                    .frame(width: isMember ? 28 : 18, height: isMember ? 28 : 18)
                     .overlay {
-                        Image(systemName: isLeader ? "star.fill" : "motorcycle")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(.white)
+                        if isMember {
+                            Image(systemName: isLeader ? "star.fill" : "motorcycle")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.white)
+                        }
                     }
             }
-            Text(name)
-                .font(.system(size: 9, weight: .medium))
-                .padding(.horizontal, 4)
-                .padding(.vertical, 1)
-                .background(.ultraThinMaterial, in: Capsule())
+            if isMember {
+                Text(name)
+                    .font(.system(size: 9, weight: .medium))
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 1)
+                    .background(.ultraThinMaterial, in: Capsule())
+            }
         }
         .onAppear { isPulsing = true }
     }
 
     private var baseColor: Color {
         if isStale { return .gray }
+        if !isMember { return .green }  // external rider (other group, public)
         return isLeader ? .blue : .orange
     }
 }
 
 /// A rider's position on the map.
+/// - Members (same group): orange/blue, full trail, pulsing
+/// - External (public, other group): green, position only, no trail, no pulse
 public struct RiderAnnotation: Identifiable, Sendable {
     public let id: String
     public let displayName: String
@@ -141,14 +150,16 @@ public struct RiderAnnotation: Identifiable, Sendable {
     public var heading: Double?
     public var speed: Double?
     public var isLeader: Bool
+    public var isMember: Bool  // true = same group; false = external (public visibility)
     public var lastSeen: Date
 
     public var isStale: Bool { Date().timeIntervalSince(lastSeen) > 15 }
 
     public init(id: String, displayName: String, coordinate: CLLocationCoordinate2D,
                 heading: Double? = nil, speed: Double? = nil, isLeader: Bool = false,
-                lastSeen: Date = Date()) {
+                isMember: Bool = true, lastSeen: Date = Date()) {
         self.id = id; self.displayName = displayName; self.coordinate = coordinate
-        self.heading = heading; self.speed = speed; self.isLeader = isLeader; self.lastSeen = lastSeen
+        self.heading = heading; self.speed = speed; self.isLeader = isLeader
+        self.isMember = isMember; self.lastSeen = lastSeen
     }
 }

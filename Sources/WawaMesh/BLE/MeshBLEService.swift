@@ -88,15 +88,32 @@ public final class MeshBLEService: NSObject, ObservableObject, @unchecked Sendab
 
     /// Broadcast packet to all connected peers via GATT write.
     /// Fragments if payload exceeds BLE MTU.
+    /// TTL is adaptive based on peer density (Caravana Mode):
+    /// - Few neighbors (0-3): TTL=5 (reach far, sparse network)
+    /// - Normal (4-6): TTL=3 (balanced)
+    /// - Dense (7+): TTL=2 (info spreads fast locally, no need to flood far)
+    /// Reference: BitChat's `bleHighDegreeThreshold = 6` for adaptive relay
     public func broadcast(_ packet: MeshPacket) {
-        let encoded = BinaryCodec.encode(packet)
+        var p = packet
+        p.ttl = adaptiveTTL()
+        let encoded = BinaryCodec.encode(p)
         if encoded.count <= MeshConfig.bleFragmentSize {
             sendToAll(encoded)
         } else {
-            // Fragment and pace at 30ms intervals (BitChat recommendation)
             for chunk in FragmentCodec.fragment(encoded) {
                 sendToAll(chunk)
             }
+        }
+    }
+
+    /// Adaptive TTL based on local peer density.
+    /// High density = information propagates quickly with few hops.
+    /// Low density = need more hops to reach distant peers.
+    private func adaptiveTTL() -> UInt8 {
+        switch connectedPeerCount {
+        case 0...3:  return 5
+        case 4...6:  return 3
+        default:     return 2
         }
     }
 
