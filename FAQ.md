@@ -267,3 +267,26 @@ BLE transfere ~Kbps. Opus a 8 kbps precisa de throughput constante que BLE não 
 - Chamada VoIP contínua (bateria + vento no mic)
 - Notificações push (sem servidor)
 - Histórico de mensagens (não é um messenger)
+
+---
+
+## Cenários de Conectividade
+
+### Líder se afasta além do alcance mesh, mas tem internet. Só 1 rider do grupo tem internet.
+O rider com internet age como **bridge automático** entre Nostr e BLE mesh:
+
+1. Líder publica posição no Nostr relay (tem 4G)
+2. Rider com internet recebe via Nostr, mostra no mapa
+3. Rider re-broadcast automaticamente via BLE mesh para o grupo
+4. Riders sem internet veem o líder graças ao bridge
+
+Isso acontece sem lógica especial — qualquer pacote recebido por qualquer canal é re-broadcast na mesh se TTL > 0. Dedup (messageID) garante processamento único.
+
+### E se ninguém do grupo tiver internet?
+Líder desaparece do mapa (cinza após 15s, some após 120s). Quando qualquer rider recuperar internet, o app baixa posições acumuladas no Nostr relay e preenche o gap.
+
+### E se o líder voltar ao alcance mesh sem internet?
+BLE reconecta. Automerge CRDT sincroniza as posições que faltavam. Trail preenche o gap automaticamente.
+
+### Qualquer rider pode ser bridge?
+**Sim.** Não é um papel atribuído. Qualquer phone que tenha internet E mesh ativo age como gateway automaticamente. Se vários riders têm internet, dedup previne duplicação.
