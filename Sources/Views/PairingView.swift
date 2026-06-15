@@ -229,22 +229,19 @@ struct PairingView: View {
                     .background(.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
             }
 
-            // Start Ride — most prominent when connected
-            if state == .connected {
-                Button(action: onStartRide) {
-                    HStack {
-                        Image(systemName: "map.fill")
-                        Text("Iniciar Passeio")
-                    }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+            // Start Ride — always available (solo if no peers)
+            Button(action: onStartRide) {
+                HStack {
+                    Image(systemName: "map.fill")
+                    Text(multipeer.connectedPeers.isEmpty ? "Iniciar Passeio (solo)" : "Iniciar Passeio")
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .tint(.orange)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .tint(.orange)
 
             // Pairing toggle
             Button {

@@ -40,15 +40,16 @@ final class LocationService: NSObject, ObservableObject, @unchecked Sendable {
 
     func startUpdating() {
         let status = manager.authorizationStatus
-        guard status == .authorizedWhenInUse || status == .authorizedAlways else {
+        if status == .denied || status == .restricted {
             error = "Permissao de localizacao negada. Va em Ajustes > Wawa Ride > Localizacao."
-            log.warning("Cannot start — not authorized (status: \(status.rawValue))")
+            log.warning("Location denied (status: \(status.rawValue))")
+            isUpdating = false
             return
         }
         error = nil
         manager.startUpdatingLocation()
         isUpdating = true
-        log.info("Location updates started (accuracy: navigation, filter: 5m)")
+        log.info("Location updates started (status: \(status.rawValue))")
     }
 
     func stopUpdating() {

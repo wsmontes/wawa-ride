@@ -100,22 +100,15 @@ final class RideViewModel {
     // MARK: - Ride
 
     func startRide() {
-        guard !multipeer.connectedPeers.isEmpty else {
-            errorMessage = "Nenhum motociclista pareado."
-            return
+        // Warn but allow solo mode
+        if multipeer.connectedPeers.isEmpty {
+            log.warning("Starting ride with no MC peers — solo mode")
         }
 
-        let status = locationService.authorizationStatus
-        guard status == .authorizedWhenInUse || status == .authorizedAlways else {
-            locationService.requestPermission()
-            errorMessage = "Permita acesso a localizacao para iniciar o passeio."
-            return
-        }
-
-        errorMessage = nil
+        // Try to start GPS regardless of permission state
         locationService.startUpdating()
 
-        // If we already have a GPS fix, create the local rider now
+        // Add local rider if we have GPS, otherwise map shows waiting state
         if let loc = locationService.currentLocation {
             currentRiders = [Rider(
                 id: localRiderID, displayName: "Voce",
@@ -128,8 +121,9 @@ final class RideViewModel {
 
         // Transition to map
         isRideActive = true
+        errorMessage = nil
 
-        // WebRTC offers — both sides create offers (WebRTC handles glare)
+        // Create WebRTC offers for any connected peers
         for peer in multipeer.connectedPeers {
             let riderID = peer.displayName
             guard !webrtcInitiatedFor.contains(riderID) else { continue }
@@ -162,7 +156,7 @@ final class RideViewModel {
             }
         }
 
-        log.info("Ride started with \(self.multipeer.connectedPeers.count) peers")
+        log.info("Ride started — MC: \(self.multipeer.connectedPeers.count) peers, GPS: \(self.locationService.isUpdating)")
     }
 
     func stopRide() {
