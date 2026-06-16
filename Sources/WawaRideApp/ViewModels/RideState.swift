@@ -21,6 +21,7 @@ final class RideState: ObservableObject {
     @Published var connectedPeerCount: Int = 0
     @Published var riders: [RiderAnnotation] = []
     @Published var routeCoords: [CLLocationCoordinate2D] = []
+    @Published var currentSpeed: String = "0"
 
     let mesh = MeshService()
     private let locationTracker = LocationTracker()
@@ -85,6 +86,8 @@ final class RideState: ObservableObject {
     }
 
     private func broadcastLocation(_ loc: CLLocation) {
+        let speedKmh = loc.speed >= 0 ? loc.speed * 3.6 : 0
+        currentSpeed = String(format: "%.0f", speedKmh)
         let msg = String(format: "LOC:%.6f,%.6f,%.1f,%.1f",
                          loc.coordinate.latitude, loc.coordinate.longitude,
                          loc.course >= 0 ? loc.course : 0,
