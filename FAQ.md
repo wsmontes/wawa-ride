@@ -724,3 +724,10 @@ Quase. O mecanismo é o mesmo do carteiro, mas em tempo real. A diferença é qu
 
 ### É exagero?
 Não. É consistente com a filosofia "todo nó é relay, todo recurso é compartilhado". 84 bytes/segundo é menos que carregar uma imagem de WhatsApp. O benefício (grupo inteiro visível no Nostr) supera amplamente o custo.
+
+### Posso compartilhar internet de forma genérica (para outros apps) entre membros do grupo?
+**Não.** iOS não permite que um app roteie tráfego IP arbitrário ou controle o Personal Hotspot programaticamente. Isso é limitação de plataforma (sandboxing Apple).
+
+**O que fazemos:** Compartilhar internet **para dados WawaMesh** (posições, hazards, sync via Nostr bridge). Isso é automático e transparente.
+
+**Por que não importa:** O app é 100% offline-first. Mapa local (PMTiles). Mesh local (BLE). Rotas pré-calculadas (GPX). A internet é bônus para sync, não requisito para funcionar.
