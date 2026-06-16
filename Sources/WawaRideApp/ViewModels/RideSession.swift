@@ -1,5 +1,6 @@
 import Foundation
 import CoreLocation
+import BitFoundation
 import WawaMesh
 import WawaMap
 import WawaNavigation
@@ -70,7 +71,7 @@ final class RideSession: ObservableObject {
 
     func joinWithPIN(_ pin: String) {
         let payload = "JOIN:\(pin)".data(using: .utf8)!
-        mesh.send(MeshPacket(type: .groupControl, senderID: mesh.ble.localPeerID, payload: payload))
+        mesh.send(BitchatPacket(type: 0x05, senderID: mesh.ble.localPeerID, payload: payload))
     }
 
     func confirmPairing() { startRide() }
@@ -79,7 +80,7 @@ final class RideSession: ObservableObject {
     private func broadcastAnnounce() {
         let announce = AnnouncePayload(nickname: "Rider", groupID: groupID, visibility: .public)
         guard let data = try? JSONEncoder().encode(announce) else { return }
-        mesh.send(MeshPacket(type: .announce, senderID: mesh.ble.localPeerID, payload: data))
+        mesh.send(BitchatPacket(type: MessageType.announce.rawValue, senderID: mesh.ble.localPeerID, payload: data))
     }
 
     // MARK: - Ride Lifecycle
@@ -123,7 +124,7 @@ final class RideSession: ObservableObject {
         // Resilient path: BLE mesh (compact binary 12 bytes, background, multi-hop)
         let compact = CompactLocation(latitude: payload.lat, longitude: payload.lon,
                                       heading: payload.heading, speed: payload.speed)
-        mesh.send(MeshPacket(type: .locationUpdate, senderID: mesh.ble.localPeerID, payload: compact.encode()))
+        mesh.send(BitchatPacket(type: 0x02, senderID: mesh.ble.localPeerID, payload: compact.encode()))
         // Update CRDT doc
         let id = mesh.ble.localPeerID.hex
         syncDoc.updateRider(id: id, lat: payload.lat, lon: payload.lon,
@@ -132,11 +133,11 @@ final class RideSession: ObservableObject {
 
     // MARK: - Receiving
 
-    private func handleMeshPacket(_ packet: MeshPacket) {
+    private func handleMeshPacket(_ packet: BitchatPacket) {
         let peerID = packet.senderID.hex
 
         switch packet.type {
-        case .announce:
+        case MessageType.announce.rawValue:
             // Track peer's group and visibility
             guard let announce = try? JSONDecoder().decode(AnnouncePayload.self, from: packet.payload) else { return }
             peerVisibility[peerID] = announce.visibility
@@ -145,7 +146,7 @@ final class RideSession: ObservableObject {
             // If groupOnly and not our group, ignore
             if announce.visibility == .groupOnly && announce.groupID != groupID { return }
 
-        case .locationUpdate:
+        case 0x02:  // locationUpdate
             // Visibility filter: check last known visibility for this peer
             let vis = peerVisibility[peerID] ?? .public
             if vis == .hidden { return }
@@ -162,7 +163,7 @@ final class RideSession: ObservableObject {
             } else if let p = try? JSONDecoder().decode(LocationPayload.self, from: packet.payload) {
                 applyLocation(p, from: peerID, isMember: true)
             }
-        case .routeShare:
+        case 0x03:  // routeShare
             if let coords = try? JSONDecoder().decode([[Double]].self, from: packet.payload) {
                 routeCoords = coords.map { CLLocationCoordinate2D(latitude: $0[0], longitude: $0[1]) }
                 groupNav.setSharedRoute(routeCoords)
@@ -192,6 +193,6 @@ final class RideSession: ObservableObject {
     }
 
     private func purgeStaleRiders() {
-        riders.removeAll { Date().timeIntervalSince($0.lastSeen) > MeshConfig.riderRemoveTimeout }
+        riders.removeAll { Date().timeIntervalSince($0.lastSeen) > MeshConstants.riderRemoveTimeout }
     }
 }

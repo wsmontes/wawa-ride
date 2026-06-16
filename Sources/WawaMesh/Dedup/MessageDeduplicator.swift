@@ -23,13 +23,14 @@ public final class MessageDeduplicator: @unchecked Sendable {
 
     /// Returns true if messageID hasn't been seen within maxAge.
     /// Thread-safe (NSLock). O(1) amortized.
+    /// Dedup params from BitChat: capacity=1000, maxAge=300s.
     public func isNew(_ messageID: String) -> Bool {
         lock.lock()
         defer { lock.unlock() }
         let now = Date()
         // Amortized eviction: purge old entries when cache is half full
-        if cache.count > MeshConfig.dedupMaxCount / 2 {
-            cache = cache.filter { now.timeIntervalSince($0.value) < MeshConfig.dedupMaxAge }
+        if cache.count > 500 {
+            cache = cache.filter { now.timeIntervalSince($0.value) < 300 }
         }
         if cache[messageID] != nil { return false }
         cache[messageID] = now

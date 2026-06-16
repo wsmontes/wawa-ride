@@ -5,6 +5,8 @@ let package = Package(
     name: "WawaRide",
     platforms: [.iOS(.v16)],
     products: [
+        .library(name: "BitLogger", targets: ["BitLogger"]),
+        .library(name: "BitFoundation", targets: ["BitFoundation"]),
         .library(name: "WawaOntology", targets: ["WawaOntology"]),
         .library(name: "WawaMesh", targets: ["WawaMesh"]),
         .library(name: "WawaMap", targets: ["WawaMap"]),
@@ -30,10 +32,15 @@ let package = Package(
         .package(url: "https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock", from: "0.17.0"),
     ],
     targets: [
+        .target(name: "BitLogger", dependencies: [], path: "Sources/BitLogger"),
+        .target(name: "BitFoundation", dependencies: ["BitLogger"], path: "Sources/BitFoundation"),
+
         .target(name: "WawaOntology", dependencies: [], path: "Sources/WawaOntology"),
         .testTarget(name: "WawaOntologyTests", dependencies: ["WawaOntology"], path: "Tests/WawaOntologyTests"),
 
         .target(name: "WawaMesh", dependencies: [
+            "BitFoundation",
+            "WawaOntology",
             .product(name: "MultipeerKit", package: "MultipeerKit"),
             .product(name: "SwiftProtobuf", package: "swift-protobuf"),
             .product(name: "CoreBluetoothMock", package: "IOS-CoreBluetooth-Mock"),

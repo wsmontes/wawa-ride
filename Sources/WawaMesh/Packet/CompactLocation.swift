@@ -1,5 +1,4 @@
 import Foundation
-import SwiftProtobuf
 
 /// Compact 12-byte location encoding for BLE mesh transmission.
 ///

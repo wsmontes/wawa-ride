@@ -30,9 +30,9 @@ public enum FragmentCodec {
     ///
     /// - Parameters:
     ///   - data: The full encoded packet to fragment
-    ///   - maxSize: Max bytes per fragment (default: MeshConfig.bleFragmentSize = 469)
+    ///   - maxSize: Max bytes per fragment (BitChat default: 469)
     /// - Returns: Array of fragment Data to send sequentially with 30ms spacing
-    public static func fragment(_ data: Data, maxSize: Int = MeshConfig.bleFragmentSize) -> [Data] {
+    public static func fragment(_ data: Data, maxSize: Int = 469) -> [Data] {
         let payloadPerChunk = maxSize - headerSize
         let total = (data.count + payloadPerChunk - 1) / payloadPerChunk
         let transferID = UInt16.random(in: 0...UInt16.max)
@@ -78,8 +78,8 @@ public final class FragmentAssemblyBuffer: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        // Evict stale assemblies to prevent memory exhaustion
-        if transfers.count >= MeshConfig.bleMaxInFlightAssemblies {
+        // Evict stale assemblies to prevent memory exhaustion (BitChat: 128 max)
+        if transfers.count >= 128 {
             let now = Date()
             transfers = transfers.filter { now.timeIntervalSince($0.value.created) < 30 }
         }
