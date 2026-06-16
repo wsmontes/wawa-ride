@@ -1,6 +1,7 @@
 import Foundation
 import CoreLocation
 import Combine
+import MapCache
 
 /// Manages ride lifecycle: idle → proposed → active → completed.
 /// Owns the MeshService, GPS tracker, and rider list.
@@ -21,12 +22,23 @@ final class RideState: ObservableObject {
     @Published var connectedPeerCount: Int = 0
     @Published var riders: [RiderAnnotation] = []
     @Published var routeCoords: [CLLocationCoordinate2D] = []
-    @Published var currentSpeed: String = "0"
+    @Published var speedKmh: Double = 0
+    var speedDisplay: String { String(format: "%.0f", speedKmh) }
+
+    /// Cache tiles around current position periodically when on WiFi
+    private var lastCacheLocation: CLLocation?
+    private var cacheTimer: Timer?
 
     let mesh = MeshService()
     private let locationTracker = LocationTracker()
     private var announceTimer: Timer?
     private var staleTimer: Timer?
+    private lazy var tileCache: MapCache = {
+        var c = MapCacheConfig()
+        c.cacheName = "WawaMapCache"
+        c.capacity = 100 * 1024 * 1024
+        return MapCache(withConfig: c)
+    }()
 
     var myId: String { mesh.localPeerIDHex }
 
@@ -86,8 +98,7 @@ final class RideState: ObservableObject {
     }
 
     private func broadcastLocation(_ loc: CLLocation) {
-        let speedKmh = loc.speed >= 0 ? loc.speed * 3.6 : 0
-        currentSpeed = String(format: "%.0f", speedKmh)
+        speedKmh = loc.speed >= 0 ? loc.speed * 3.6 : 0
         let msg = String(format: "LOC:%.6f,%.6f,%.1f,%.1f",
                          loc.coordinate.latitude, loc.coordinate.longitude,
                          loc.course >= 0 ? loc.course : 0,
@@ -96,6 +107,28 @@ final class RideState: ObservableObject {
         upsertRider(id: myId, coord: loc.coordinate,
                     heading: loc.course >= 0 ? loc.course : nil,
                     speed: loc.speed >= 0 ? loc.speed : nil)
+
+        // Pre-cache tiles every 500m moved while on WiFi
+        if let prev = lastCacheLocation, loc.distance(from: prev) > 500 {
+            triggerCacheIfWiFi(around: loc)
+            lastCacheLocation = loc
+        } else if lastCacheLocation == nil {
+            lastCacheLocation = loc
+            triggerCacheIfWiFi(around: loc)
+        }
+    }
+
+    private func triggerCacheIfWiFi(around loc: CLLocation) {
+        let d = 0.05 // ~5km in degrees
+        guard let region = TileCoordsRegion(
+            topLeftLatitude: loc.coordinate.latitude + d,
+            topLeftLongitude: loc.coordinate.longitude - d,
+            bottomRightLatitude: loc.coordinate.latitude - d,
+            bottomRightLongitude: loc.coordinate.longitude + d,
+            minZoom: 10,
+            maxZoom: 16
+        ) else { return }
+        let _ = RegionDownloader(forRegion: region, mapCache: tileCache)
     }
 
     private func handleMessage(peerId: String, text: String) {

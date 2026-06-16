@@ -21,6 +21,7 @@
 		281E44F03EA75739CA276163 /* CompressionUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0D3FD1D4F4194254528EFF8 /* CompressionUtil.swift */; };
 		2B7B28EECF32FBDD8F0F2F26 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE4FFD968080579087C5B79 /* Constants.swift */; };
 		3352E0E7F3A49EA97FAC988D /* RideState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69927ADE3F6ECB4AD8C2A49C /* RideState.swift */; };
+		342AA7E4CB3571727C4BD800 /* SmartMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C87E485C6506B7ACF28268 /* SmartMapView.swift */; };
 		375F7AE3AF24F97755866DDF /* DeliveryStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D916DD380528C9EA62DF29 /* DeliveryStatus.swift */; };
 		3E828D4AB0D0E3BAD3F59A1E /* MapCache in Frameworks */ = {isa = PBXBuildFile; productRef = 30B4707CA2948B5ECA28D43C /* MapCache */; };
 		492A950C119F19D8F28B0A92 /* BitchatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A034B46138D714B07E25AC7D /* BitchatMessage.swift */; };
@@ -49,7 +50,6 @@
 		DB754A133B2116CD6D53D392 /* String+Sanitization.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17814C19A672CD001B12884 /* String+Sanitization.swift */; };
 		ED266938637DA0D62B45A077 /* MediaObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FD9C7916A994628D6AF1A55 /* MediaObject.swift */; };
 		EF2117ADAF29A5994F19F85A /* BitchatPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42B484C3155C2140FABFCB07 /* BitchatPacket.swift */; };
-		F2C1763A59EE053B1CC52F34 /* RideMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */; };
 		F98AA27A278BD59E79F769B1 /* MessagePadding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5024207646D420E4115AB14E /* MessagePadding.swift */; };
 		F9E788DD87AE497593577AEE /* MeshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CC007E68AE7320F38167CC /* MeshService.swift */; };
 		FE2632C79CE6D0C970ADCA97 /* Place.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D8D111A5C229A647C40F43 /* Place.swift */; };
@@ -76,7 +76,6 @@
 		5FD9C7916A994628D6AF1A55 /* MediaObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaObject.swift; sourceTree = "<group>"; };
 		69927ADE3F6ECB4AD8C2A49C /* RideState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideState.swift; sourceTree = "<group>"; };
 		6BB67499DE2B88A319B849A4 /* FileTransferLimits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTransferLimits.swift; sourceTree = "<group>"; };
-		6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideMapView.swift; sourceTree = "<group>"; };
 		775C89811DA31175332DFC90 /* WawaContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaContext.swift; sourceTree = "<group>"; };
 		7809A7C68E1FB41D0A6B6FC8 /* BinaryEncodingUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryEncodingUtils.swift; sourceTree = "<group>"; };
 		7ECD0233F3AC54BD1DD60969 /* Data+SHA256.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+SHA256.swift"; sourceTree = "<group>"; };
@@ -102,6 +101,7 @@
 		D18F975984CF636A40785D0B /* MeshBLEService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshBLEService.swift; sourceTree = "<group>"; };
 		DEC2F46D69908E883AA8DC28 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E2521893DEF13A9B85A9AB0D /* MessageDeduplicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageDeduplicator.swift; sourceTree = "<group>"; };
+		E8C87E485C6506B7ACF28268 /* SmartMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartMapView.swift; sourceTree = "<group>"; };
 		EA2098B64528998EBC24280A /* CompactLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactLocation.swift; sourceTree = "<group>"; };
 		F7B0F1CF9F6318046FDFEEA1 /* OSLog+Categories.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OSLog+Categories.swift"; sourceTree = "<group>"; };
 		F9811FF0F9B4C8D7F5C8BEDE /* FragmentCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FragmentCodec.swift; sourceTree = "<group>"; };
@@ -284,7 +284,7 @@
 			isa = PBXGroup;
 			children = (
 				4A062A271A1EDC79CF8EA4CB /* OfflineTileManager.swift */,
-				6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */,
+				E8C87E485C6506B7ACF28268 /* SmartMapView.swift */,
 			);
 			name = WawaMap;
 			path = Sources/WawaMap;
@@ -423,10 +423,10 @@
 				BFBE536479773BD3CB30E048 /* PeerID.swift in Sources */,
 				FE2632C79CE6D0C970ADCA97 /* Place.swift in Sources */,
 				D7163CC7A09CE6CD8538C961 /* RideMainView.swift in Sources */,
-				F2C1763A59EE053B1CC52F34 /* RideMapView.swift in Sources */,
 				3352E0E7F3A49EA97FAC988D /* RideState.swift in Sources */,
 				8D5B9F8083B5FC37F03C0C43 /* SecureLogger.swift in Sources */,
 				2476B42324FEC3B71D3EA59C /* SmartLocationTracker.swift in Sources */,
+				342AA7E4CB3571727C4BD800 /* SmartMapView.swift in Sources */,
 				8DA2F4CD42892AFCD6BEE88A /* String+Ext.swift in Sources */,
 				DB754A133B2116CD6D53D392 /* String+Sanitization.swift in Sources */,
 				0B8D0E233535BEEF394D11E9 /* WaitingView.swift in Sources */,

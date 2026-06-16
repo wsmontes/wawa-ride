@@ -35,6 +35,7 @@ targets:
       - path: Sources/WawaMap
         excludes:
           - "RouteCorridor.swift"
+          - "RideMapView.swift"
       - path: Sources/WawaRideApp
         excludes:
           - "ViewModels/RideSession.swift"
