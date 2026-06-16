@@ -1,0 +1,206 @@
+{
+  "version": 8,
+  "name": "Wawa Ride Victoria",
+  "glyphs": "https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf",
+  "sprite": "https://demotiles.maplibre.org/sprite",
+  "sources": {
+    "protomaps": {
+      "type": "vector",
+      "url": "pmtiles://Tiles/victoria.pmtiles",
+      "attribution": "© OpenStreetMap contributors"
+    }
+  },
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": {
+        "background-color": "#1a1a2e"
+      }
+    },
+    {
+      "id": "water",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "water",
+      "filter": ["==", "$type", "Polygon"],
+      "paint": {
+        "fill-color": "#162447"
+      }
+    },
+    {
+      "id": "water-line",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "water",
+      "paint": {
+        "line-color": "#1f4068",
+        "line-width": 0.5
+      }
+    },
+    {
+      "id": "landuse-park",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "landuse",
+      "filter": ["==", "class", "park"],
+      "paint": {
+        "fill-color": "#1b2a1b",
+        "fill-opacity": 0.6
+      }
+    },
+    {
+      "id": "landcover-wood",
+      "type": "fill",
+      "source": "protomaps",
+      "source-layer": "landcover",
+      "filter": ["==", "class", "wood"],
+      "paint": {
+        "fill-color": "#1a2e1a",
+        "fill-opacity": 0.5
+      }
+    },
+    {
+      "id": "road-motorway",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "transportation",
+      "filter": ["==", "class", "motorway"],
+      "paint": {
+        "line-color": "#e94560",
+        "line-width": 3
+      },
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      }
+    },
+    {
+      "id": "road-trunk",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "transportation",
+      "filter": ["==", "class", "trunk"],
+      "paint": {
+        "line-color": "#e94560",
+        "line-width": 2.5
+      },
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      }
+    },
+    {
+      "id": "road-primary",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "transportation",
+      "filter": ["==", "class", "primary"],
+      "paint": {
+        "line-color": "#f0a500",
+        "line-width": 2
+      },
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      }
+    },
+    {
+      "id": "road-secondary",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "transportation",
+      "filter": ["==", "class", "secondary"],
+      "paint": {
+        "line-color": "#cfcfcf",
+        "line-width": 1.5
+      },
+      "layout": {
+        "line-cap": "round",
+        "line-join": "round"
+      }
+    },
+    {
+      "id": "road-tertiary",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "transportation",
+      "filter": ["==", "class", "tertiary"],
+      "paint": {
+        "line-color": "#a0a0a0",
+        "line-width": 1
+      }
+    },
+    {
+      "id": "road-minor",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "transportation",
+      "filter": ["in", "class", "minor", "service", "track", "path"],
+      "paint": {
+        "line-color": "#7a7a7a",
+        "line-width": 0.5,
+        "line-dasharray": [2, 2]
+      }
+    },
+    {
+      "id": "bridge",
+      "type": "line",
+      "source": "protomaps",
+      "source-layer": "transportation",
+      "filter": ["==", "brunnel", "bridge"],
+      "paint": {
+        "line-color": "#e94560",
+        "line-width": 2
+      }
+    },
+    {
+      "id": "place-city",
+      "type": "symbol",
+      "source": "protomaps",
+      "source-layer": "place",
+      "filter": ["==", "class", "city"],
+      "layout": {
+        "text-field": ["get", "name"],
+        "text-size": 14,
+        "text-font": ["Noto Sans Bold"]
+      },
+      "paint": {
+        "text-color": "#ffffff",
+        "text-halo-color": "#1a1a2e",
+        "text-halo-width": 1.5
+      }
+    },
+    {
+      "id": "place-town",
+      "type": "symbol",
+      "source": "protomaps",
+      "source-layer": "place",
+      "filter": ["in", "class", "town", "village"],
+      "layout": {
+        "text-field": ["get", "name"],
+        "text-size": 11,
+        "text-font": ["Noto Sans Regular"]
+      },
+      "paint": {
+        "text-color": "#cfcfcf",
+        "text-halo-color": "#1a1a2e",
+        "text-halo-width": 1
+      }
+    },
+    {
+      "id": "poi-fuel",
+      "type": "circle",
+      "source": "protomaps",
+      "source-layer": "poi",
+      "filter": ["==", "class", "fuel"],
+      "paint": {
+        "circle-color": "#e94560",
+        "circle-radius": 4,
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 1
+      }
+    }
+  ],
+  "id": "wawa-victoria"
+}

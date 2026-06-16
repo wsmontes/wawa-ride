@@ -1,42 +1,15 @@
 import Foundation
 import MapLibre
 
-/// Manages offline PMTiles/MBTiles for regional maps.
+/// Manages offline PMTiles for the motorcycle ride map.
 ///
-/// Tile generation pipeline (all tools are open-source):
-/// 1. **Planetiler** generates regional basemap from OSM → .pmtiles
-///    Reference: https://github.com/onthegomap/planetiler (Apache-2, 2.1k stars)
-///    Command: `planetiler --area=brazil --output=brazil-sudeste.pmtiles`
+/// Two sources of tiles:
+/// 1. **Bundled** — Victoria region PMTiles shipped with the app (~8 MB, always available)
+/// 2. **Downloaded** — additional regions downloaded on-demand (future)
 ///
-/// 2. **Tippecanoe** converts custom GeoJSON overlays → .pmtiles
-///    Reference: https://github.com/felt/tippecanoe (BSD-2, 1.5k stars)
-///    Command: `tippecanoe -zg -o routes.pmtiles routes.geojson`
-///
-/// 3. **pmtiles CLI** extracts sub-regions from larger archives
-///    Reference: https://github.com/protomaps/go-pmtiles
-///    Command: `pmtiles extract planet.pmtiles sp.pmtiles --bbox=-47,-24,-45,-23`
-///
-/// PMTiles format (vs MBTiles):
-/// - Single flat binary file (not SQLite) — optimized for HTTP range requests
-/// - 10-15% smaller than equivalent MBTiles
-/// - MapLibre Native reads via `pmtiles://file:///path/to/file.pmtiles`
-/// - No tile server needed — file IS the database
-/// Reference: https://github.com/protomaps/PMTiles (BSD-3, 2.9k stars)
-///
-/// Size estimates for Brazil:
-/// - Full country (z0-z14): ~2-4 GB
-/// - State of São Paulo: ~200-500 MB
-/// - City (São Paulo metro): ~50-150 MB
-/// - Single ride route corridor: ~5-20 MB
-///
-/// MapLibre PMTiles support:
-/// Added in MapLibre Native v6.10.0+. Use `pmtiles://` protocol prefix.
-/// For local files: `"url": "pmtiles://file:///path/to/basemap.pmtiles"`
-/// Reference: MapLibre Android docs (iOS shares same style spec engine)
-///
-/// Pre-built basemaps available from Protomaps (ODbL, global coverage):
-/// https://docs.protomaps.com/basemaps/downloads
-/// https://github.com/protomaps/basemaps
+/// PMTiles is a single-file format optimized for HTTP range requests.
+/// MapLibre reads it directly via `pmtiles://` protocol — no tile server needed.
+/// Reference: https://github.com/protomaps/PMTiles
 public final class OfflineTileManager: ObservableObject {
     @Published public var availableRegions: [TileRegion] = []
 
@@ -45,6 +18,7 @@ public final class OfflineTileManager: ObservableObject {
         public let name: String
         public let fileURL: URL
         public let sizeBytes: UInt64
+        public let isBundled: Bool
     }
 
     private let tilesDir: URL
@@ -56,47 +30,59 @@ public final class OfflineTileManager: ObservableObject {
         refresh()
     }
 
-    /// Generate a minimal style.json that references a local PMTiles file.
-    /// This style is passed to MapLibre's `styleURL` parameter.
+    // MARK: - Bundled map
+
+    /// URL for the bundled Victoria style.json.
     ///
-    /// For production, use Protomaps' style generator for full layer definitions:
-    /// https://docs.protomaps.com/basemaps/maplibre
-    public func localStyleURL(for region: TileRegion) -> URL? {
-        let style: [String: Any] = [
-            "version": 8,
-            "name": "Wawa Ride Offline",
-            "sources": ["openmaptiles": [
-                "type": "vector",
-                "url": "pmtiles://\(region.fileURL.path)"
-            ]],
-            "layers": [
-                ["id": "background", "type": "background", "paint": ["background-color": "#f8f4f0"]],
-                ["id": "road", "type": "line", "source": "openmaptiles", "source-layer": "transportation",
-                 "paint": ["line-color": "#ffffff", "line-width": 1.5]]
-            ]
-        ]
-        let jsonURL = tilesDir.appendingPathComponent("\(region.id)-style.json")
-        if let data = try? JSONSerialization.data(withJSONObject: style) {
-            try? data.write(to: jsonURL)
-            return jsonURL
-        }
-        return nil
+    /// The style references tiles at `pmtiles://Tiles/victoria.pmtiles`
+    /// which resolves relative to the app bundle. MapLibre's PMTiles
+    /// integration handles this transparently.
+    public var bundledStyleURL: URL? {
+        Bundle.main.url(forResource: "Tiles/style", withExtension: "json")
     }
 
-    /// Refresh available regions from the tiles directory.
+    /// The bundled Victoria PMTiles region.
+    public var victoriaRegion: TileRegion? {
+        availableRegions.first { $0.id == "victoria" }
+    }
+
+    // MARK: - Dynamic loading
+
+    /// Refresh available regions from tiles directory and app bundle.
     public func refresh() {
+        var regions: [TileRegion] = []
+
+        // Scan app bundle for bundled tiles
+        if let bundleTiles = Bundle.main.urls(forResourcesWithExtension: "pmtiles", subdirectory: "Tiles") {
+            for url in bundleTiles {
+                let name = url.deletingPathExtension().lastPathComponent
+                let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+                regions.append(TileRegion(
+                    id: name, name: name.capitalized, fileURL: url,
+                    sizeBytes: UInt64(size), isBundled: true
+                ))
+            }
+        }
+
+        // Scan documents directory for downloaded tiles
         let fm = FileManager.default
         let files = (try? fm.contentsOfDirectory(at: tilesDir, includingPropertiesForKeys: [.fileSizeKey])) ?? []
-        availableRegions = files
-            .filter { $0.pathExtension == "pmtiles" || $0.pathExtension == "mbtiles" }
-            .compactMap { url in
-                let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
-                let name = url.deletingPathExtension().lastPathComponent
-                return TileRegion(id: name, name: name, fileURL: url, sizeBytes: UInt64(size))
+        for url in files where url.pathExtension == "pmtiles" || url.pathExtension == "mbtiles" {
+            let name = url.deletingPathExtension().lastPathComponent
+            let size = (try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0
+            // Don't duplicate if already in bundle
+            if !regions.contains(where: { $0.id == name }) {
+                regions.append(TileRegion(
+                    id: name, name: name.capitalized, fileURL: url,
+                    sizeBytes: UInt64(size), isBundled: false
+                ))
             }
+        }
+
+        availableRegions = regions
     }
 
-    /// Import a PMTiles file (e.g., after downloading from server or AirDrop).
+    /// Import a PMTiles file (e.g., after downloading or AirDrop).
     public func importTiles(from source: URL, name: String) throws {
         let dest = tilesDir.appendingPathComponent("\(name).pmtiles")
         try FileManager.default.copyItem(at: source, to: dest)
