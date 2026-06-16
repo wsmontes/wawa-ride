@@ -5,6 +5,7 @@ struct RideMainView: View {
     @ObservedObject var state: RideState
     @State private var showPIN = false
     @State private var isAutoCentered = true
+    @State private var hasEverAutoCentered = false
 
     var body: some View {
         ZStack {
@@ -12,10 +13,13 @@ struct RideMainView: View {
                 riders: $state.riders,
                 routeCoords: $state.routeCoords,
                 speedKmh: $state.speedKmh,
-                isAutoCentered: $isAutoCentered,
-                onManualPan: { isAutoCentered = false }
+                isAutoCentered: $isAutoCentered
             )
             .ignoresSafeArea()
+            .onReceive(NotificationCenter.default.publisher(for: .userDidPanMap)) { _ in
+                hasEverAutoCentered = true
+                isAutoCentered = false
+            }
 
             // Top HUD
             VStack {
@@ -64,8 +68,11 @@ struct RideMainView: View {
                 Spacer()
 
                 // Re-center button (appears when user manually pans)
-                if !isAutoCentered {
-                    Button(action: { isAutoCentered = true }) {
+                if !isAutoCentered && hasEverAutoCentered {
+                    Button(action: {
+                        NotificationCenter.default.post(name: .userDidTapReCenter, object: nil)
+                        isAutoCentered = true
+                    }) {
                         Label("Recentralizar", systemImage: "location.fill")
                             .font(.subheadline)
                             .padding(.horizontal, 16).padding(.vertical, 8)

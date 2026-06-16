@@ -12,13 +12,11 @@ public struct SmartMapView: UIViewRepresentable {
     @Binding var routeCoords: [CLLocationCoordinate2D]
     @Binding var speedKmh: Double
     @Binding var isAutoCentered: Bool
-    var onManualPan: (() -> Void)?
 
     public init(riders: Binding<[RiderAnnotation]>,
                 routeCoords: Binding<[CLLocationCoordinate2D]>,
                 speedKmh: Binding<Double>,
-                isAutoCentered: Binding<Bool>,
-                onManualPan: (() -> Void)? = nil) {
+                isAutoCentered: Binding<Bool>) {
         _riders = riders
         _routeCoords = routeCoords
         _speedKmh = speedKmh
@@ -39,7 +37,14 @@ public struct SmartMapView: UIViewRepresentable {
         map.useCache(cache)
         context.coordinator.cache = cache
         context.coordinator.map = map
-        context.coordinator.onManualPan = onManualPan
+
+        // Listen for re-center tap to force update
+        NotificationCenter.default.addObserver(
+            context.coordinator,
+            selector: #selector(Coordinator.didReceiveReCenter),
+            name: .userDidTapReCenter,
+            object: nil
+        )
 
         return map
     }
@@ -48,15 +53,26 @@ public struct SmartMapView: UIViewRepresentable {
         context.coordinator.updateAnnotations(map: map, riders: riders)
         context.coordinator.updateRoute(map: map, coords: routeCoords)
 
-        // Auto-center: adjust zoom based on speed (only if not manually overridden)
+        // Auto-center: first location, speed change, or re-center button tapped
         if isAutoCentered, let userLoc = map.userLocation.location {
             let distance = distanceForSpeed(speedKmh)
-            let region = MKCoordinateRegion(
-                center: userLoc.coordinate,
-                latitudinalMeters: distance,
-                longitudinalMeters: distance
-            )
-            map.setRegion(region, animated: true)
+            // Reset when transitioning from manual back to auto
+            if context.coordinator.wasManual {
+                context.coordinator.lastAutoCenterDistance = 0
+                context.coordinator.wasManual = false
+            }
+            let lastDist = context.coordinator.lastAutoCenterDistance
+            let shouldUpdate = !context.coordinator.hasInitialCentered || lastDist == 0 || abs(distance - lastDist) > 50
+            if shouldUpdate {
+                let region = MKCoordinateRegion(
+                    center: userLoc.coordinate,
+                    latitudinalMeters: distance,
+                    longitudinalMeters: distance
+                )
+                context.coordinator.isProgrammaticChange = true
+                context.coordinator.lastAutoCenterDistance = distance
+                map.setRegion(region, animated: true)
+            }
         }
     }
 
@@ -80,6 +96,16 @@ public struct SmartMapView: UIViewRepresentable {
         var cache: MapCache?
         weak var map: MKMapView?
         private var lastRoute: MKPolyline?
+        var isProgrammaticChange = false
+        var lastAutoCenterDistance: CLLocationDistance = 0
+        var wasManual = false
+        var hasInitialCentered = false
+        var mapReadyTime: Date?
+
+        @objc func didReceiveReCenter() {
+            wasManual = true
+            lastAutoCenterDistance = 0
+        }
 
         public func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let polyline = overlay as? MKPolyline {
@@ -91,13 +117,31 @@ public struct SmartMapView: UIViewRepresentable {
             return mapView.mapCacheRenderer(forOverlay: overlay)
         }
 
-        var onManualPan: (() -> Void)?
-
-        /// Detect manual pan/zoom — user gesture fires without animation
+        /// Detect manual pan/zoom — user gesture, after map is ready
         public func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-            if !animated {
-                DispatchQueue.main.async { self.onManualPan?() }
+            if !animated && !isProgrammaticChange {
+                // Only fire after initial setup is complete (2s grace period)
+                if let ready = mapReadyTime, Date() > ready {
+                    NotificationCenter.default.post(name: .userDidPanMap, object: nil)
+                }
             }
+        }
+
+        /// Re-enable auto-tracking after programmatic change completes
+        public func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            isProgrammaticChange = false
+        }
+
+        /// Auto-center on first user location fix
+        public func mapView(_ mapView: MKMapView, didUpdate userLocation: MKUserLocation) {
+            guard !hasInitialCentered, let loc = userLocation.location else { return }
+            hasInitialCentered = true
+            let region = MKCoordinateRegion(center: loc.coordinate, latitudinalMeters: 200, longitudinalMeters: 200)
+            isProgrammaticChange = true
+            lastAutoCenterDistance = 200
+            mapView.setRegion(region, animated: true)
+            // Ignore any "user pan" events for 2 seconds after initial center
+            mapReadyTime = Date().addingTimeInterval(2)
         }
 
         func updateAnnotations(map: MKMapView, riders: [RiderAnnotation]) {
@@ -151,6 +195,11 @@ class RiderPoint: MKPointAnnotation {
         self.coordinate = rider.coordinate
         self.title = rider.displayName
     }
+}
+
+extension Notification.Name {
+    static let userDidPanMap = Notification.Name("com.wawaride.userDidPanMap")
+    static let userDidTapReCenter = Notification.Name("com.wawaride.userDidTapReCenter")
 }
 
 // MARK: - RiderAnnotation (shared model)
