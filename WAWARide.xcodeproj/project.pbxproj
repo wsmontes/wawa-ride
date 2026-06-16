@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0276F3D9505BC138CAB38965 /* WawaRideApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 544A169A8314145C3343D0E3 /* WawaRideApp.swift */; };
 		07EB5E971A71AA87E9007682 /* MeshConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E2F58521FE85F23C65616AB /* MeshConstants.swift */; };
+		0B8D0E233535BEEF394D11E9 /* WaitingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91E82371385CF75EC2DCBFF8 /* WaitingView.swift */; };
 		10155B88312BA3ADCB24407D /* BinaryEncodingUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7809A7C68E1FB41D0A6B6FC8 /* BinaryEncodingUtils.swift */; };
 		133053F485D5DEFAA122727D /* KeychainManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF9CD83912158543232B23 /* KeychainManagerProtocol.swift */; };
 		13A60254A609C3FA40D658B6 /* BinaryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99393642C679DE5D54689ACC /* BinaryProtocol.swift */; };
@@ -19,6 +20,7 @@
 		266644C15489F4693B8E79BD /* MeshStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505A4B75932C17D64D79B82B /* MeshStatusView.swift */; };
 		281E44F03EA75739CA276163 /* CompressionUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0D3FD1D4F4194254528EFF8 /* CompressionUtil.swift */; };
 		2B7B28EECF32FBDD8F0F2F26 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE4FFD968080579087C5B79 /* Constants.swift */; };
+		3352E0E7F3A49EA97FAC988D /* RideState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69927ADE3F6ECB4AD8C2A49C /* RideState.swift */; };
 		375F7AE3AF24F97755866DDF /* DeliveryStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D916DD380528C9EA62DF29 /* DeliveryStatus.swift */; };
 		3E828D4AB0D0E3BAD3F59A1E /* MapCache in Frameworks */ = {isa = PBXBuildFile; productRef = 30B4707CA2948B5ECA28D43C /* MapCache */; };
 		492A950C119F19D8F28B0A92 /* BitchatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A034B46138D714B07E25AC7D /* BitchatMessage.swift */; };
@@ -27,6 +29,7 @@
 		5403AE2AC874BC3FF7C08176 /* CompactLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA2098B64528998EBC24280A /* CompactLocation.swift */; };
 		5ECEB468B09726378E5D1852 /* MeshBLEService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D18F975984CF636A40785D0B /* MeshBLEService.swift */; };
 		66B6F3AD63560DF8EB32D295 /* FragmentCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9811FF0F9B4C8D7F5C8BEDE /* FragmentCodec.swift */; };
+		67A811AFA569B1D833D796CC /* CreateRideView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A86B949887368F904D0E4C05 /* CreateRideView.swift */; };
 		6AD95A59B85EB598CF8921C3 /* WawaIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C56F96C7839C41C3B39C482F /* WawaIdentifier.swift */; };
 		6D65D5866AA6F5B454DC04C2 /* JCS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4E7ADAB8C88BE39B175734 /* JCS.swift */; };
 		7CFAAE7D92035F5FDD52104A /* WawaProof.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C332149494BAE6361A16C23 /* WawaProof.swift */; };
@@ -34,6 +37,7 @@
 		8D407B61A16F96802D15EEB7 /* Data+SHA256.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ECD0233F3AC54BD1DD60969 /* Data+SHA256.swift */; };
 		8D5B9F8083B5FC37F03C0C43 /* SecureLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00F7EB6126942F516DB422B7 /* SecureLogger.swift */; };
 		8DA2F4CD42892AFCD6BEE88A /* String+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A42FFBD2F87BA1DBC1ACD2 /* String+Ext.swift */; };
+		9311E7407EEF1AE00991EFC3 /* LocationTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4CB43A508B13317AA7949285 /* LocationTracker.swift */; };
 		A4C87F3C1B91E851EF222AF8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DEC2F46D69908E883AA8DC28 /* Assets.xcassets */; };
 		AD82EE756E45E6F4C5B884CD /* WawaValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E0A242319F16D0F88C8235 /* WawaValue.swift */; };
 		B8108FFA4CCA1A08B5CC599A /* WawaEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EACE624DCF027E4C6912FA8 /* WawaEncoder.swift */; };
@@ -64,11 +68,13 @@
 		42B484C3155C2140FABFCB07 /* BitchatPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitchatPacket.swift; sourceTree = "<group>"; };
 		46D916DD380528C9EA62DF29 /* DeliveryStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryStatus.swift; sourceTree = "<group>"; };
 		4A062A271A1EDC79CF8EA4CB /* OfflineTileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineTileManager.swift; sourceTree = "<group>"; };
+		4CB43A508B13317AA7949285 /* LocationTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationTracker.swift; sourceTree = "<group>"; };
 		5024207646D420E4115AB14E /* MessagePadding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagePadding.swift; sourceTree = "<group>"; };
 		505A4B75932C17D64D79B82B /* MeshStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshStatusView.swift; sourceTree = "<group>"; };
 		544A169A8314145C3343D0E3 /* WawaRideApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaRideApp.swift; sourceTree = "<group>"; };
 		54535268658418FC49D23321 /* WawaObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaObject.swift; sourceTree = "<group>"; };
 		5FD9C7916A994628D6AF1A55 /* MediaObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaObject.swift; sourceTree = "<group>"; };
+		69927ADE3F6ECB4AD8C2A49C /* RideState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideState.swift; sourceTree = "<group>"; };
 		6BB67499DE2B88A319B849A4 /* FileTransferLimits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTransferLimits.swift; sourceTree = "<group>"; };
 		6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideMapView.swift; sourceTree = "<group>"; };
 		775C89811DA31175332DFC90 /* WawaContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaContext.swift; sourceTree = "<group>"; };
@@ -77,11 +83,13 @@
 		83D8D111A5C229A647C40F43 /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
 		8E2F58521FE85F23C65616AB /* MeshConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshConstants.swift; sourceTree = "<group>"; };
 		8F83F2DE765904DAA79FB888 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		91E82371385CF75EC2DCBFF8 /* WaitingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WaitingView.swift; sourceTree = "<group>"; };
 		99393642C679DE5D54689ACC /* BinaryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryProtocol.swift; sourceTree = "<group>"; };
 		9999870E3266E9010D1B4BF9 /* WawaRide.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WawaRide.entitlements; sourceTree = "<group>"; };
 		A034B46138D714B07E25AC7D /* BitchatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitchatMessage.swift; sourceTree = "<group>"; };
 		A0628C41A187F35B59E78AEC /* MessageType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageType.swift; sourceTree = "<group>"; };
 		A0D3FD1D4F4194254528EFF8 /* CompressionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompressionUtil.swift; sourceTree = "<group>"; };
+		A86B949887368F904D0E4C05 /* CreateRideView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateRideView.swift; sourceTree = "<group>"; };
 		ACE4FFD968080579087C5B79 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		B216465A6863DB0B0D422A7D /* PeerID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerID.swift; sourceTree = "<group>"; };
 		C17814C19A672CD001B12884 /* String+Sanitization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Sanitization.swift"; sourceTree = "<group>"; };
@@ -165,6 +173,7 @@
 		620FA447913D6D5D99A6209F /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				4CB43A508B13317AA7949285 /* LocationTracker.swift */,
 				11CC007E68AE7320F38167CC /* MeshService.swift */,
 				C2A296D3553C605D00CD69D1 /* SmartLocationTracker.swift */,
 			);
@@ -196,8 +205,10 @@
 		7C12BD8F06B3E5D166CC7FF9 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				A86B949887368F904D0E4C05 /* CreateRideView.swift */,
 				505A4B75932C17D64D79B82B /* MeshStatusView.swift */,
 				D1058AE0D7EE3A7C2D466345 /* RideMainView.swift */,
+				91E82371385CF75EC2DCBFF8 /* WaitingView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -239,6 +250,7 @@
 				544A169A8314145C3343D0E3 /* WawaRideApp.swift */,
 				9F14087AA1375B43486CC905 /* Resources */,
 				620FA447913D6D5D99A6209F /* Services */,
+				E01A32ED3B1A8BA8553BB4DD /* ViewModels */,
 				7C12BD8F06B3E5D166CC7FF9 /* Views */,
 			);
 			name = WawaRideApp;
@@ -287,6 +299,14 @@
 			);
 			name = WawaOntology;
 			path = Sources/WawaOntology;
+			sourceTree = "<group>";
+		};
+		E01A32ED3B1A8BA8553BB4DD /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				69927ADE3F6ECB4AD8C2A49C /* RideState.swift */,
+			);
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 		EAF4D3F76F98E818D8B14AD5 /* Dedup */ = {
@@ -380,6 +400,7 @@
 				5403AE2AC874BC3FF7C08176 /* CompactLocation.swift in Sources */,
 				281E44F03EA75739CA276163 /* CompressionUtil.swift in Sources */,
 				2B7B28EECF32FBDD8F0F2F26 /* Constants.swift in Sources */,
+				67A811AFA569B1D833D796CC /* CreateRideView.swift in Sources */,
 				211C09C2BEE9398FCB5699CB /* Data+Hex.swift in Sources */,
 				8D407B61A16F96802D15EEB7 /* Data+SHA256.swift in Sources */,
 				375F7AE3AF24F97755866DDF /* DeliveryStatus.swift in Sources */,
@@ -388,6 +409,7 @@
 				6D65D5866AA6F5B454DC04C2 /* JCS.swift in Sources */,
 				133053F485D5DEFAA122727D /* KeychainManagerProtocol.swift in Sources */,
 				FFE76EE246B5FD321A9F24A9 /* LocationPayload.swift in Sources */,
+				9311E7407EEF1AE00991EFC3 /* LocationTracker.swift in Sources */,
 				ED266938637DA0D62B45A077 /* MediaObject.swift in Sources */,
 				5ECEB468B09726378E5D1852 /* MeshBLEService.swift in Sources */,
 				07EB5E971A71AA87E9007682 /* MeshConstants.swift in Sources */,
@@ -402,10 +424,12 @@
 				FE2632C79CE6D0C970ADCA97 /* Place.swift in Sources */,
 				D7163CC7A09CE6CD8538C961 /* RideMainView.swift in Sources */,
 				F2C1763A59EE053B1CC52F34 /* RideMapView.swift in Sources */,
+				3352E0E7F3A49EA97FAC988D /* RideState.swift in Sources */,
 				8D5B9F8083B5FC37F03C0C43 /* SecureLogger.swift in Sources */,
 				2476B42324FEC3B71D3EA59C /* SmartLocationTracker.swift in Sources */,
 				8DA2F4CD42892AFCD6BEE88A /* String+Ext.swift in Sources */,
 				DB754A133B2116CD6D53D392 /* String+Sanitization.swift in Sources */,
+				0B8D0E233535BEEF394D11E9 /* WaitingView.swift in Sources */,
 				4BC1C99856EACE953528217E /* WawaContext.swift in Sources */,
 				89CFFA6EEA10404887490E4D /* WawaDecoder.swift in Sources */,
 				B8108FFA4CCA1A08B5CC599A /* WawaEncoder.swift in Sources */,

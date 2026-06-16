@@ -1,28 +1,21 @@
 import SwiftUI
 
-/// Main ride view — full-screen map with HUD overlay for mesh status.
 struct RideMainView: View {
-    @EnvironmentObject var app: WawaAppState
+    @ObservedObject var state: RideState
 
     var body: some View {
         ZStack {
-            // Full-screen map
-            RideMapView(
-                riders: $app.riders,
-                routeCoords: $app.routeCoords
-            )
-            .ignoresSafeArea()
+            RideMapView(riders: $state.riders, routeCoords: $state.routeCoords)
+                .ignoresSafeArea()
 
-            // HUD overlay
             VStack {
                 Spacer()
                 HStack {
-                    // Connection indicator
                     HStack(spacing: 6) {
                         Circle()
-                            .fill(app.mesh.connectedPeerCount > 0 ? Color.green : Color.orange)
+                            .fill(state.connectedPeerCount > 0 ? Color.green : Color.orange)
                             .frame(width: 10, height: 10)
-                        Text("\(app.mesh.connectedPeerCount)")
+                        Text("\(state.connectedPeerCount)")
                             .font(.system(.headline, design: .monospaced))
                     }
                     .padding(.horizontal, 12)
@@ -31,15 +24,9 @@ struct RideMainView: View {
 
                     Spacer()
 
-                    // Start/Stop
-                    Button(action: {
-                        if app.mesh.isRunning { app.stop() } else { app.start() }
-                    }) {
-                        Label(
-                            app.mesh.isRunning ? "Stop" : "Start",
-                            systemImage: app.mesh.isRunning ? "stop.circle.fill" : "play.circle.fill"
-                        )
-                        .font(.title2)
+                    Button(action: { state.stopRide() }) {
+                        Label("End", systemImage: "stop.circle.fill")
+                            .font(.title2)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
