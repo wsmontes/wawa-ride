@@ -694,3 +694,17 @@ Pin vermelho grande pulsando rápido no mapa + banner "🆘 EMERGÊNCIA — Fula
 
 ### É basicamente um SOS que não para de gritar até alguém ouvir?
 Exatamente. Cada rider na estrada é um potencial gateway. A emergência escala de local (BLE) para global (Nostr) automaticamente assim que qualquer nó da cadeia tiver internet.
+
+### E se eu me perdi mas não é emergência?
+Nível intermediário: botão **"🟡 Me perdi"** (1 toque). Propaga com alta prioridade (TTL=255, carteiro prioriza) mas **só para o meu grupo** — não publica no Nostr público.
+
+| | Emergency 🆘 | Lost 🟡 | Normal 📍 |
+|--|---|---|---|
+| Situação | Acidente/pane | Me perdi, estou bem | Tudo normal |
+| TTL | 255 | 255 | 2-5 (adaptativo) |
+| Carteiro prioriza | Sim | Sim | Não |
+| Nostr público | Sim (qualquer um) | **Não** (só meu grupo) | Não |
+| Visual no time | 🔴 vermelho + vibra forte | 🟡 amarelo + vibra média | Nenhum |
+| Ação esperada | Resgate | "Esperem / me guiem" | — |
+
+O "Lost" respeita privacidade (não quero que desconhecidos saibam) mas ainda usa toda a rede mesh como prioridade para chegar ao meu time.
