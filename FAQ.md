@@ -603,3 +603,18 @@ Se alguém alterar data/local/rota, a assinatura invalida.
 - `clubSignature`: prova que o clube (Brazoocas) autoriza
 
 Qualquer receptor verifica ambos localmente. Um membro comum pode criar passeios pessoais (só rider signature), mas não pode assinar em nome do clube sem a `clubPrivKey`.
+
+### Toda mensagem na mesh é assinada?
+**Não.** Só o que é persistente ou propaga para fora do grupo:
+
+| Assinado (Ed25519) | Não assinado |
+|---|---|
+| RiderCard (identidade) | Location updates (12B, 1 Hz) |
+| QR codes (integridade) | Route share (só grupo) |
+| ClubBadge (membership) | Waypoints (só grupo) |
+| Hazard beacon (accountability) | Group control/PIN (efêmero) |
+| Ride beacon (autenticidade) | |
+
+**Por que locations não assinam?** Assinatura = +64 bytes por pacote. A 1 Hz × 7 riders, são 448 bytes/segundo desperdiçados. O rideSecret (controle de acesso ao grupo) já garante que só membros injetam posições.
+
+**Regra:** Se pode ser verificado por alguém fora do grupo → assina. Se é efêmero dentro do grupo → rideSecret basta.
