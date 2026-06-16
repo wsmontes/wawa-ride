@@ -664,3 +664,33 @@ Sim — é exatamente o padrão de redes tolerantes a atraso. Cada rider é um "
 | GroupID destino | Visível | Visível como hash (não o secret) |
 
 Na fase 5, o payload inteiro (senderID + lat/lon + heading + speed) é encriptado com o rideSecret. O carteiro só vê: "blob para grupo hash(X), criado há Y minutos". Entrega cego.
+
+---
+
+## Emergência (SOS)
+
+### Se minha moto pifou, posso pedir socorro?
+**Sim.** Segura botão 🆘 por 3 segundos (previne ativação acidental). O app emite um pacote `.emergency` com tratamento especial em toda a rede.
+
+### O que muda num pacote de emergência?
+| Aspecto | Pacote normal | Pacote emergency |
+|---------|---------------|-----------------|
+| TTL | 2-5 (adaptativo) | **255** (nunca morre por hops) |
+| Buffer do carteiro | Descartável, max 50 | **Nunca descarta**, primeiro da fila |
+| Expiração | 30 min | **24 horas** |
+| Internet do carteiro | Não usa | **Publica no Nostr imediatamente** |
+| FEDEX (multi-hop até internet) | Não | **Sim** — A→X→Y→internet→Nostr→time |
+
+### Se o carteiro tem internet, publica direto?
+**Sim.** Qualquer nó WawaMesh que toca um pacote de emergência E tem internet → publica no Nostr imediatamente. Meu time (subscrito ao groupID) recebe onde estou.
+
+### E se ninguém tem internet?
+O pacote continua propagando via BLE (TTL=255, sem limite de hops) até:
+- Encontrar alguém com internet (→ Nostr)
+- Chegar no meu time diretamente (→ BLE range)
+
+### O que meu time vê?
+Pin vermelho grande pulsando rápido no mapa + banner "🆘 EMERGÊNCIA — Fulano parado há X min" + botão "Abrir no Maps" / "Ligar".
+
+### É basicamente um SOS que não para de gritar até alguém ouvir?
+Exatamente. Cada rider na estrada é um potencial gateway. A emergência escala de local (BLE) para global (Nostr) automaticamente assim que qualquer nó da cadeia tiver internet.
