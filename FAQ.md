@@ -618,3 +618,36 @@ Qualquer receptor verifica ambos localmente. Um membro comum pode criar passeios
 **Por que locations não assinam?** Assinatura = +64 bytes por pacote. A 1 Hz × 7 riders, são 448 bytes/segundo desperdiçados. O rideSecret (controle de acesso ao grupo) já garante que só membros injetam posições.
 
 **Regra:** Se pode ser verificado por alguém fora do grupo → assina. Se é efêmero dentro do grupo → rideSecret basta.
+
+---
+
+## Store-and-Forward Oportunístico ("Carteiro Cego")
+
+### Se eu me perco do time, um rider desconhecido que cruzar comigo pode levar meus dados para eles?
+**Sim.** Qualquer rider WawaMesh com `visibility: .public` pode servir de relay oportunístico — sem saber o conteúdo, sem ser do mesmo grupo.
+
+### Como funciona?
+1. Estou perdido, fora do alcance. Meus location updates ficam na fila offline.
+2. Rider X (outro grupo, sentido oposto) passa por mim. BLE conecta por ~10 segundos.
+3. Meu app empurra pacotes pendentes (marcados com meu groupID) para Rider X.
+4. Rider X guarda no buffer dele (não processa — não é do grupo dele).
+5. Minutos depois, Rider X cruza com meu time. App dele vê: "tenho pacotes para este groupID". Entrega.
+6. Meu time recebe minha posição de minutos atrás. Sabem onde estou.
+
+### Rider X sabe o que está carregando?
+**No MVP (cleartext):** Tecnicamente pode ler, mas sem contexto (não sabe quem é quem).
+**Fase 5 (encryption):** Pacotes encriptados com rideSecret. Rider X carrega bytes opacos. Carteiro verdadeiramente cego.
+
+### Rider X precisa fazer algo?
+**Nada.** É completamente automático e invisível. App dele nem mostra que carregou algo.
+
+### Limites para não virar spam?
+| Parâmetro | Valor |
+|-----------|-------|
+| Buffer máximo | 50 pacotes por rider externo |
+| Idade máxima | 30 min (posição velha é inútil) |
+| Tamanho máximo | 200 bytes por pacote (só locations) |
+| Opt-in | Só riders com `visibility: .public` participam |
+
+### Isso é a mesma coisa que DTN (Delay-Tolerant Network)?
+Sim — é exatamente o padrão de redes tolerantes a atraso. Cada rider é um "nó móvel" que carrega dados e entrega oportunisticamente. A mesh é a estrada; os riders são os carteiros.
