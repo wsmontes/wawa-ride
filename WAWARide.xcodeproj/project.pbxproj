@@ -12,7 +12,6 @@
 		10155B88312BA3ADCB24407D /* BinaryEncodingUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7809A7C68E1FB41D0A6B6FC8 /* BinaryEncodingUtils.swift */; };
 		133053F485D5DEFAA122727D /* KeychainManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF9CD83912158543232B23 /* KeychainManagerProtocol.swift */; };
 		13A60254A609C3FA40D658B6 /* BinaryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99393642C679DE5D54689ACC /* BinaryProtocol.swift */; };
-		17FE60D693D4E2ED351EA9DD /* style.json in Resources */ = {isa = PBXBuildFile; fileRef = 38258CCA53AE03C92039AD28 /* style.json */; };
 		200F35C5C54A81069D3D739C /* WawaObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54535268658418FC49D23321 /* WawaObject.swift */; };
 		203CA094777B3D160314FCD9 /* OSLog+Categories.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B0F1CF9F6318046FDFEEA1 /* OSLog+Categories.swift */; };
 		211C09C2BEE9398FCB5699CB /* Data+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = C507511C92DBFA30DED82F75 /* Data+Hex.swift */; };
@@ -20,14 +19,12 @@
 		266644C15489F4693B8E79BD /* MeshStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505A4B75932C17D64D79B82B /* MeshStatusView.swift */; };
 		281E44F03EA75739CA276163 /* CompressionUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0D3FD1D4F4194254528EFF8 /* CompressionUtil.swift */; };
 		2B7B28EECF32FBDD8F0F2F26 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE4FFD968080579087C5B79 /* Constants.swift */; };
-		3252868E4FFD4934433DD840 /* Turf in Frameworks */ = {isa = PBXBuildFile; productRef = E07784F613A5604678F93947 /* Turf */; };
 		375F7AE3AF24F97755866DDF /* DeliveryStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D916DD380528C9EA62DF29 /* DeliveryStatus.swift */; };
-		3E828D4AB0D0E3BAD3F59A1E /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = FDF67BE25D295035DAE49CF7 /* MapLibre */; };
+		3E828D4AB0D0E3BAD3F59A1E /* MapCache in Frameworks */ = {isa = PBXBuildFile; productRef = 30B4707CA2948B5ECA28D43C /* MapCache */; };
 		492A950C119F19D8F28B0A92 /* BitchatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A034B46138D714B07E25AC7D /* BitchatMessage.swift */; };
 		4A6561B2122485F3F386C679 /* MessageType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0628C41A187F35B59E78AEC /* MessageType.swift */; };
 		4BC1C99856EACE953528217E /* WawaContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 775C89811DA31175332DFC90 /* WawaContext.swift */; };
 		5403AE2AC874BC3FF7C08176 /* CompactLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA2098B64528998EBC24280A /* CompactLocation.swift */; };
-		562367276C4A701129F7AA7C /* RouteCorridor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE5374E1929A1B840275D34 /* RouteCorridor.swift */; };
 		5ECEB468B09726378E5D1852 /* MeshBLEService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D18F975984CF636A40785D0B /* MeshBLEService.swift */; };
 		66B6F3AD63560DF8EB32D295 /* FragmentCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9811FF0F9B4C8D7F5C8BEDE /* FragmentCodec.swift */; };
 		6AD95A59B85EB598CF8921C3 /* WawaIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C56F96C7839C41C3B39C482F /* WawaIdentifier.swift */; };
@@ -37,7 +34,6 @@
 		8D407B61A16F96802D15EEB7 /* Data+SHA256.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ECD0233F3AC54BD1DD60969 /* Data+SHA256.swift */; };
 		8D5B9F8083B5FC37F03C0C43 /* SecureLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00F7EB6126942F516DB422B7 /* SecureLogger.swift */; };
 		8DA2F4CD42892AFCD6BEE88A /* String+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A42FFBD2F87BA1DBC1ACD2 /* String+Ext.swift */; };
-		9DE1E3D67D76AF5327824140 /* victoria.pmtiles in Resources */ = {isa = PBXBuildFile; fileRef = 7217ADF537213BE262C4CC77 /* victoria.pmtiles */; };
 		A4C87F3C1B91E851EF222AF8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DEC2F46D69908E883AA8DC28 /* Assets.xcassets */; };
 		AD82EE756E45E6F4C5B884CD /* WawaValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E0A242319F16D0F88C8235 /* WawaValue.swift */; };
 		B8108FFA4CCA1A08B5CC599A /* WawaEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EACE624DCF027E4C6912FA8 /* WawaEncoder.swift */; };
@@ -49,7 +45,6 @@
 		DB754A133B2116CD6D53D392 /* String+Sanitization.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17814C19A672CD001B12884 /* String+Sanitization.swift */; };
 		ED266938637DA0D62B45A077 /* MediaObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FD9C7916A994628D6AF1A55 /* MediaObject.swift */; };
 		EF2117ADAF29A5994F19F85A /* BitchatPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42B484C3155C2140FABFCB07 /* BitchatPacket.swift */; };
-		F001171F749DE41CAB9AFD90 /* style-template.json in Resources */ = {isa = PBXBuildFile; fileRef = EC485E41F948851B3FF27AF8 /* style-template.json */; };
 		F2C1763A59EE053B1CC52F34 /* RideMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */; };
 		F98AA27A278BD59E79F769B1 /* MessagePadding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5024207646D420E4115AB14E /* MessagePadding.swift */; };
 		F9E788DD87AE497593577AEE /* MeshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CC007E68AE7320F38167CC /* MeshService.swift */; };
@@ -64,7 +59,6 @@
 		181131D2327996FED85F5D37 /* WAWARide.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WAWARide.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2A4E7ADAB8C88BE39B175734 /* JCS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JCS.swift; sourceTree = "<group>"; };
 		2AAF9CD83912158543232B23 /* KeychainManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManagerProtocol.swift; sourceTree = "<group>"; };
-		38258CCA53AE03C92039AD28 /* style.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = style.json; sourceTree = "<group>"; };
 		3C332149494BAE6361A16C23 /* WawaProof.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaProof.swift; sourceTree = "<group>"; };
 		42A42FFBD2F87BA1DBC1ACD2 /* String+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Ext.swift"; sourceTree = "<group>"; };
 		42B484C3155C2140FABFCB07 /* BitchatPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitchatPacket.swift; sourceTree = "<group>"; };
@@ -77,10 +71,8 @@
 		5FD9C7916A994628D6AF1A55 /* MediaObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaObject.swift; sourceTree = "<group>"; };
 		6BB67499DE2B88A319B849A4 /* FileTransferLimits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTransferLimits.swift; sourceTree = "<group>"; };
 		6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideMapView.swift; sourceTree = "<group>"; };
-		7217ADF537213BE262C4CC77 /* victoria.pmtiles */ = {isa = PBXFileReference; path = victoria.pmtiles; sourceTree = "<group>"; };
 		775C89811DA31175332DFC90 /* WawaContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaContext.swift; sourceTree = "<group>"; };
 		7809A7C68E1FB41D0A6B6FC8 /* BinaryEncodingUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryEncodingUtils.swift; sourceTree = "<group>"; };
-		7AE5374E1929A1B840275D34 /* RouteCorridor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteCorridor.swift; sourceTree = "<group>"; };
 		7ECD0233F3AC54BD1DD60969 /* Data+SHA256.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+SHA256.swift"; sourceTree = "<group>"; };
 		83D8D111A5C229A647C40F43 /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
 		8E2F58521FE85F23C65616AB /* MeshConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshConstants.swift; sourceTree = "<group>"; };
@@ -103,7 +95,6 @@
 		DEC2F46D69908E883AA8DC28 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E2521893DEF13A9B85A9AB0D /* MessageDeduplicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageDeduplicator.swift; sourceTree = "<group>"; };
 		EA2098B64528998EBC24280A /* CompactLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactLocation.swift; sourceTree = "<group>"; };
-		EC485E41F948851B3FF27AF8 /* style-template.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = "style-template.json"; sourceTree = "<group>"; };
 		F7B0F1CF9F6318046FDFEEA1 /* OSLog+Categories.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OSLog+Categories.swift"; sourceTree = "<group>"; };
 		F9811FF0F9B4C8D7F5C8BEDE /* FragmentCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FragmentCodec.swift; sourceTree = "<group>"; };
 		FAFC75A04B75A98C38F18124 /* LocationPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPayload.swift; sourceTree = "<group>"; };
@@ -114,8 +105,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3E828D4AB0D0E3BAD3F59A1E /* MapLibre in Frameworks */,
-				3252868E4FFD4934433DD840 /* Turf in Frameworks */,
+				3E828D4AB0D0E3BAD3F59A1E /* MapCache in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -181,16 +171,6 @@
 			path = Services;
 			sourceTree = "<group>";
 		};
-		68E2F6512949F20E25CE7567 /* Tiles */ = {
-			isa = PBXGroup;
-			children = (
-				EC485E41F948851B3FF27AF8 /* style-template.json */,
-				38258CCA53AE03C92039AD28 /* style.json */,
-				7217ADF537213BE262C4CC77 /* victoria.pmtiles */,
-			);
-			path = Tiles;
-			sourceTree = "<group>";
-		};
 		71B381AC2089F6D486EB351A /* Codec */ = {
 			isa = PBXGroup;
 			children = (
@@ -249,7 +229,6 @@
 				DEC2F46D69908E883AA8DC28 /* Assets.xcassets */,
 				8F83F2DE765904DAA79FB888 /* Info.plist */,
 				9999870E3266E9010D1B4BF9 /* WawaRide.entitlements */,
-				68E2F6512949F20E25CE7567 /* Tiles */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -294,7 +273,6 @@
 			children = (
 				4A062A271A1EDC79CF8EA4CB /* OfflineTileManager.swift */,
 				6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */,
-				7AE5374E1929A1B840275D34 /* RouteCorridor.swift */,
 			);
 			name = WawaMap;
 			path = Sources/WawaMap;
@@ -336,8 +314,7 @@
 			);
 			name = WAWARide;
 			packageProductDependencies = (
-				FDF67BE25D295035DAE49CF7 /* MapLibre */,
-				E07784F613A5604678F93947 /* Turf */,
+				30B4707CA2948B5ECA28D43C /* MapCache */,
 			);
 			productName = WAWARide;
 			productReference = 181131D2327996FED85F5D37 /* WAWARide.app */;
@@ -368,8 +345,7 @@
 			mainGroup = 7E06ACC5AD3D475900C5C221;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				ADBCBD73428079344193673A /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
-				C791656807DB3EDEBF853791 /* XCRemoteSwiftPackageReference "turf-swift" */,
+				7C4F4C2292AA7C26292C2ADD /* XCRemoteSwiftPackageReference "MapCache" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 814E4153F9895B2C7D777737 /* Products */;
@@ -387,9 +363,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A4C87F3C1B91E851EF222AF8 /* Assets.xcassets in Resources */,
-				F001171F749DE41CAB9AFD90 /* style-template.json in Resources */,
-				17FE60D693D4E2ED351EA9DD /* style.json in Resources */,
-				9DE1E3D67D76AF5327824140 /* victoria.pmtiles in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -429,7 +402,6 @@
 				FE2632C79CE6D0C970ADCA97 /* Place.swift in Sources */,
 				D7163CC7A09CE6CD8538C961 /* RideMainView.swift in Sources */,
 				F2C1763A59EE053B1CC52F34 /* RideMapView.swift in Sources */,
-				562367276C4A701129F7AA7C /* RouteCorridor.swift in Sources */,
 				8D5B9F8083B5FC37F03C0C43 /* SecureLogger.swift in Sources */,
 				2476B42324FEC3B71D3EA59C /* SmartLocationTracker.swift in Sources */,
 				8DA2F4CD42892AFCD6BEE88A /* String+Ext.swift in Sources */,
@@ -631,34 +603,21 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		ADBCBD73428079344193673A /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
+		7C4F4C2292AA7C26292C2ADD /* XCRemoteSwiftPackageReference "MapCache" */ = {
 			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/maplibre/maplibre-gl-native-distribution";
+			repositoryURL = "https://github.com/merlos/MapCache";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 6.27.0;
-			};
-		};
-		C791656807DB3EDEBF853791 /* XCRemoteSwiftPackageReference "turf-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mapbox/turf-swift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.0.0;
+				minimumVersion = 0.10.0;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		E07784F613A5604678F93947 /* Turf */ = {
+		30B4707CA2948B5ECA28D43C /* MapCache */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = C791656807DB3EDEBF853791 /* XCRemoteSwiftPackageReference "turf-swift" */;
-			productName = Turf;
-		};
-		FDF67BE25D295035DAE49CF7 /* MapLibre */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ADBCBD73428079344193673A /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
-			productName = MapLibre;
+			package = 7C4F4C2292AA7C26292C2ADD /* XCRemoteSwiftPackageReference "MapCache" */;
+			productName = MapCache;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

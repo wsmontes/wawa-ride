@@ -1,32 +1,15 @@
 import Foundation
-import MapLibre
+import MapCache
 
-/// Map tile source. Currently uses OSM raster (online, proven to work).
-/// PMTiles support in MapLibre iOS 6.27.0 xcframework is broken.
-/// TODO: switch to MBTiles for offline support.
+/// Offline tile caching via MapCache.
+/// Tiles stored in a single SQLite file. First use downloads; subsequent loads from cache.
 public final class OfflineTileManager: ObservableObject {
     public init() {}
 
-    public func makeStyleURL() -> URL {
-        let style: [String: Any] = [
-            "version": 8,
-            "name": "Wawa Ride",
-            "sources": [
-                "osm": [
-                    "type": "raster",
-                    "tiles": ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-                    "tileSize": 256,
-                    "attribution": "© OpenStreetMap contributors"
-                ] as [String: Any]
-            ],
-            "layers": [
-                ["id": "osm", "type": "raster", "source": "osm"]
-            ]
-        ]
-        let out = FileManager.default.temporaryDirectory.appendingPathComponent("wawa-osm.json")
-        if let d = try? JSONSerialization.data(withJSONObject: style, options: .sortedKeys) {
-            try? d.write(to: out, options: .atomic)
-        }
-        return out
+    public func makeCache() -> MapCache {
+        var config = MapCacheConfig()
+        config.cacheName = "WawaMapCache"
+        config.capacity = 100 * 1024 * 1024  // 100 MB
+        return MapCache(withConfig: config)
     }
 }

@@ -1,37 +1,39 @@
 import SwiftUI
-import CoreLocation
-import MapLibre
+import MapKit
+import MapCache
 
-/// Ride map using MapLibre Native directly (no SwiftUI DSL — avoids macro issues).
+/// Ride map using native MapKit with offline tile caching via MapCache.
 ///
-/// Uses UIViewRepresentable to wrap MLNMapView. Supports PMTiles via local
-/// style URL for fully offline maps. Rider annotations update reactively.
+/// MapCache automatically caches OpenStreetMap tiles to a single SQLite file
+/// as the user browses. First use requires internet; subsequent uses work
+/// offline for any previously-viewed areas. Cache persists across app launches.
+///
+/// Reference: https://github.com/merlos/MapCache (MIT, 120+ stars)
 public struct RideMapView: UIViewRepresentable {
     @Binding var riders: [RiderAnnotation]
     @Binding var routeCoords: [CLLocationCoordinate2D]
-    let styleURL: URL
 
     public init(riders: Binding<[RiderAnnotation]>,
-                routeCoords: Binding<[CLLocationCoordinate2D]>,
-                styleURL: URL = defaultStyleURL()) {
+                routeCoords: Binding<[CLLocationCoordinate2D]>) {
         _riders = riders
         _routeCoords = routeCoords
-        self.styleURL = styleURL
     }
 
-    public func makeUIView(context: Context) -> MLNMapView {
-        let map = MLNMapView(frame: .zero, styleURL: styleURL)
+    public func makeUIView(context: Context) -> MKMapView {
+        let map = MKMapView()
         map.delegate = context.coordinator
-        map.setCenter(CLLocationCoordinate2D(latitude: 48.4284, longitude: -123.3656), zoomLevel: 13, animated: false)
         map.showsUserLocation = true
-        map.userTrackingMode = .follow
-        map.logoView.isHidden = true
-        // OSM attribution required by ODbL
-        map.attributionButton.isHidden = false
+        let center = CLLocationCoordinate2D(latitude: 48.4284, longitude: -123.3656)
+        map.setRegion(MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.3, longitudeDelta: 0.3)), animated: false)
+
+        // Offline cache: OSM tiles → SQLite, single file
+        let cache = OfflineTileManager().makeCache()
+        map.useCache(cache)
+
         return map
     }
 
-    public func updateUIView(_ map: MLNMapView, context: Context) {
+    public func updateUIView(_ map: MKMapView, context: Context) {
         context.coordinator.updateAnnotations(map: map, riders: riders)
         context.coordinator.updateRoute(map: map, coords: routeCoords)
     }
@@ -40,88 +42,66 @@ public struct RideMapView: UIViewRepresentable {
         Coordinator()
     }
 
-    public class Coordinator: NSObject, MLNMapViewDelegate {
-        private var riderSources: [String: MLNShapeSource] = [:]
-        private var routeSource: MLNShapeSource?
+    public class Coordinator: NSObject, MKMapViewDelegate {
+        private var lastRoute: MKPolyline?
 
-        // MARK: - MLNMapViewDelegate
-
-        public func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
-            // We'll add sources and connect layers when data arrives
+        public func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            if let polyline = overlay as? MKPolyline {
+                let renderer = MKPolylineRenderer(polyline: polyline)
+                renderer.strokeColor = .systemBlue
+                renderer.lineWidth = 4
+                return renderer
+            }
+            // Delegate tile rendering to MapCache
+            return mapView.mapCacheRenderer(forOverlay: overlay)
         }
 
-        func updateAnnotations(map: MLNMapView, riders: [RiderAnnotation]) {
-            guard let style = map.style else { return }
+        func updateAnnotations(map: MKMapView, riders: [RiderAnnotation]) {
+            let currentIDs = Set(riders.map(\.id))
+            let existingIDs = Set(map.annotations.compactMap { ($0 as? RiderPoint)?.riderId })
 
-            // Build GeoJSON feature collection for riders
-            var features: [MLNPointFeature] = []
+            // Remove stale
+            let toRemove = map.annotations.filter { ann in
+                guard let rp = ann as? RiderPoint else { return false }
+                return !currentIDs.contains(rp.riderId)
+            }
+            map.removeAnnotations(toRemove)
+
+            // Add or update
             for rider in riders {
-                let feature = MLNPointFeature()
-                feature.coordinate = rider.coordinate
-                feature.title = rider.displayName
-                feature.attributes = [
-                    "isLeader": rider.isLeader,
-                    "id": rider.id
-                ]
-                features.append(feature)
-            }
-
-            let sourceID = "riders-source"
-            if style.source(withIdentifier: sourceID) == nil {
-                let source = MLNShapeSource(identifier: sourceID, features: features)
-                style.addSource(source)
-
-                // Self: blue dot
-                let selfLayer = MLNCircleStyleLayer(identifier: "riders-self", source: source)
-                selfLayer.circleRadius = NSExpression(forConstantValue: 12)
-                selfLayer.circleColor = NSExpression(forConstantValue: UIColor.systemBlue)
-                selfLayer.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
-                selfLayer.circleStrokeWidth = NSExpression(forConstantValue: 3)
-                selfLayer.predicate = NSPredicate(format: "isLeader == YES")
-                style.addLayer(selfLayer)
-
-                // Others: orange dot
-                let otherLayer = MLNCircleStyleLayer(identifier: "riders-other", source: source)
-                otherLayer.circleRadius = NSExpression(forConstantValue: 12)
-                otherLayer.circleColor = NSExpression(forConstantValue: UIColor.systemOrange)
-                otherLayer.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
-                otherLayer.circleStrokeWidth = NSExpression(forConstantValue: 2)
-                otherLayer.predicate = NSPredicate(format: "isLeader == NO")
-                style.addLayer(otherLayer)
-            } else if let source = style.source(withIdentifier: sourceID) as? MLNShapeSource {
-                source.shape = MLNShapeCollectionFeature(shapes: features)
+                if let existing = map.annotations.first(where: { ($0 as? RiderPoint)?.riderId == rider.id }) as? RiderPoint {
+                    existing.coordinate = rider.coordinate
+                } else {
+                    let point = RiderPoint(rider: rider)
+                    map.addAnnotation(point)
+                }
             }
         }
 
-        func updateRoute(map: MLNMapView, coords: [CLLocationCoordinate2D]) {
-            guard let style = map.style, coords.count > 1 else { return }
-
-            var coordinates = coords
-            let polyline = MLNPolyline(coordinates: &coordinates, count: UInt(coordinates.count))
-
-            let sourceID = "route-source"
-            if style.source(withIdentifier: sourceID) == nil {
-                let source = MLNShapeSource(identifier: sourceID, shape: polyline)
-                style.addSource(source)
-
-                let layer = MLNLineStyleLayer(identifier: "route", source: source)
-                layer.lineColor = NSExpression(forConstantValue: UIColor.systemBlue)
-                layer.lineWidth = NSExpression(forConstantValue: 4)
-                style.addLayer(layer)
-            } else if let source = style.source(withIdentifier: sourceID) as? MLNShapeSource {
-                source.shape = polyline
-            }
+        func updateRoute(map: MKMapView, coords: [CLLocationCoordinate2D]) {
+            if let last = lastRoute { map.removeOverlay(last) }
+            guard coords.count > 1 else { return }
+            let polyline = MKPolyline(coordinates: coords, count: coords.count)
+            map.addOverlay(polyline)
+            lastRoute = polyline
         }
-    }
-
-    public static func defaultStyleURL() -> URL {
-        OfflineTileManager().makeStyleURL()
     }
 }
 
-// MARK: - Data models
+/// MKPointAnnotation subclass that carries rider identity.
+class RiderPoint: MKPointAnnotation {
+    let riderId: String
 
-/// A rider's position on the map.
+    init(rider: RiderAnnotation) {
+        self.riderId = rider.id
+        super.init()
+        self.coordinate = rider.coordinate
+        self.title = rider.displayName
+    }
+}
+
+// MARK: - Data models (unchanged from MapLibre version)
+
 public struct RiderAnnotation: Identifiable, Sendable {
     public let id: String
     public let displayName: String

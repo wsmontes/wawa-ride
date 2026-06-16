@@ -11,12 +11,9 @@ settings:
     TARGETED_DEVICE_FAMILY: "1"
 
 packages:
-  MapLibre:
-    url: https://github.com/maplibre/maplibre-gl-native-distribution
-    from: "6.27.0"
-  Turf:
-    url: https://github.com/mapbox/turf-swift
-    from: "4.0.0"
+  MapCache:
+    url: https://github.com/merlos/MapCache
+    from: "0.10.0"
 
 targets:
   WAWARide:
@@ -36,13 +33,14 @@ targets:
           - "Multipeer/MultipeerTransport.swift"
           - "Transport.swift"
       - path: Sources/WawaMap
+        excludes:
+          - "RouteCorridor.swift"
       - path: Sources/WawaRideApp
         excludes:
           - "ViewModels/RideSession.swift"
           - "Views/RootView.swift"
     resources:
       - path: Sources/WawaRideApp/Resources/Assets.xcassets
-      - path: Sources/WawaRideApp/Resources/Tiles
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wawaride.app
@@ -51,6 +49,5 @@ targets:
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 955573A4YH
     dependencies:
-      - package: MapLibre
-      - package: Turf
-        product: Turf
+      - package: MapCache
+        product: MapCache
