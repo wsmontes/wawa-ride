@@ -1,10 +1,7 @@
 import Foundation
 import CoreLocation
-import BitFoundation
-import WawaMesh
-import WawaMap
-import WawaNavigation
-import WawaPersistence
+// Self-module imports commented for flat-target compilation:
+// import BitFoundation, WawaMesh, WawaMap, WawaNavigation, WawaPersistence
 import Automerge
 
 @MainActor

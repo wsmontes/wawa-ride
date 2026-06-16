@@ -1,6 +1,6 @@
 import Foundation
 import CoreLocation
-import WawaMesh
+// import WawaMesh — flat target: types compiled in same module
 
 /// Coordinates group navigation — leader shares route, followers track leader's trail.
 ///

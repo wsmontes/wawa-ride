@@ -68,6 +68,7 @@ let package = Package(
             name: "WawaRideApp",
             dependencies: ["WawaOntology", "WawaMesh", "WawaMap", "WawaNavigation", "WawaPersistence"],
             path: "Sources/WawaRideApp",
+            exclude: ["Resources/Info.plist"],
             resources: [.process("Resources")]
         ),
     ]

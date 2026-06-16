@@ -9,6 +9,9 @@
 import struct Foundation.Data
 
 public extension Data {
+    /// Short alias for hexEncodedString(). Used throughout WawaMesh.
+    var hex: String { hexEncodedString() }
+
     func hexEncodedString() -> String {
         if self.isEmpty {
             return ""

@@ -1,6 +1,6 @@
 import SwiftUI
-import WawaMap
-import WawaMesh
+// Self-module imports commented for flat-target compilation:
+// import WawaMap, WawaMesh
 
 /// Single-screen UI: map is ALWAYS visible, states are overlays.
 /// Designed for gloved motorcycle use: 60pt touch targets, zero text input,

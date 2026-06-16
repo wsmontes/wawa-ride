@@ -10,97 +10,67 @@
 		0276F3D9505BC138CAB38965 /* WawaRideApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 544A169A8314145C3343D0E3 /* WawaRideApp.swift */; };
 		07EB5E971A71AA87E9007682 /* MeshConstants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E2F58521FE85F23C65616AB /* MeshConstants.swift */; };
 		10155B88312BA3ADCB24407D /* BinaryEncodingUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7809A7C68E1FB41D0A6B6FC8 /* BinaryEncodingUtils.swift */; };
-		12BAF445382655054ED72236 /* RideSyncDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = F555DC42A7E19B3D106171EC /* RideSyncDocument.swift */; };
 		133053F485D5DEFAA122727D /* KeychainManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAF9CD83912158543232B23 /* KeychainManagerProtocol.swift */; };
 		13A60254A609C3FA40D658B6 /* BinaryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99393642C679DE5D54689ACC /* BinaryProtocol.swift */; };
-		1727724488CFAE92DD36A955 /* RouteService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 345D75AE1E53BED5208CBAE9 /* RouteService.swift */; };
-		1C85F58240C0881B9445A8CD /* MultipeerKit in Frameworks */ = {isa = PBXBuildFile; productRef = 3D9E61ED1C19E73A02E421DB /* MultipeerKit */; };
-		1F890ED243702871857F28EF /* RideSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01BA27C4C05DE45A65905B51 /* RideSession.swift */; };
+		17FE60D693D4E2ED351EA9DD /* style.json in Resources */ = {isa = PBXBuildFile; fileRef = 38258CCA53AE03C92039AD28 /* style.json */; };
 		200F35C5C54A81069D3D739C /* WawaObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54535268658418FC49D23321 /* WawaObject.swift */; };
 		203CA094777B3D160314FCD9 /* OSLog+Categories.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7B0F1CF9F6318046FDFEEA1 /* OSLog+Categories.swift */; };
 		211C09C2BEE9398FCB5699CB /* Data+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = C507511C92DBFA30DED82F75 /* Data+Hex.swift */; };
 		2476B42324FEC3B71D3EA59C /* SmartLocationTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2A296D3553C605D00CD69D1 /* SmartLocationTracker.swift */; };
+		266644C15489F4693B8E79BD /* MeshStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 505A4B75932C17D64D79B82B /* MeshStatusView.swift */; };
 		281E44F03EA75739CA276163 /* CompressionUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0D3FD1D4F4194254528EFF8 /* CompressionUtil.swift */; };
 		2B7B28EECF32FBDD8F0F2F26 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACE4FFD968080579087C5B79 /* Constants.swift */; };
-		3252868E4FFD4934433DD840 /* FerrostarCore in Frameworks */ = {isa = PBXBuildFile; productRef = 235014F936DE320F25B474F9 /* FerrostarCore */; };
 		375F7AE3AF24F97755866DDF /* DeliveryStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 46D916DD380528C9EA62DF29 /* DeliveryStatus.swift */; };
-		3E828D4AB0D0E3BAD3F59A1E /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = FDF67BE25D295035DAE49CF7 /* MapLibre */; };
 		492A950C119F19D8F28B0A92 /* BitchatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A034B46138D714B07E25AC7D /* BitchatMessage.swift */; };
 		4A6561B2122485F3F386C679 /* MessageType.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0628C41A187F35B59E78AEC /* MessageType.swift */; };
 		4BC1C99856EACE953528217E /* WawaContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 775C89811DA31175332DFC90 /* WawaContext.swift */; };
-		4E2B00107913AC67552055AD /* FerrostarSwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = D0B5AF207A996720C568F40D /* FerrostarSwiftUI */; };
-		50E5192221B751090B6064A3 /* AppDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 270F65137C74F1DFAD0C7F11 /* AppDatabase.swift */; };
 		5403AE2AC874BC3FF7C08176 /* CompactLocation.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA2098B64528998EBC24280A /* CompactLocation.swift */; };
-		562367276C4A701129F7AA7C /* RouteCorridor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE5374E1929A1B840275D34 /* RouteCorridor.swift */; };
 		5ECEB468B09726378E5D1852 /* MeshBLEService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D18F975984CF636A40785D0B /* MeshBLEService.swift */; };
-		63589BEED5C2062729E58ECE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C25EFF87D4A431582E5CDED7 /* RootView.swift */; };
 		66B6F3AD63560DF8EB32D295 /* FragmentCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9811FF0F9B4C8D7F5C8BEDE /* FragmentCodec.swift */; };
 		6AD95A59B85EB598CF8921C3 /* WawaIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C56F96C7839C41C3B39C482F /* WawaIdentifier.swift */; };
 		6D65D5866AA6F5B454DC04C2 /* JCS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4E7ADAB8C88BE39B175734 /* JCS.swift */; };
-		6F53F0775B0D6E2F3634BC18 /* MultipeerTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C5530500C5173A3B43C6BD7 /* MultipeerTransport.swift */; };
-		70CDC30DDE76B6D9F71BF84F /* CoreBluetoothMock in Frameworks */ = {isa = PBXBuildFile; productRef = FA7543BE7837745531976FF5 /* CoreBluetoothMock */; };
-		714646F45B4EF3A19BAC4512 /* RideEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB9D4093C2CF5F6E53A20B2D /* RideEvent.swift */; };
-		73FA1C180128C910E9062236 /* Automerge in Frameworks */ = {isa = PBXBuildFile; productRef = 70A69BEB10DF5F9BC1A9BE00 /* Automerge */; };
-		74B17CE30038D7022AA5D569 /* MapMatchingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB12D2B9FDA83F7F23D9BE2A /* MapMatchingService.swift */; };
 		7CFAAE7D92035F5FDD52104A /* WawaProof.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C332149494BAE6361A16C23 /* WawaProof.swift */; };
-		80E1D072A4491CF50399C4AC /* Transport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A8AC5FDADE652ABCFF52D08 /* Transport.swift */; };
-		85486BB5CB5DBB0EBC513B10 /* Data+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = C94E838CCB21F159A4FF580C /* Data+Hex.swift */; };
 		89CFFA6EEA10404887490E4D /* WawaDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = C716EF77C923F16F44C2A79E /* WawaDecoder.swift */; };
 		8D407B61A16F96802D15EEB7 /* Data+SHA256.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7ECD0233F3AC54BD1DD60969 /* Data+SHA256.swift */; };
 		8D5B9F8083B5FC37F03C0C43 /* SecureLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00F7EB6126942F516DB422B7 /* SecureLogger.swift */; };
 		8DA2F4CD42892AFCD6BEE88A /* String+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42A42FFBD2F87BA1DBC1ACD2 /* String+Ext.swift */; };
-		8DE1A4E83B5A63217B22770B /* Collection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24FCCAA9FAE0C242B1827E5A /* Collection.swift */; };
-		992A47F66FCC95E0B0980037 /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 36C60EB47AC50A8CC309AD64 /* SwiftProtobuf */; };
-		9D3A23CD693028F174DE9081 /* GroupNavigationCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF663ED59E686419000DBCB5 /* GroupNavigationCoordinator.swift */; };
+		9DE1E3D67D76AF5327824140 /* victoria.pmtiles in Resources */ = {isa = PBXBuildFile; fileRef = 7217ADF537213BE262C4CC77 /* victoria.pmtiles */; };
 		A4C87F3C1B91E851EF222AF8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = DEC2F46D69908E883AA8DC28 /* Assets.xcassets */; };
 		AD82EE756E45E6F4C5B884CD /* WawaValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0E0A242319F16D0F88C8235 /* WawaValue.swift */; };
-		ADCAE1DAF332A2C8FB5D2F02 /* Route.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6193BF8584CE97702C7776BD /* Route.swift */; };
 		B8108FFA4CCA1A08B5CC599A /* WawaEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EACE624DCF027E4C6912FA8 /* WawaEncoder.swift */; };
 		BBEF496B0B5EB80B89543BCA /* MessageDeduplicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2521893DEF13A9B85A9AB0D /* MessageDeduplicator.swift */; };
-		BCA704A4FCC71DDCCBE618C0 /* OfflineTileManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A062A271A1EDC79CF8EA4CB /* OfflineTileManager.swift */; };
-		BCE618F89284BA853F209C40 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E4E44ADF335107AEA4FFFC1 /* Profile.swift */; };
 		BFBE536479773BD3CB30E048 /* PeerID.swift in Sources */ = {isa = PBXBuildFile; fileRef = B216465A6863DB0B0D422A7D /* PeerID.swift */; };
-		C0611AC42124F3E9C8A4DB60 /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = F5F9991EF84E7FCCC59E34FE /* GRDB */; };
-		CFFBA0ABBE66A90352ED42EB /* FerrostarMapLibreUI in Frameworks */ = {isa = PBXBuildFile; productRef = FCAA386BE2D9D114DE6AF299 /* FerrostarMapLibreUI */; };
 		D924F4F9452A6ABDA1CB5FC0 /* FileTransferLimits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BB67499DE2B88A319B849A4 /* FileTransferLimits.swift */; };
 		DB754A133B2116CD6D53D392 /* String+Sanitization.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17814C19A672CD001B12884 /* String+Sanitization.swift */; };
 		ED266938637DA0D62B45A077 /* MediaObject.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FD9C7916A994628D6AF1A55 /* MediaObject.swift */; };
 		EF2117ADAF29A5994F19F85A /* BitchatPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42B484C3155C2140FABFCB07 /* BitchatPacket.swift */; };
-		F2C1763A59EE053B1CC52F34 /* RideMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */; };
 		F98AA27A278BD59E79F769B1 /* MessagePadding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5024207646D420E4115AB14E /* MessagePadding.swift */; };
-		FD015BBB2DC8D86B7037B073 /* Turf in Frameworks */ = {isa = PBXBuildFile; productRef = E07784F613A5604678F93947 /* Turf */; };
+		F9E788DD87AE497593577AEE /* MeshService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 11CC007E68AE7320F38167CC /* MeshService.swift */; };
 		FE2632C79CE6D0C970ADCA97 /* Place.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D8D111A5C229A647C40F43 /* Place.swift */; };
 		FFE76EE246B5FD321A9F24A9 /* LocationPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAFC75A04B75A98C38F18124 /* LocationPayload.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		00F7EB6126942F516DB422B7 /* SecureLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureLogger.swift; sourceTree = "<group>"; };
-		01BA27C4C05DE45A65905B51 /* RideSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideSession.swift; sourceTree = "<group>"; };
-		0E4E44ADF335107AEA4FFFC1 /* Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Profile.swift; sourceTree = "<group>"; };
 		0EACE624DCF027E4C6912FA8 /* WawaEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaEncoder.swift; sourceTree = "<group>"; };
+		11CC007E68AE7320F38167CC /* MeshService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshService.swift; sourceTree = "<group>"; };
 		181131D2327996FED85F5D37 /* WAWARide.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WAWARide.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		24FCCAA9FAE0C242B1827E5A /* Collection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Collection.swift; sourceTree = "<group>"; };
-		270F65137C74F1DFAD0C7F11 /* AppDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDatabase.swift; sourceTree = "<group>"; };
 		2A4E7ADAB8C88BE39B175734 /* JCS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JCS.swift; sourceTree = "<group>"; };
 		2AAF9CD83912158543232B23 /* KeychainManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManagerProtocol.swift; sourceTree = "<group>"; };
-		345D75AE1E53BED5208CBAE9 /* RouteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteService.swift; sourceTree = "<group>"; };
+		38258CCA53AE03C92039AD28 /* style.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = style.json; sourceTree = "<group>"; };
 		3C332149494BAE6361A16C23 /* WawaProof.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaProof.swift; sourceTree = "<group>"; };
 		42A42FFBD2F87BA1DBC1ACD2 /* String+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Ext.swift"; sourceTree = "<group>"; };
 		42B484C3155C2140FABFCB07 /* BitchatPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitchatPacket.swift; sourceTree = "<group>"; };
 		46D916DD380528C9EA62DF29 /* DeliveryStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryStatus.swift; sourceTree = "<group>"; };
-		4A062A271A1EDC79CF8EA4CB /* OfflineTileManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OfflineTileManager.swift; sourceTree = "<group>"; };
 		5024207646D420E4115AB14E /* MessagePadding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagePadding.swift; sourceTree = "<group>"; };
+		505A4B75932C17D64D79B82B /* MeshStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshStatusView.swift; sourceTree = "<group>"; };
 		544A169A8314145C3343D0E3 /* WawaRideApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaRideApp.swift; sourceTree = "<group>"; };
 		54535268658418FC49D23321 /* WawaObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaObject.swift; sourceTree = "<group>"; };
-		5C5530500C5173A3B43C6BD7 /* MultipeerTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultipeerTransport.swift; sourceTree = "<group>"; };
 		5FD9C7916A994628D6AF1A55 /* MediaObject.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaObject.swift; sourceTree = "<group>"; };
-		6193BF8584CE97702C7776BD /* Route.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Route.swift; sourceTree = "<group>"; };
-		6A8AC5FDADE652ABCFF52D08 /* Transport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transport.swift; sourceTree = "<group>"; };
 		6BB67499DE2B88A319B849A4 /* FileTransferLimits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTransferLimits.swift; sourceTree = "<group>"; };
-		6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideMapView.swift; sourceTree = "<group>"; };
+		7217ADF537213BE262C4CC77 /* victoria.pmtiles */ = {isa = PBXFileReference; path = victoria.pmtiles; sourceTree = "<group>"; };
 		775C89811DA31175332DFC90 /* WawaContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaContext.swift; sourceTree = "<group>"; };
 		7809A7C68E1FB41D0A6B6FC8 /* BinaryEncodingUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryEncodingUtils.swift; sourceTree = "<group>"; };
-		7AE5374E1929A1B840275D34 /* RouteCorridor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RouteCorridor.swift; sourceTree = "<group>"; };
 		7ECD0233F3AC54BD1DD60969 /* Data+SHA256.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+SHA256.swift"; sourceTree = "<group>"; };
 		83D8D111A5C229A647C40F43 /* Place.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Place.swift; sourceTree = "<group>"; };
 		8E2F58521FE85F23C65616AB /* MeshConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshConstants.swift; sourceTree = "<group>"; };
@@ -110,61 +80,24 @@
 		A034B46138D714B07E25AC7D /* BitchatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitchatMessage.swift; sourceTree = "<group>"; };
 		A0628C41A187F35B59E78AEC /* MessageType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageType.swift; sourceTree = "<group>"; };
 		A0D3FD1D4F4194254528EFF8 /* CompressionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompressionUtil.swift; sourceTree = "<group>"; };
-		AB12D2B9FDA83F7F23D9BE2A /* MapMatchingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapMatchingService.swift; sourceTree = "<group>"; };
 		ACE4FFD968080579087C5B79 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		B216465A6863DB0B0D422A7D /* PeerID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerID.swift; sourceTree = "<group>"; };
-		BF663ED59E686419000DBCB5 /* GroupNavigationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GroupNavigationCoordinator.swift; sourceTree = "<group>"; };
 		C17814C19A672CD001B12884 /* String+Sanitization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Sanitization.swift"; sourceTree = "<group>"; };
-		C25EFF87D4A431582E5CDED7 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		C2A296D3553C605D00CD69D1 /* SmartLocationTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartLocationTracker.swift; sourceTree = "<group>"; };
 		C507511C92DBFA30DED82F75 /* Data+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Hex.swift"; sourceTree = "<group>"; };
 		C56F96C7839C41C3B39C482F /* WawaIdentifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaIdentifier.swift; sourceTree = "<group>"; };
 		C716EF77C923F16F44C2A79E /* WawaDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaDecoder.swift; sourceTree = "<group>"; };
-		C94E838CCB21F159A4FF580C /* Data+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Hex.swift"; sourceTree = "<group>"; };
 		D0E0A242319F16D0F88C8235 /* WawaValue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WawaValue.swift; sourceTree = "<group>"; };
 		D18F975984CF636A40785D0B /* MeshBLEService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MeshBLEService.swift; sourceTree = "<group>"; };
 		DEC2F46D69908E883AA8DC28 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E2521893DEF13A9B85A9AB0D /* MessageDeduplicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageDeduplicator.swift; sourceTree = "<group>"; };
 		EA2098B64528998EBC24280A /* CompactLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactLocation.swift; sourceTree = "<group>"; };
-		EB9D4093C2CF5F6E53A20B2D /* RideEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideEvent.swift; sourceTree = "<group>"; };
-		F555DC42A7E19B3D106171EC /* RideSyncDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideSyncDocument.swift; sourceTree = "<group>"; };
 		F7B0F1CF9F6318046FDFEEA1 /* OSLog+Categories.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OSLog+Categories.swift"; sourceTree = "<group>"; };
 		F9811FF0F9B4C8D7F5C8BEDE /* FragmentCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FragmentCodec.swift; sourceTree = "<group>"; };
 		FAFC75A04B75A98C38F18124 /* LocationPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationPayload.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
-/* Begin PBXFrameworksBuildPhase section */
-		457F39CA74AA32853D2DCC7A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				3E828D4AB0D0E3BAD3F59A1E /* MapLibre in Frameworks */,
-				3252868E4FFD4934433DD840 /* FerrostarCore in Frameworks */,
-				4E2B00107913AC67552055AD /* FerrostarSwiftUI in Frameworks */,
-				CFFBA0ABBE66A90352ED42EB /* FerrostarMapLibreUI in Frameworks */,
-				1C85F58240C0881B9445A8CD /* MultipeerKit in Frameworks */,
-				C0611AC42124F3E9C8A4DB60 /* GRDB in Frameworks */,
-				73FA1C180128C910E9062236 /* Automerge in Frameworks */,
-				992A47F66FCC95E0B0980037 /* SwiftProtobuf in Frameworks */,
-				FD015BBB2DC8D86B7037B073 /* Turf in Frameworks */,
-				70CDC30DDE76B6D9F71BF84F /* CoreBluetoothMock in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
-
 /* Begin PBXGroup section */
-		0433180EE4EF09AB89902312 /* WawaNavigation */ = {
-			isa = PBXGroup;
-			children = (
-				BF663ED59E686419000DBCB5 /* GroupNavigationCoordinator.swift */,
-				AB12D2B9FDA83F7F23D9BE2A /* MapMatchingService.swift */,
-				345D75AE1E53BED5208CBAE9 /* RouteService.swift */,
-			);
-			name = WawaNavigation;
-			path = Sources/WawaNavigation;
-			sourceTree = "<group>";
-		};
 		22B4F0ABEA05BB8FBEE53161 /* BitLogger */ = {
 			isa = PBXGroup;
 			children = (
@@ -197,12 +130,8 @@
 		4B5F569FE00D84C06122A588 /* Types */ = {
 			isa = PBXGroup;
 			children = (
-				24FCCAA9FAE0C242B1827E5A /* Collection.swift */,
 				5FD9C7916A994628D6AF1A55 /* MediaObject.swift */,
 				83D8D111A5C229A647C40F43 /* Place.swift */,
-				0E4E44ADF335107AEA4FFFC1 /* Profile.swift */,
-				EB9D4093C2CF5F6E53A20B2D /* RideEvent.swift */,
-				6193BF8584CE97702C7776BD /* Route.swift */,
 			);
 			path = Types;
 			sourceTree = "<group>";
@@ -222,9 +151,19 @@
 		620FA447913D6D5D99A6209F /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				11CC007E68AE7320F38167CC /* MeshService.swift */,
 				C2A296D3553C605D00CD69D1 /* SmartLocationTracker.swift */,
 			);
 			path = Services;
+			sourceTree = "<group>";
+		};
+		68E2F6512949F20E25CE7567 /* Tiles */ = {
+			isa = PBXGroup;
+			children = (
+				38258CCA53AE03C92039AD28 /* style.json */,
+				7217ADF537213BE262C4CC77 /* victoria.pmtiles */,
+			);
+			path = Tiles;
 			sourceTree = "<group>";
 		};
 		71B381AC2089F6D486EB351A /* Codec */ = {
@@ -241,11 +180,8 @@
 			isa = PBXGroup;
 			children = (
 				8E2F58521FE85F23C65616AB /* MeshConstants.swift */,
-				6A8AC5FDADE652ABCFF52D08 /* Transport.swift */,
 				2EBCBEA8AC1E134EC9FDB0F8 /* BLE */,
 				EAF4D3F76F98E818D8B14AD5 /* Dedup */,
-				8579EFB1697A5C6ED505F93F /* Extensions */,
-				BEE8CA77DA76D1C621304425 /* Multipeer */,
 				3753D28C69E260DE96D32652 /* Packet */,
 			);
 			name = WawaMesh;
@@ -255,7 +191,7 @@
 		7C12BD8F06B3E5D166CC7FF9 /* Views */ = {
 			isa = PBXGroup;
 			children = (
-				C25EFF87D4A431582E5CDED7 /* RootView.swift */,
+				505A4B75932C17D64D79B82B /* MeshStatusView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -265,11 +201,8 @@
 			children = (
 				ADB71622E852AD434E867D18 /* BitFoundation */,
 				22B4F0ABEA05BB8FBEE53161 /* BitLogger */,
-				C709EC1FD38D8AA1247F4543 /* WawaMap */,
 				7225F19A02B027DA9F2D6D52 /* WawaMesh */,
-				0433180EE4EF09AB89902312 /* WawaNavigation */,
 				D720653D31FCF4F01F2B04FB /* WawaOntology */,
-				87E129A8FD72A614EEA1117D /* WawaPersistence */,
 				A7B9FC95639FB02E03A9DFC2 /* WawaRideApp */,
 				814E4153F9895B2C7D777737 /* Products */,
 			);
@@ -283,30 +216,13 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		8579EFB1697A5C6ED505F93F /* Extensions */ = {
-			isa = PBXGroup;
-			children = (
-				C94E838CCB21F159A4FF580C /* Data+Hex.swift */,
-			);
-			path = Extensions;
-			sourceTree = "<group>";
-		};
-		87E129A8FD72A614EEA1117D /* WawaPersistence */ = {
-			isa = PBXGroup;
-			children = (
-				270F65137C74F1DFAD0C7F11 /* AppDatabase.swift */,
-				F555DC42A7E19B3D106171EC /* RideSyncDocument.swift */,
-			);
-			name = WawaPersistence;
-			path = Sources/WawaPersistence;
-			sourceTree = "<group>";
-		};
 		9F14087AA1375B43486CC905 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
 				DEC2F46D69908E883AA8DC28 /* Assets.xcassets */,
 				8F83F2DE765904DAA79FB888 /* Info.plist */,
 				9999870E3266E9010D1B4BF9 /* WawaRide.entitlements */,
+				68E2F6512949F20E25CE7567 /* Tiles */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -317,7 +233,6 @@
 				544A169A8314145C3343D0E3 /* WawaRideApp.swift */,
 				9F14087AA1375B43486CC905 /* Resources */,
 				620FA447913D6D5D99A6209F /* Services */,
-				E01A32ED3B1A8BA8553BB4DD /* ViewModels */,
 				7C12BD8F06B3E5D166CC7FF9 /* Views */,
 			);
 			name = WawaRideApp;
@@ -347,25 +262,6 @@
 			path = Sources/BitFoundation;
 			sourceTree = "<group>";
 		};
-		BEE8CA77DA76D1C621304425 /* Multipeer */ = {
-			isa = PBXGroup;
-			children = (
-				5C5530500C5173A3B43C6BD7 /* MultipeerTransport.swift */,
-			);
-			path = Multipeer;
-			sourceTree = "<group>";
-		};
-		C709EC1FD38D8AA1247F4543 /* WawaMap */ = {
-			isa = PBXGroup;
-			children = (
-				4A062A271A1EDC79CF8EA4CB /* OfflineTileManager.swift */,
-				6DD5ECA28CA743D1B2F5768A /* RideMapView.swift */,
-				7AE5374E1929A1B840275D34 /* RouteCorridor.swift */,
-			);
-			name = WawaMap;
-			path = Sources/WawaMap;
-			sourceTree = "<group>";
-		};
 		D720653D31FCF4F01F2B04FB /* WawaOntology */ = {
 			isa = PBXGroup;
 			children = (
@@ -375,14 +271,6 @@
 			);
 			name = WawaOntology;
 			path = Sources/WawaOntology;
-			sourceTree = "<group>";
-		};
-		E01A32ED3B1A8BA8553BB4DD /* ViewModels */ = {
-			isa = PBXGroup;
-			children = (
-				01BA27C4C05DE45A65905B51 /* RideSession.swift */,
-			);
-			path = ViewModels;
 			sourceTree = "<group>";
 		};
 		EAF4D3F76F98E818D8B14AD5 /* Dedup */ = {
@@ -402,7 +290,6 @@
 			buildPhases = (
 				92F95C37D42D65B4498BD475 /* Sources */,
 				2FD31904384BE1580AE33966 /* Resources */,
-				457F39CA74AA32853D2DCC7A /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -410,16 +297,6 @@
 			);
 			name = WAWARide;
 			packageProductDependencies = (
-				FDF67BE25D295035DAE49CF7 /* MapLibre */,
-				235014F936DE320F25B474F9 /* FerrostarCore */,
-				D0B5AF207A996720C568F40D /* FerrostarSwiftUI */,
-				FCAA386BE2D9D114DE6AF299 /* FerrostarMapLibreUI */,
-				3D9E61ED1C19E73A02E421DB /* MultipeerKit */,
-				F5F9991EF84E7FCCC59E34FE /* GRDB */,
-				70A69BEB10DF5F9BC1A9BE00 /* Automerge */,
-				36C60EB47AC50A8CC309AD64 /* SwiftProtobuf */,
-				E07784F613A5604678F93947 /* Turf */,
-				FA7543BE7837745531976FF5 /* CoreBluetoothMock */,
 			);
 			productName = WAWARide;
 			productReference = 181131D2327996FED85F5D37 /* WAWARide.app */;
@@ -449,16 +326,6 @@
 			);
 			mainGroup = 7E06ACC5AD3D475900C5C221;
 			minimizedProjectReferenceProxies = 1;
-			packageReferences = (
-				44EE1B252655B852AAC43C72 /* XCRemoteSwiftPackageReference "automerge-swift" */,
-				5018FCFDCA6A11D94D9A2EDD /* XCRemoteSwiftPackageReference "IOS-CoreBluetooth-Mock" */,
-				15F85727DD11BC7EC9BA0258 /* XCRemoteSwiftPackageReference "ferrostar" */,
-				3A87D5897349E39C01A73BED /* XCRemoteSwiftPackageReference "GRDB.swift" */,
-				ADBCBD73428079344193673A /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
-				EB548BEAB24EFB5A8FA2756E /* XCRemoteSwiftPackageReference "MultipeerKit" */,
-				74C021B33F072014A5F6DC1F /* XCRemoteSwiftPackageReference "swift-protobuf" */,
-				C791656807DB3EDEBF853791 /* XCRemoteSwiftPackageReference "turf-swift" */,
-			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 814E4153F9895B2C7D777737 /* Products */;
 			projectDirPath = "";
@@ -475,6 +342,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A4C87F3C1B91E851EF222AF8 /* Assets.xcassets in Resources */,
+				17FE60D693D4E2ED351EA9DD /* style.json in Resources */,
+				9DE1E3D67D76AF5327824140 /* victoria.pmtiles in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -485,51 +354,36 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				50E5192221B751090B6064A3 /* AppDatabase.swift in Sources */,
 				10155B88312BA3ADCB24407D /* BinaryEncodingUtils.swift in Sources */,
 				13A60254A609C3FA40D658B6 /* BinaryProtocol.swift in Sources */,
 				492A950C119F19D8F28B0A92 /* BitchatMessage.swift in Sources */,
 				EF2117ADAF29A5994F19F85A /* BitchatPacket.swift in Sources */,
-				8DE1A4E83B5A63217B22770B /* Collection.swift in Sources */,
 				5403AE2AC874BC3FF7C08176 /* CompactLocation.swift in Sources */,
 				281E44F03EA75739CA276163 /* CompressionUtil.swift in Sources */,
 				2B7B28EECF32FBDD8F0F2F26 /* Constants.swift in Sources */,
 				211C09C2BEE9398FCB5699CB /* Data+Hex.swift in Sources */,
-				85486BB5CB5DBB0EBC513B10 /* Data+Hex.swift in Sources */,
 				8D407B61A16F96802D15EEB7 /* Data+SHA256.swift in Sources */,
 				375F7AE3AF24F97755866DDF /* DeliveryStatus.swift in Sources */,
 				D924F4F9452A6ABDA1CB5FC0 /* FileTransferLimits.swift in Sources */,
 				66B6F3AD63560DF8EB32D295 /* FragmentCodec.swift in Sources */,
-				9D3A23CD693028F174DE9081 /* GroupNavigationCoordinator.swift in Sources */,
 				6D65D5866AA6F5B454DC04C2 /* JCS.swift in Sources */,
 				133053F485D5DEFAA122727D /* KeychainManagerProtocol.swift in Sources */,
 				FFE76EE246B5FD321A9F24A9 /* LocationPayload.swift in Sources */,
-				74B17CE30038D7022AA5D569 /* MapMatchingService.swift in Sources */,
 				ED266938637DA0D62B45A077 /* MediaObject.swift in Sources */,
 				5ECEB468B09726378E5D1852 /* MeshBLEService.swift in Sources */,
 				07EB5E971A71AA87E9007682 /* MeshConstants.swift in Sources */,
+				F9E788DD87AE497593577AEE /* MeshService.swift in Sources */,
+				266644C15489F4693B8E79BD /* MeshStatusView.swift in Sources */,
 				BBEF496B0B5EB80B89543BCA /* MessageDeduplicator.swift in Sources */,
 				F98AA27A278BD59E79F769B1 /* MessagePadding.swift in Sources */,
 				4A6561B2122485F3F386C679 /* MessageType.swift in Sources */,
-				6F53F0775B0D6E2F3634BC18 /* MultipeerTransport.swift in Sources */,
 				203CA094777B3D160314FCD9 /* OSLog+Categories.swift in Sources */,
-				BCA704A4FCC71DDCCBE618C0 /* OfflineTileManager.swift in Sources */,
 				BFBE536479773BD3CB30E048 /* PeerID.swift in Sources */,
 				FE2632C79CE6D0C970ADCA97 /* Place.swift in Sources */,
-				BCE618F89284BA853F209C40 /* Profile.swift in Sources */,
-				714646F45B4EF3A19BAC4512 /* RideEvent.swift in Sources */,
-				F2C1763A59EE053B1CC52F34 /* RideMapView.swift in Sources */,
-				1F890ED243702871857F28EF /* RideSession.swift in Sources */,
-				12BAF445382655054ED72236 /* RideSyncDocument.swift in Sources */,
-				63589BEED5C2062729E58ECE /* RootView.swift in Sources */,
-				ADCAE1DAF332A2C8FB5D2F02 /* Route.swift in Sources */,
-				562367276C4A701129F7AA7C /* RouteCorridor.swift in Sources */,
-				1727724488CFAE92DD36A955 /* RouteService.swift in Sources */,
 				8D5B9F8083B5FC37F03C0C43 /* SecureLogger.swift in Sources */,
 				2476B42324FEC3B71D3EA59C /* SmartLocationTracker.swift in Sources */,
 				8DA2F4CD42892AFCD6BEE88A /* String+Ext.swift in Sources */,
 				DB754A133B2116CD6D53D392 /* String+Sanitization.swift in Sources */,
-				80E1D072A4491CF50399C4AC /* Transport.swift in Sources */,
 				4BC1C99856EACE953528217E /* WawaContext.swift in Sources */,
 				89CFFA6EEA10404887490E4D /* WawaDecoder.swift in Sources */,
 				B8108FFA4CCA1A08B5CC599A /* WawaEncoder.swift in Sources */,
@@ -608,7 +462,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = Sources/WawaRideApp/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -672,7 +525,6 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				INFOPLIST_FILE = Sources/WawaRideApp/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -727,126 +579,6 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
-
-/* Begin XCRemoteSwiftPackageReference section */
-		15F85727DD11BC7EC9BA0258 /* XCRemoteSwiftPackageReference "ferrostar" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/stadiamaps/ferrostar";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.51.0;
-			};
-		};
-		3A87D5897349E39C01A73BED /* XCRemoteSwiftPackageReference "GRDB.swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/groue/GRDB.swift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 7.11.0;
-			};
-		};
-		44EE1B252655B852AAC43C72 /* XCRemoteSwiftPackageReference "automerge-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/automerge/automerge-swift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.5.0;
-			};
-		};
-		5018FCFDCA6A11D94D9A2EDD /* XCRemoteSwiftPackageReference "IOS-CoreBluetooth-Mock" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.17.0;
-			};
-		};
-		74C021B33F072014A5F6DC1F /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/apple/swift-protobuf";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 1.28.0;
-			};
-		};
-		ADBCBD73428079344193673A /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/maplibre/maplibre-gl-native-distribution";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 6.27.0;
-			};
-		};
-		C791656807DB3EDEBF853791 /* XCRemoteSwiftPackageReference "turf-swift" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/mapbox/turf-swift";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 4.0.0;
-			};
-		};
-		EB548BEAB24EFB5A8FA2756E /* XCRemoteSwiftPackageReference "MultipeerKit" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/insidegui/MultipeerKit";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.4.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		235014F936DE320F25B474F9 /* FerrostarCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 15F85727DD11BC7EC9BA0258 /* XCRemoteSwiftPackageReference "ferrostar" */;
-			productName = FerrostarCore;
-		};
-		36C60EB47AC50A8CC309AD64 /* SwiftProtobuf */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 74C021B33F072014A5F6DC1F /* XCRemoteSwiftPackageReference "swift-protobuf" */;
-			productName = SwiftProtobuf;
-		};
-		3D9E61ED1C19E73A02E421DB /* MultipeerKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = EB548BEAB24EFB5A8FA2756E /* XCRemoteSwiftPackageReference "MultipeerKit" */;
-			productName = MultipeerKit;
-		};
-		70A69BEB10DF5F9BC1A9BE00 /* Automerge */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 44EE1B252655B852AAC43C72 /* XCRemoteSwiftPackageReference "automerge-swift" */;
-			productName = Automerge;
-		};
-		D0B5AF207A996720C568F40D /* FerrostarSwiftUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 15F85727DD11BC7EC9BA0258 /* XCRemoteSwiftPackageReference "ferrostar" */;
-			productName = FerrostarSwiftUI;
-		};
-		E07784F613A5604678F93947 /* Turf */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = C791656807DB3EDEBF853791 /* XCRemoteSwiftPackageReference "turf-swift" */;
-			productName = Turf;
-		};
-		F5F9991EF84E7FCCC59E34FE /* GRDB */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 3A87D5897349E39C01A73BED /* XCRemoteSwiftPackageReference "GRDB.swift" */;
-			productName = GRDB;
-		};
-		FA7543BE7837745531976FF5 /* CoreBluetoothMock */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 5018FCFDCA6A11D94D9A2EDD /* XCRemoteSwiftPackageReference "IOS-CoreBluetooth-Mock" */;
-			productName = CoreBluetoothMock;
-		};
-		FCAA386BE2D9D114DE6AF299 /* FerrostarMapLibreUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 15F85727DD11BC7EC9BA0258 /* XCRemoteSwiftPackageReference "ferrostar" */;
-			productName = FerrostarMapLibreUI;
-		};
-		FDF67BE25D295035DAE49CF7 /* MapLibre */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = ADBCBD73428079344193673A /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
-			productName = MapLibre;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FFEC093283D6ACD0772DEB17 /* Project object */;
 }

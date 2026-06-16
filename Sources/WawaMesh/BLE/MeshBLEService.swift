@@ -1,6 +1,17 @@
 import Foundation
-import CoreBluetoothMock
-import BitFoundation
+@preconcurrency import CoreBluetooth
+// CoreBluetoothMock → real CoreBluetooth aliases (must be public for delegate conformance)
+public typealias CBMCentralManager = CBCentralManager
+public typealias CBMCentralManagerDelegate = CBCentralManagerDelegate
+public typealias CBMPeripheralManager = CBPeripheralManager
+public typealias CBMPeripheralManagerDelegate = CBPeripheralManagerDelegate
+public typealias CBMPeripheralDelegate = CBPeripheralDelegate
+public typealias CBMCentral = CBCentral
+public typealias CBMPeripheral = CBPeripheral
+public typealias CBMService = CBService
+public typealias CBMCharacteristic = CBCharacteristic
+public typealias CBMATTRequest = CBATTRequest
+// import BitFoundation — flat target: types compiled in same module
 import os.log
 
 /// Dual-role BLE mesh service (Central + Peripheral simultaneously).
@@ -59,7 +70,7 @@ public final class MeshBLEService: NSObject, ObservableObject, @unchecked Sendab
     public override init() {
         super.init()
         centralManager = CBMCentralManager(delegate: self, queue: nil, options: [
-            CBMCentralManagerOptionRestoreIdentifierKey: "com.wawaride.central"
+            CBCentralManagerOptionRestoreIdentifierKey: "com.wawaride.central"
         ])
         peripheralManager = CBMPeripheralManager(delegate: self, queue: nil)
     }
@@ -67,7 +78,7 @@ public final class MeshBLEService: NSObject, ObservableObject, @unchecked Sendab
     public func start() {
         if centralManager.state == .poweredOn {
             centralManager.scanForPeripherals(withServices: [serviceUUID], options: [
-                CBMCentralManagerScanOptionAllowDuplicatesKey: false
+                CBCentralManagerScanOptionAllowDuplicatesKey: false
             ])
         }
     }
@@ -162,7 +173,7 @@ extension MeshBLEService: CBMCentralManagerDelegate {
     }
 
     public func centralManager(_ central: CBMCentralManager, willRestoreState dict: [String: Any]) {
-        if let peripherals = dict[CBMCentralManagerRestoredStatePeripheralsKey] as? [CBMPeripheral] {
+        if let peripherals = dict[CBCentralManagerRestoredStatePeripheralsKey] as? [CBMPeripheral] {
             for peripheral in peripherals {
                 connectedPeripherals[peripheral.identifier] = peripheral
                 peripheral.delegate = self
@@ -223,8 +234,8 @@ extension MeshBLEService: CBMPeripheralManagerDelegate {
         txCharacteristic = ch
         peripheralManager.add(svc)
         peripheralManager.startAdvertising([
-            CBMAdvertisementDataServiceUUIDsKey: [serviceUUID],
-            CBMAdvertisementDataLocalNameKey: "WawaRide"
+            CBAdvertisementDataServiceUUIDsKey: [serviceUUID],
+            CBAdvertisementDataLocalNameKey: "WawaRide"
         ])
     }
 

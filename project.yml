@@ -4,64 +4,38 @@ options:
   deploymentTarget:
     iOS: "16.0"
   xcodeVersion: "26.0"
-  generateEmptyDirectories: true
 
 settings:
   base:
     SWIFT_VERSION: "6.0"
     TARGETED_DEVICE_FAMILY: "1"
-    INFOPLIST_FILE: Sources/WawaRideApp/Resources/Info.plist
 
-packages:
-  MapLibre:
-    url: https://github.com/maplibre/maplibre-gl-native-distribution
-    from: "6.27.0"
-  Ferrostar:
-    url: https://github.com/stadiamaps/ferrostar
-    from: "0.51.0"
-  MultipeerKit:
-    url: https://github.com/insidegui/MultipeerKit
-    from: "0.4.0"
-  GRDB:
-    url: https://github.com/groue/GRDB.swift
-    from: "7.11.0"
-  Automerge:
-    url: https://github.com/automerge/automerge-swift
-    from: "0.5.0"
-  SwiftProtobuf:
-    url: https://github.com/apple/swift-protobuf
-    from: "1.28.0"
-  Turf:
-    url: https://github.com/mapbox/turf-swift
-    from: "4.0.0"
-  CoreBluetoothMock:
-    url: https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock
-    from: "0.17.0"
+packages: {}
 
 targets:
   WAWARide:
     type: application
     platform: iOS
     sources:
-      - path: Sources/WawaRideApp
-        type: group
       - path: Sources/BitLogger
-        type: group
       - path: Sources/BitFoundation
-        type: group
       - path: Sources/WawaOntology
-        type: group
+        excludes:
+          - "Types/RideEvent.swift"
+          - "Types/Profile.swift"
+          - "Types/Route.swift"
+          - "Types/Collection.swift"
       - path: Sources/WawaMesh
-        type: group
-      - path: Sources/WawaMap
-        type: group
-      - path: Sources/WawaNavigation
-        type: group
-      - path: Sources/WawaPersistence
-        type: group
+        excludes:
+          - "Multipeer/MultipeerTransport.swift"
+          - "Transport.swift"
+      - path: Sources/WawaRideApp
+        excludes:
+          - "ViewModels/RideSession.swift"
+          - "Views/RootView.swift"
     resources:
       - path: Sources/WawaRideApp/Resources/Assets.xcassets
-        type: group
+      - path: Sources/WawaRideApp/Resources/Tiles
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.wawaride.app
@@ -69,23 +43,4 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Sources/WawaRideApp/Resources/WawaRide.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 955573A4YH
-    dependencies:
-      - package: MapLibre
-      - package: Ferrostar
-        product: FerrostarCore
-      - package: Ferrostar
-        product: FerrostarSwiftUI
-      - package: Ferrostar
-        product: FerrostarMapLibreUI
-      - package: MultipeerKit
-        product: MultipeerKit
-      - package: GRDB
-        product: GRDB
-      - package: Automerge
-        product: Automerge
-      - package: SwiftProtobuf
-        product: SwiftProtobuf
-      - package: Turf
-        product: Turf
-      - package: CoreBluetoothMock
-        product: CoreBluetoothMock
+    dependencies: []

@@ -93,4 +93,36 @@ extension WawaObject {
 
     /// Additional types default to empty.
     public static var additionalTypes: [String] { [] }
+
+    /// Decode unknown keys into wawaExtensions.
+    /// Phase A: returns empty dict. WawaDecoder handles full extraction.
+    static func decodeWawaExtensions(from decoder: Decoder) throws -> [String: WawaValue] {
+        return [:]
+    }
+
+    /// Encode wawaExtensions as top-level keys using DynamicCodingKey.
+    static func encodeWawaExtensions(_ extensions: [String: WawaValue], to encoder: Encoder) throws {
+        guard !extensions.isEmpty else { return }
+        var container = encoder.container(keyedBy: DynamicCodingKey.self)
+        for (key, value) in extensions {
+            guard let codingKey = DynamicCodingKey(stringValue: key) else { continue }
+            try container.encode(value, forKey: codingKey)
+        }
+    }
+}
+
+/// A coding key that accepts any string value.
+struct DynamicCodingKey: CodingKey {
+    var stringValue: String
+    var intValue: Int?
+
+    init?(stringValue: String) {
+        self.stringValue = stringValue
+        self.intValue = nil
+    }
+
+    init?(intValue: Int) {
+        self.stringValue = String(intValue)
+        self.intValue = intValue
+    }
 }
