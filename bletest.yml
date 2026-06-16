@@ -1,0 +1,25 @@
+name: WawaBLETest
+options:
+  bundleIdPrefix: com.wawaride
+  deploymentTarget:
+    iOS: "16.0"
+  xcodeVersion: "26.0"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
+
+targets:
+  WawaBLETest:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources/WawaBLETest
+        type: group
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wawaride.bletest
+        INFOPLIST_FILE: Sources/WawaBLETest/Info.plist
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: 955573A4YH
