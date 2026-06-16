@@ -66,7 +66,27 @@ final class MeshService: NSObject, ObservableObject, @unchecked Sendable {
         else { for chunk in FragmentCodec.fragment(encoded, maxSize: 469) { sendToAll(chunk) } }
     }
 
-    private func sendToAll(_ data: Data, excluding: UUID? = nil) {
+    func sendPacket(type: UInt8, payload: Data) {
+        let packet = BitchatPacket(
+            type: type,
+            senderID: localPeerID,
+            recipientID: nil,
+            timestamp: UInt64(Date().timeIntervalSince1970 * 1000),
+            payload: payload,
+            signature: nil,
+            ttl: 5
+        )
+        guard let encoded = packet.toBinaryData() else { return }
+        if encoded.count <= 469 {
+            sendToAll(encoded)
+        } else {
+            for chunk in FragmentCodec.fragment(encoded, maxSize: 469) {
+                sendToAll(chunk)
+            }
+        }
+    }
+
+    func sendToAll(_ data: Data, excluding: UUID? = nil) {
         for (id, p) in connectedPeripherals where id != excluding {
             if let svc = p.services?.first(where: { $0.uuid == serviceUUID }),
                let ch = svc.characteristics?.first(where: { $0.uuid == charUUID }) {

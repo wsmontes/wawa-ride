@@ -1,0 +1,111 @@
+<h2>PIN Pairing Flow — WawaRide</h2>
+<p class="subtitle">Líder cria passeio, gera PIN, espera riders conectarem via BLE mesh</p>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">Tela 1: Criar Passeio</div>
+    <div class="mockup-body" style="padding:20px;background:#1a1a2e;color:#fff;min-height:400px">
+      <div style="text-align:center;padding:10px 0">
+        <span style="font-size:18px;font-weight:bold">🏍️ Wawa Ride</span>
+      </div>
+      <div style="margin:30px 0;text-align:center">
+        <input class="mock-input" value="Sunday Ride" style="width:80%;text-align:center;font-size:16px">
+      </div>
+      <div style="margin:20px 0;text-align:center">
+        <div class="placeholder" style="height:40px;display:flex;align-items:center;justify-content:center">
+          📍 Victoria, BC
+        </div>
+      </div>
+      <div style="margin-top:40px;text-align:center">
+        <button class="mock-button" style="width:80%;height:56px;font-size:18px;background:#e94560">
+          Criar Passeio
+        </button>
+      </div>
+      <div style="margin-top:30px;text-align:center;color:#aaa;font-size:13px">
+        BLE mesh será ativado automaticamente
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">Tela 2: Aguardando Riders</div>
+    <div class="mockup-body" style="padding:20px;background:#1a1a2e;color:#fff;min-height:400px">
+      <div style="text-align:center;padding:10px 0">
+        <span style="font-size:14px;color:#aaa">Sunday Ride</span>
+      </div>
+      <div style="margin:40px 0;text-align:center">
+        <div style="font-size:60px;font-weight:bold;letter-spacing:12px;color:#e94560">4821</div>
+        <div style="font-size:12px;color:#aaa;margin-top:10px">PIN do passeio</div>
+      </div>
+      <div style="margin:20px 0;text-align:center">
+        <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+          <div style="width:8px;height:8px;background:#e94560;border-radius:50%;animation:pulse"></div>
+          <span style="color:#e94560;font-size:14px">Aguardando riders...</span>
+        </div>
+      </div>
+      <div style="margin-top:30px;text-align:center;color:#555;font-size:14px">
+        <div style="margin:8px 0">👤 Nenhum rider conectado</div>
+        <div style="margin:8px 0">📡 BLE advertising ativo</div>
+        <div style="margin:8px 0">🔒 PIN trocado via BLE</div>
+      </div>
+      <div style="margin-top:20px;text-align:center">
+        <button class="mock-button" style="width:60%;background:#333;color:#888">Partiu! (0 riders)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Data Model (WawaOntology)</h3>
+  <div class="cards">
+    <div class="card" style="padding:16px">
+      <div style="font-family:monospace;font-size:12px;color:#e94560">RideEvent</div>
+      <div style="font-family:monospace;font-size:12px;margin-top:8px">
+        id: "urn:wawa:ride:01HX..."<br>
+        name: "Sunday Ride"<br>
+        startDate: (agora)<br>
+        location: Victoria, BC<br>
+        rideType: groupRide<br>
+        visibility: groupOnly<br>
+        meshGroupId: (UUID)<br>
+        status: <strong>proposed</strong>
+      </div>
+    </div>
+    <div class="card" style="padding:16px">
+      <div style="font-family:monospace;font-size:12px;color:#4ecdc4">Profile</div>
+      <div style="font-family:monospace;font-size:12px;margin-top:8px">
+        id: "urn:wawa:peer:a1b2c3..."<br>
+        name: "Wagner"<br>
+        peerID: "a1b2c3d4e5f6g7h8"<br>
+        clubs: []
+      </div>
+    </div>
+    <div class="card" style="padding:16px">
+      <div style="font-family:monospace;font-size:12px;color:#ffd93d">BitchatPacket</div>
+      <div style="font-family:monospace;font-size:12px;margin-top:8px">
+        type: 0x01 (announce)<br>
+        ttl: 5<br>
+        senderID: 8 bytes<br>
+        payload: PIN + groupID JSON
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Fluxo de Dados</h3>
+  <div style="background:#1a1a2e;padding:20px;border-radius:8px;font-family:monospace;font-size:13px;color:#ccc">
+    App (líder)<br>
+    &nbsp;&nbsp;│<br>
+    &nbsp;&nbsp;├─ RideEvent(status: .proposed)<br>
+    &nbsp;&nbsp;├─ mesh.start() — BLE advertising<br>
+    &nbsp;&nbsp;├─ Broadcast: AnnouncePayload(groupID, PIN)<br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;(a cada ~4s via BitChat BinaryProtocol v2)<br>
+    &nbsp;&nbsp;│<br>
+    &nbsp;&nbsp;├─ (futuro: follower receives PIN, validates)<br>
+    &nbsp;&nbsp;├─ (futuro: leader adds follower to participants)<br>
+    &nbsp;&nbsp;│<br>
+    &nbsp;&nbsp;└─ Quando todos conectam: RideEvent.status = .active<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GPS começa, mapa mostra riders
+  </div>
+</div>
