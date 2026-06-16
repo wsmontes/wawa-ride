@@ -651,3 +651,16 @@ Qualquer receptor verifica ambos localmente. Um membro comum pode criar passeios
 
 ### Isso é a mesma coisa que DTN (Delay-Tolerant Network)?
 Sim — é exatamente o padrão de redes tolerantes a atraso. Cada rider é um "nó móvel" que carrega dados e entrega oportunisticamente. A mesh é a estrada; os riders são os carteiros.
+
+### O pacote carregado revela quem sou, onde estava e quando?
+**Sim, carrega:** meu PeerID (quem), posição (onde), timestamp (quando), e recipientGroupID (para quem entregar). Entrega a qualquer device com o mesmo groupID.
+
+**Preocupação de privacidade:**
+| Dado | MVP (cleartext) | Fase 5 (encrypted) |
+|------|-----------------|---------------------|
+| Meu PeerID | Visível (8 bytes, sem contexto) | **Encriptado** |
+| Minha posição | Visível | **Encriptado** |
+| Timestamp | Visível | Visível (necessário para expirar pacotes velhos) |
+| GroupID destino | Visível | Visível como hash (não o secret) |
+
+Na fase 5, o payload inteiro (senderID + lat/lon + heading + speed) é encriptado com o rideSecret. O carteiro só vê: "blob para grupo hash(X), criado há Y minutos". Entrega cego.
