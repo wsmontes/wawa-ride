@@ -12,6 +12,9 @@ final class MeshService: NSObject, ObservableObject, @unchecked Sendable {
     @Published var isRunning = false
     @Published var lastMessage: String = "—"
 
+    /// Called when a text message is received: (senderPeerID, text)
+    var onMessageReceived: ((String, String) -> Void)?
+
     private let serviceUUID = CBUUID(string: "A1B2C3D4-5E6F-7A8B-9C0D-E1F2A3B4C5D6")
     private let charUUID    = CBUUID(string: "B2C3D4E5-6F7A-8B9C-0D1E-F2A3B4C5D6E7")
 
@@ -84,7 +87,9 @@ final class MeshService: NSObject, ObservableObject, @unchecked Sendable {
         let key = "\(packet.senderID.hex)-\(packet.timestamp)-\(packet.type)"
         guard deduplicator.isNew(key) else { return }
         let text = String(data: packet.payload, encoding: .utf8) ?? "\(packet.payload.count)B"
-        lastMessage = "[\(packet.senderID.hex.prefix(6))] \(text)"
+        let peerId = packet.senderID.hex
+        lastMessage = "[\(peerId.prefix(6))] \(text)"
+        onMessageReceived?(peerId, text)
         if packet.ttl > 1 {
             var r = packet; r.ttl -= 1
             if let e = r.toBinaryData() { sendToAll(e, excluding: peerUUID) }

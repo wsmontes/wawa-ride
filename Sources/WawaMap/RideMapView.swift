@@ -1,37 +1,14 @@
 import SwiftUI
 import CoreLocation
-import MapLibreSwiftUI
 import MapLibre
 
-/// Ride map using MapLibre SwiftUI-DSL (official wrapper).
-/// Supports PMTiles via local file:// style URL.
+/// Ride map using MapLibre Native directly (no SwiftUI DSL — avoids macro issues).
 ///
-/// MapLibre SwiftUI-DSL: https://github.com/maplibre/swiftui-dsl (BSD-3, 105 stars)
-/// Provides declarative MapView, camera bindings, layer DSL, and CarPlay support.
-///
-/// PMTiles integration (confirmed working MapLibre iOS v6.10+):
-/// - Style JSON references local file: `"url": "pmtiles://basemap.pmtiles"`
-/// - File must be in app bundle or Documents directory
-/// - MapLibre reads tiles directly from the flat binary (no server needed)
-/// - Reference: https://docs.protomaps.com/pmtiles/maplibre
-///
-/// Rider annotations use data-driven styling:
-/// - Active riders: orange circles (full opacity)
-/// - Stale riders (>15s no update): gray circles at 50% opacity
-/// - Leader: blue circle with star icon
-/// Pattern inspired by Meshtastic Apple (GPL — UX only, no code copied):
-/// - Direct vs multi-hop node distinction on map
-/// - Connection quality indicators
-/// Reference: https://github.com/meshtastic/Meshtastic-Apple
-///
-/// OSM Attribution (ODbL legal requirement):
-/// Must display "© OpenStreetMap contributors" when using OSM-derived tiles.
-/// Reference: https://www.openstreetmap.org/copyright
-public struct RideMapView: View {
+/// Uses UIViewRepresentable to wrap MLNMapView. Supports PMTiles via local
+/// style URL for fully offline maps. Rider annotations update reactively.
+public struct RideMapView: UIViewRepresentable {
     @Binding var riders: [RiderAnnotation]
     @Binding var routeCoords: [CLLocationCoordinate2D]
-    @State private var camera: MapViewCamera = .trackUserLocation(zoom: 14, pitch: .free)
-
     let styleURL: URL
 
     public init(riders: Binding<[RiderAnnotation]>,
@@ -42,107 +19,109 @@ public struct RideMapView: View {
         self.styleURL = styleURL
     }
 
-    public var body: some View {
-        MapView(styleURL: styleURL, camera: $camera) {
-            // Route polyline
-            if !routeCoords.isEmpty {
-                MapPolyline(coordinates: routeCoords)
-                    .stroke(.blue, lineWidth: 4)
+    public func makeUIView(context: Context) -> MLNMapView {
+        let map = MLNMapView(frame: .zero, styleURL: styleURL)
+        map.delegate = context.coordinator
+        map.setCenter(CLLocationCoordinate2D(latitude: 48.4284, longitude: -123.3656), zoomLevel: 13, animated: false)
+        map.showsUserLocation = true
+        map.userTrackingMode = .follow
+        map.logoView.isHidden = true
+        // OSM attribution required by ODbL
+        map.attributionButton.isHidden = false
+        return map
+    }
+
+    public func updateUIView(_ map: MLNMapView, context: Context) {
+        context.coordinator.updateAnnotations(map: map, riders: riders)
+        context.coordinator.updateRoute(map: map, coords: routeCoords)
+    }
+
+    public func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    public class Coordinator: NSObject, MLNMapViewDelegate {
+        private var riderSources: [String: MLNShapeSource] = [:]
+        private var routeSource: MLNShapeSource?
+
+        // MARK: - MLNMapViewDelegate
+
+        public func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
+            // We'll add sources and connect layers when data arrives
+        }
+
+        func updateAnnotations(map: MLNMapView, riders: [RiderAnnotation]) {
+            guard let style = map.style else { return }
+
+            // Build GeoJSON feature collection for riders
+            var features: [MLNPointFeature] = []
+            for rider in riders {
+                let feature = MLNPointFeature()
+                feature.coordinate = rider.coordinate
+                feature.title = rider.displayName
+                feature.attributes = [
+                    "isLeader": rider.isLeader,
+                    "id": rider.id
+                ]
+                features.append(feature)
             }
-            // Rider markers
-            ForEvery(riders) { rider in
-                MapMarker(coordinate: rider.coordinate) {
-                    RiderBadge(name: rider.displayName, isStale: rider.isStale, isLeader: rider.isLeader)
-                }
+
+            let sourceID = "riders-source"
+            if style.source(withIdentifier: sourceID) == nil {
+                let source = MLNShapeSource(identifier: sourceID, features: features)
+                style.addSource(source)
+
+                // Self: blue dot
+                let selfLayer = MLNCircleStyleLayer(identifier: "riders-self", source: source)
+                selfLayer.circleRadius = NSExpression(forConstantValue: 12)
+                selfLayer.circleColor = NSExpression(forConstantValue: UIColor.systemBlue)
+                selfLayer.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
+                selfLayer.circleStrokeWidth = NSExpression(forConstantValue: 3)
+                selfLayer.predicate = NSPredicate(format: "isLeader == YES")
+                style.addLayer(selfLayer)
+
+                // Others: orange dot
+                let otherLayer = MLNCircleStyleLayer(identifier: "riders-other", source: source)
+                otherLayer.circleRadius = NSExpression(forConstantValue: 12)
+                otherLayer.circleColor = NSExpression(forConstantValue: UIColor.systemOrange)
+                otherLayer.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
+                otherLayer.circleStrokeWidth = NSExpression(forConstantValue: 2)
+                otherLayer.predicate = NSPredicate(format: "isLeader == NO")
+                style.addLayer(otherLayer)
+            } else if let source = style.source(withIdentifier: sourceID) as? MLNShapeSource {
+                source.shape = MLNShapeCollectionFeature(shapes: features)
             }
         }
-        .mapControls {
-            CompassView()
-            UserLocationButton()
-        }
-        .ignoresSafeArea()
-        // OSM attribution (ODbL requirement)
-        .overlay(alignment: .bottomTrailing) {
-            Text("© OpenStreetMap")
-                .font(.system(size: 9))
-                .foregroundStyle(.secondary)
-                .padding(4)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 4))
-                .padding(8)
+
+        func updateRoute(map: MLNMapView, coords: [CLLocationCoordinate2D]) {
+            guard let style = map.style, coords.count > 1 else { return }
+
+            var coordinates = coords
+            let polyline = MLNPolyline(coordinates: &coordinates, count: UInt(coordinates.count))
+
+            let sourceID = "route-source"
+            if style.source(withIdentifier: sourceID) == nil {
+                let source = MLNShapeSource(identifier: sourceID, shape: polyline)
+                style.addSource(source)
+
+                let layer = MLNLineStyleLayer(identifier: "route", source: source)
+                layer.lineColor = NSExpression(forConstantValue: UIColor.systemBlue)
+                layer.lineWidth = NSExpression(forConstantValue: 4)
+                style.addLayer(layer)
+            } else if let source = style.source(withIdentifier: sourceID) as? MLNShapeSource {
+                source.shape = polyline
+            }
         }
     }
 
-    /// Default style URL — uses bundled PMTiles if available, otherwise demo tiles.
     public static func defaultStyleURL() -> URL {
-        if let local = Bundle.main.url(forResource: "style", withExtension: "json") {
-            return local
-        }
-        return URL(string: "https://demotiles.maplibre.org/style.json")!
+        OfflineTileManager().makeStyleURL()
     }
 }
 
-/// Compact rider badge for map annotations.
-/// Inspired by Meshtastic-Apple's AnimatedNodePin pattern:
-/// https://github.com/meshtastic/Meshtastic-Apple — pulsing circles, staggered delays,
-/// density adaptation (rich pins ≤7 riders, simple dots for more).
-///
-/// Visual states:
-/// - Member active: pulsing orange circle + motorcycle icon
-/// - Leader: pulsing blue circle + star icon
-/// - External (public, other group): static green circle, no pulse, smaller
-/// - Stale (>15s no update): static gray, no pulse, 50% opacity
-struct RiderBadge: View {
-    let name: String
-    let isStale: Bool
-    let isLeader: Bool
-    let isMember: Bool
-    @State private var isPulsing = false
-
-    var body: some View {
-        VStack(spacing: 2) {
-            ZStack {
-                // Pulse ring (only for active members)
-                if !isStale && isMember {
-                    Circle()
-                        .fill(baseColor.opacity(0.25))
-                        .frame(width: 40, height: 40)
-                        .scaleEffect(isPulsing ? 1.15 : 0.85)
-                        .animation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true), value: isPulsing)
-                }
-                // Main dot (smaller for externals)
-                Circle()
-                    .fill(baseColor)
-                    .opacity(isStale ? 0.4 : 1.0)
-                    .frame(width: isMember ? 28 : 18, height: isMember ? 28 : 18)
-                    .overlay {
-                        if isMember {
-                            Image(systemName: isLeader ? "star.fill" : "motorcycle")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
-                    }
-            }
-            if isMember {
-                Text(name)
-                    .font(.system(size: 9, weight: .medium))
-                    .padding(.horizontal, 4)
-                    .padding(.vertical, 1)
-                    .background(.ultraThinMaterial, in: Capsule())
-            }
-        }
-        .onAppear { isPulsing = true }
-    }
-
-    private var baseColor: Color {
-        if isStale { return .gray }
-        if !isMember { return .green }  // external rider (other group, public)
-        return isLeader ? .blue : .orange
-    }
-}
+// MARK: - Data models
 
 /// A rider's position on the map.
-/// - Members (same group): orange/blue, full trail, pulsing
-/// - External (public, other group): green, position only, no trail, no pulse
 public struct RiderAnnotation: Identifiable, Sendable {
     public let id: String
     public let displayName: String
@@ -150,7 +129,7 @@ public struct RiderAnnotation: Identifiable, Sendable {
     public var heading: Double?
     public var speed: Double?
     public var isLeader: Bool
-    public var isMember: Bool  // true = same group; false = external (public visibility)
+    public var isMember: Bool
     public var lastSeen: Date
 
     public var isStale: Bool { Date().timeIntervalSince(lastSeen) > 15 }

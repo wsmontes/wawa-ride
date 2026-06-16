@@ -10,7 +10,13 @@ settings:
     SWIFT_VERSION: "6.0"
     TARGETED_DEVICE_FAMILY: "1"
 
-packages: {}
+packages:
+  MapLibre:
+    url: https://github.com/maplibre/maplibre-gl-native-distribution
+    from: "6.27.0"
+  Turf:
+    url: https://github.com/mapbox/turf-swift
+    from: "4.0.0"
 
 targets:
   WAWARide:
@@ -29,6 +35,7 @@ targets:
         excludes:
           - "Multipeer/MultipeerTransport.swift"
           - "Transport.swift"
+      - path: Sources/WawaMap
       - path: Sources/WawaRideApp
         excludes:
           - "ViewModels/RideSession.swift"
@@ -43,4 +50,7 @@ targets:
         CODE_SIGN_ENTITLEMENTS: Sources/WawaRideApp/Resources/WawaRide.entitlements
         CODE_SIGN_STYLE: Automatic
         DEVELOPMENT_TEAM: 955573A4YH
-    dependencies: []
+    dependencies:
+      - package: MapLibre
+      - package: Turf
+        product: Turf
