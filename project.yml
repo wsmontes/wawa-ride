@@ -19,13 +19,45 @@ packages:
   Ferrostar:
     url: https://github.com/stadiamaps/ferrostar
     from: "0.51.0"
+  MultipeerKit:
+    url: https://github.com/insidegui/MultipeerKit
+    from: "0.4.0"
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: "7.11.0"
+  Automerge:
+    url: https://github.com/automerge/automerge-swift
+    from: "0.5.0"
+  SwiftProtobuf:
+    url: https://github.com/apple/swift-protobuf
+    from: "1.28.0"
+  Turf:
+    url: https://github.com/mapbox/turf-swift
+    from: "4.0.0"
+  CoreBluetoothMock:
+    url: https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock
+    from: "0.17.0"
 
 targets:
   WAWARide:
     type: application
     platform: iOS
     sources:
-      - path: Sources
+      - path: Sources/WawaRideApp
+        type: group
+      - path: Sources/BitLogger
+        type: group
+      - path: Sources/BitFoundation
+        type: group
+      - path: Sources/WawaOntology
+        type: group
+      - path: Sources/WawaMesh
+        type: group
+      - path: Sources/WawaMap
+        type: group
+      - path: Sources/WawaNavigation
+        type: group
+      - path: Sources/WawaPersistence
         type: group
     resources:
       - path: Sources/WawaRideApp/Resources/Assets.xcassets
@@ -45,3 +77,15 @@ targets:
         product: FerrostarSwiftUI
       - package: Ferrostar
         product: FerrostarMapLibreUI
+      - package: MultipeerKit
+        product: MultipeerKit
+      - package: GRDB
+        product: GRDB
+      - package: Automerge
+        product: Automerge
+      - package: SwiftProtobuf
+        product: SwiftProtobuf
+      - package: Turf
+        product: Turf
+      - package: CoreBluetoothMock
+        product: CoreBluetoothMock

@@ -59,7 +59,7 @@ extension String {
 private extension String {
     static let queue = DispatchQueue(label: "chat.bitchat.securelogger.cache", attributes: .concurrent)
 
-    static let cache: NSCache<NSString, NSString> = {
+    nonisolated(unsafe) static let cache: NSCache<NSString, NSString> = {
         let cache = NSCache<NSString, NSString>()
         cache.countLimit = 100 // Keep last 100 sanitized strings
         return cache

@@ -15,6 +15,14 @@ targets:
     type: application
     platform: iOS
     sources:
+      - path: Sources/BitLogger
+        type: group
+      - path: Sources/BitFoundation
+        type: group
+      - path: Sources/WawaMesh/Packet/FragmentCodec.swift
+        type: file
+      - path: Sources/WawaMesh/Dedup/MessageDeduplicator.swift
+        type: file
       - path: Sources/WawaBLETest
         type: group
     settings:

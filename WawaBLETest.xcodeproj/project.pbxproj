@@ -1,0 +1,417 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		17A3F645B2BD9268D422196E /* MessageDeduplicator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A6A1AFB51ADDFA6BA572454 /* MessageDeduplicator.swift */; };
+		21AF5870314E082AF494DB3C /* BLETestApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21549BECDAD6E65E75ED4CE1 /* BLETestApp.swift */; };
+		22D6DAE34D7AA67D8FF7A26E /* Data+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CCDF6E04C9656D494374625 /* Data+Hex.swift */; };
+		22F06F327DBF5306E96CA2C6 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2547F131AF28DD8402213DFA /* Constants.swift */; };
+		2BDF95797F4FED14807A3D5E /* OSLog+Categories.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05124509949CB38817109814 /* OSLog+Categories.swift */; };
+		3BCDE53446C987C05C1D781C /* FileTransferLimits.swift in Sources */ = {isa = PBXBuildFile; fileRef = 386D11CEA7F243A629D19340 /* FileTransferLimits.swift */; };
+		443723450BEA3C804613A9FA /* String+Sanitization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CCC4C6BA3D733A8E73923BD /* String+Sanitization.swift */; };
+		467AEA26C94C82AA39382AF6 /* Data+SHA256.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8851F87F78FD1ED4AF02DD18 /* Data+SHA256.swift */; };
+		4B69102ACFD100F7451155E5 /* DeliveryStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D5EAEFA6891D844FEA768D8 /* DeliveryStatus.swift */; };
+		4E7A7E11E39E552ED9BB07BA /* BitchatPacket.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC9F9C0CFFCB322FB6AF4BE0 /* BitchatPacket.swift */; };
+		52497251D54DDD5E5784BF9F /* String+Ext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53B08CE3A2C20078CB7AAB1F /* String+Ext.swift */; };
+		62681887089B1CFB825787CE /* BitchatMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B84931ABCAEF565732B374 /* BitchatMessage.swift */; };
+		72A595BD5E5720249999B50B /* KeychainManagerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0146AD9EEB89F530BA260891 /* KeychainManagerProtocol.swift */; };
+		761E80B3F9659D6D2D946888 /* PeerID.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC672C190EFB5988FC1CC566 /* PeerID.swift */; };
+		8F48B1B38407B0C7510E8F4C /* MessagePadding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4A743A7FF75324F895E21D /* MessagePadding.swift */; };
+		95787B02B3C5EBD5E5D46E38 /* MessageType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CFBFEDEA313C29F1AA2992E /* MessageType.swift */; };
+		AB29FD933E922C269452B6F7 /* FragmentCodec.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EBE2765B74285B1EF4CF456 /* FragmentCodec.swift */; };
+		B9B1987EF9AD8F5E13D70C4C /* BinaryEncodingUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2064FEE8ADE4D22EFBCC064A /* BinaryEncodingUtils.swift */; };
+		BF2EBA386E914DD115893B30 /* CompressionUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1641D60993FC12F60B564020 /* CompressionUtil.swift */; };
+		CEDA05C83D9366FBE091BB88 /* BinaryProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = DD272426B2AB80EC2744C65A /* BinaryProtocol.swift */; };
+		E5FA408EBBE689C48D27D173 /* SecureLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF53C964E09E262CA92AC236 /* SecureLogger.swift */; };
+		F96BB1B7CCF251734A9CF7FA /* BLETestService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2110EAB390F54625F7EB2B1 /* BLETestService.swift */; };
+		FF837047147682221B744E9F /* BLEConnectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D7FB7C26FA09686C832EB9A /* BLEConnectionView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		0146AD9EEB89F530BA260891 /* KeychainManagerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainManagerProtocol.swift; sourceTree = "<group>"; };
+		05124509949CB38817109814 /* OSLog+Categories.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "OSLog+Categories.swift"; sourceTree = "<group>"; };
+		0A6A1AFB51ADDFA6BA572454 /* MessageDeduplicator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageDeduplicator.swift; sourceTree = "<group>"; };
+		0CCC4C6BA3D733A8E73923BD /* String+Sanitization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Sanitization.swift"; sourceTree = "<group>"; };
+		0CFBFEDEA313C29F1AA2992E /* MessageType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageType.swift; sourceTree = "<group>"; };
+		1641D60993FC12F60B564020 /* CompressionUtil.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompressionUtil.swift; sourceTree = "<group>"; };
+		1CCDF6E04C9656D494374625 /* Data+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Hex.swift"; sourceTree = "<group>"; };
+		2064FEE8ADE4D22EFBCC064A /* BinaryEncodingUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryEncodingUtils.swift; sourceTree = "<group>"; };
+		21549BECDAD6E65E75ED4CE1 /* BLETestApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLETestApp.swift; sourceTree = "<group>"; };
+		2547F131AF28DD8402213DFA /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		2A4A743A7FF75324F895E21D /* MessagePadding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagePadding.swift; sourceTree = "<group>"; };
+		2D5EAEFA6891D844FEA768D8 /* DeliveryStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeliveryStatus.swift; sourceTree = "<group>"; };
+		386D11CEA7F243A629D19340 /* FileTransferLimits.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileTransferLimits.swift; sourceTree = "<group>"; };
+		4D7FB7C26FA09686C832EB9A /* BLEConnectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEConnectionView.swift; sourceTree = "<group>"; };
+		53B08CE3A2C20078CB7AAB1F /* String+Ext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "String+Ext.swift"; sourceTree = "<group>"; };
+		8851F87F78FD1ED4AF02DD18 /* Data+SHA256.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+SHA256.swift"; sourceTree = "<group>"; };
+		9EBE2765B74285B1EF4CF456 /* FragmentCodec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FragmentCodec.swift; sourceTree = "<group>"; };
+		AC9F9C0CFFCB322FB6AF4BE0 /* BitchatPacket.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitchatPacket.swift; sourceTree = "<group>"; };
+		BC3B91B078DBA4F4CED4A88F /* WawaBLETest.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = WawaBLETest.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BC672C190EFB5988FC1CC566 /* PeerID.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerID.swift; sourceTree = "<group>"; };
+		C1B84931ABCAEF565732B374 /* BitchatMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BitchatMessage.swift; sourceTree = "<group>"; };
+		C2110EAB390F54625F7EB2B1 /* BLETestService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLETestService.swift; sourceTree = "<group>"; };
+		C638BD9C3F57609382606D5D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		DD272426B2AB80EC2744C65A /* BinaryProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryProtocol.swift; sourceTree = "<group>"; };
+		FF53C964E09E262CA92AC236 /* SecureLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureLogger.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		3F8ECCB8949D3A61B4EADA51 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BC3B91B078DBA4F4CED4A88F /* WawaBLETest.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		619385760F8608F3B82233EF /* WawaBLETest */ = {
+			isa = PBXGroup;
+			children = (
+				4D7FB7C26FA09686C832EB9A /* BLEConnectionView.swift */,
+				21549BECDAD6E65E75ED4CE1 /* BLETestApp.swift */,
+				C2110EAB390F54625F7EB2B1 /* BLETestService.swift */,
+				C638BD9C3F57609382606D5D /* Info.plist */,
+			);
+			name = WawaBLETest;
+			path = Sources/WawaBLETest;
+			sourceTree = "<group>";
+		};
+		68C329AB7B3484684ACA7B00 = {
+			isa = PBXGroup;
+			children = (
+				8F3F58D1F24DDD6FD6B49A84 /* BitFoundation */,
+				6EBA5CC8B30E5017F789F11A /* BitLogger */,
+				F696948AA5201B4D5D3E632A /* Dedup */,
+				7B25403537D80524208FF2EA /* Packet */,
+				619385760F8608F3B82233EF /* WawaBLETest */,
+				3F8ECCB8949D3A61B4EADA51 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		6EBA5CC8B30E5017F789F11A /* BitLogger */ = {
+			isa = PBXGroup;
+			children = (
+				05124509949CB38817109814 /* OSLog+Categories.swift */,
+				FF53C964E09E262CA92AC236 /* SecureLogger.swift */,
+				0CCC4C6BA3D733A8E73923BD /* String+Sanitization.swift */,
+			);
+			name = BitLogger;
+			path = Sources/BitLogger;
+			sourceTree = "<group>";
+		};
+		7B25403537D80524208FF2EA /* Packet */ = {
+			isa = PBXGroup;
+			children = (
+				9EBE2765B74285B1EF4CF456 /* FragmentCodec.swift */,
+			);
+			name = Packet;
+			path = Sources/WawaMesh/Packet;
+			sourceTree = "<group>";
+		};
+		8F3F58D1F24DDD6FD6B49A84 /* BitFoundation */ = {
+			isa = PBXGroup;
+			children = (
+				2064FEE8ADE4D22EFBCC064A /* BinaryEncodingUtils.swift */,
+				DD272426B2AB80EC2744C65A /* BinaryProtocol.swift */,
+				C1B84931ABCAEF565732B374 /* BitchatMessage.swift */,
+				AC9F9C0CFFCB322FB6AF4BE0 /* BitchatPacket.swift */,
+				1641D60993FC12F60B564020 /* CompressionUtil.swift */,
+				2547F131AF28DD8402213DFA /* Constants.swift */,
+				1CCDF6E04C9656D494374625 /* Data+Hex.swift */,
+				8851F87F78FD1ED4AF02DD18 /* Data+SHA256.swift */,
+				2D5EAEFA6891D844FEA768D8 /* DeliveryStatus.swift */,
+				386D11CEA7F243A629D19340 /* FileTransferLimits.swift */,
+				0146AD9EEB89F530BA260891 /* KeychainManagerProtocol.swift */,
+				2A4A743A7FF75324F895E21D /* MessagePadding.swift */,
+				0CFBFEDEA313C29F1AA2992E /* MessageType.swift */,
+				BC672C190EFB5988FC1CC566 /* PeerID.swift */,
+				53B08CE3A2C20078CB7AAB1F /* String+Ext.swift */,
+			);
+			name = BitFoundation;
+			path = Sources/BitFoundation;
+			sourceTree = "<group>";
+		};
+		F696948AA5201B4D5D3E632A /* Dedup */ = {
+			isa = PBXGroup;
+			children = (
+				0A6A1AFB51ADDFA6BA572454 /* MessageDeduplicator.swift */,
+			);
+			name = Dedup;
+			path = Sources/WawaMesh/Dedup;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CA72B1C651542E77ECAFC1F5 /* WawaBLETest */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0512E01756525ED7865005BF /* Build configuration list for PBXNativeTarget "WawaBLETest" */;
+			buildPhases = (
+				FB03FBE0FE783BED57C8FB91 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = WawaBLETest;
+			packageProductDependencies = (
+			);
+			productName = WawaBLETest;
+			productReference = BC3B91B078DBA4F4CED4A88F /* WawaBLETest.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		9D1E5D19909B6865A38EF2A6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					CA72B1C651542E77ECAFC1F5 = {
+						DevelopmentTeam = 955573A4YH;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = CE18DB4EF4181186AB661446 /* Build configuration list for PBXProject "WawaBLETest" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 68C329AB7B3484684ACA7B00;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 3F8ECCB8949D3A61B4EADA51 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CA72B1C651542E77ECAFC1F5 /* WawaBLETest */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		FB03FBE0FE783BED57C8FB91 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				FF837047147682221B744E9F /* BLEConnectionView.swift in Sources */,
+				21AF5870314E082AF494DB3C /* BLETestApp.swift in Sources */,
+				F96BB1B7CCF251734A9CF7FA /* BLETestService.swift in Sources */,
+				B9B1987EF9AD8F5E13D70C4C /* BinaryEncodingUtils.swift in Sources */,
+				CEDA05C83D9366FBE091BB88 /* BinaryProtocol.swift in Sources */,
+				62681887089B1CFB825787CE /* BitchatMessage.swift in Sources */,
+				4E7A7E11E39E552ED9BB07BA /* BitchatPacket.swift in Sources */,
+				BF2EBA386E914DD115893B30 /* CompressionUtil.swift in Sources */,
+				22F06F327DBF5306E96CA2C6 /* Constants.swift in Sources */,
+				22D6DAE34D7AA67D8FF7A26E /* Data+Hex.swift in Sources */,
+				467AEA26C94C82AA39382AF6 /* Data+SHA256.swift in Sources */,
+				4B69102ACFD100F7451155E5 /* DeliveryStatus.swift in Sources */,
+				3BCDE53446C987C05C1D781C /* FileTransferLimits.swift in Sources */,
+				AB29FD933E922C269452B6F7 /* FragmentCodec.swift in Sources */,
+				72A595BD5E5720249999B50B /* KeychainManagerProtocol.swift in Sources */,
+				17A3F645B2BD9268D422196E /* MessageDeduplicator.swift in Sources */,
+				8F48B1B38407B0C7510E8F4C /* MessagePadding.swift in Sources */,
+				95787B02B3C5EBD5E5D46E38 /* MessageType.swift in Sources */,
+				2BDF95797F4FED14807A3D5E /* OSLog+Categories.swift in Sources */,
+				761E80B3F9659D6D2D946888 /* PeerID.swift in Sources */,
+				E5FA408EBBE689C48D27D173 /* SecureLogger.swift in Sources */,
+				52497251D54DDD5E5784BF9F /* String+Ext.swift in Sources */,
+				443723450BEA3C804613A9FA /* String+Sanitization.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		1206D44BAE58E59421815DC5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 955573A4YH;
+				INFOPLIST_FILE = Sources/WawaBLETest/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.wawaride.bletest;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		35463ECAEC21B82E5935CB19 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		4452951657F5A9CFC56D9DF3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 955573A4YH;
+				INFOPLIST_FILE = Sources/WawaBLETest/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.wawaride.bletest;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		673D834BAA9B13DFC2B45A39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0512E01756525ED7865005BF /* Build configuration list for PBXNativeTarget "WawaBLETest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				1206D44BAE58E59421815DC5 /* Debug */,
+				4452951657F5A9CFC56D9DF3 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CE18DB4EF4181186AB661446 /* Build configuration list for PBXProject "WawaBLETest" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				35463ECAEC21B82E5935CB19 /* Debug */,
+				673D834BAA9B13DFC2B45A39 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 9D1E5D19909B6865A38EF2A6 /* Project object */;
+}

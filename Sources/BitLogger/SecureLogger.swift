@@ -102,7 +102,7 @@ public final class SecureLogger {
 
     /// Minimum level that will be logged. Defaults to .info. Override via env BITCHAT_LOG_LEVEL.
     /// Internal-settable so tests can verify level filtering; app code should not mutate it.
-    internal static var minimumLevel: LogLevel = {
+    nonisolated(unsafe) internal static var minimumLevel: LogLevel = {
         let env = ProcessInfo.processInfo.environment["BITCHAT_LOG_LEVEL"]?.lowercased()
         switch env {
         case "debug": return .debug

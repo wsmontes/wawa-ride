@@ -1,9 +1,10 @@
 import Foundation
 @preconcurrency import CoreBluetooth
 
-/// Minimal BLE mesh test — two iPhones discover, connect, and exchange messages.
+/// BLE mesh service using BitChat BinaryProtocol v2 wire format.
 ///
-/// BLE delegates fire on arbitrary queues. We bridge to @MainActor for UI safety.
+/// Full BitChat stack: BitchatPacket → toBinaryData() → BLE GATT → from() → BitchatPacket
+/// Includes TTL-based flood relay, dedup, fragment reassembly, and compression.
 @MainActor
 final class BLETestService: NSObject, ObservableObject, @unchecked Sendable {
     @Published var connectedPeerCount = 0
@@ -18,8 +19,10 @@ final class BLETestService: NSObject, ObservableObject, @unchecked Sendable {
     private var txCharacteristic: CBMutableCharacteristic?
     private var connectedPeripherals: [UUID: CBPeripheral] = [:]
     private var subscribedCentrals: [CBCentral] = []
+    private let fragmentAssembly = FragmentAssemblyBuffer()
+    private let deduplicator = MessageDeduplicator()
 
-    /// persistent 8-byte peer identity.
+    /// Persistent 8-byte peer identity.
     let localPeerID: Data = {
         let key = "wawa_mesh_peer_id"
         if let saved = UserDefaults.standard.data(forKey: key), saved.count == 8 { return saved }
@@ -45,7 +48,7 @@ final class BLETestService: NSObject, ObservableObject, @unchecked Sendable {
         centralManager = CBCentralManager(delegate: self, queue: nil)
         peripheralManager = CBPeripheralManager(delegate: self, queue: nil)
         isRunning = true
-        addLog("BLE initializing...")
+        addLog("BLE mesh starting (BitChat BinaryProtocol v2)...")
     }
 
     func stop() {
@@ -59,12 +62,45 @@ final class BLETestService: NSObject, ObservableObject, @unchecked Sendable {
         addLog("BLE stopped")
     }
 
-    // MARK: - Send
+    // MARK: - Send via BitChat BinaryProtocol v2
 
     func broadcastTest(_ message: String) {
         guard let payload = message.data(using: .utf8) else { return }
-        sendToAll(payload)
-        addLog("SENT: \(message)")
+        let packet = BitchatPacket(
+            type: MessageType.message.rawValue,
+            senderID: localPeerID,
+            recipientID: nil,
+            timestamp: UInt64(Date().timeIntervalSince1970 * 1000),
+            payload: payload,
+            signature: nil,
+            ttl: 5
+        )
+        broadcast(packet)
+        let wireSize = packet.toBinaryData()?.count ?? 0
+        addLog("SENT: \(message) (wire: \(wireSize)B, header: BinaryProtocol v2)")
+    }
+
+    private func broadcast(_ packet: BitchatPacket) {
+        var p = packet
+        p.ttl = adaptiveTTL()
+        guard let encoded = p.toBinaryData() else {
+            addLog("ERROR: BinaryProtocol.encode failed")
+            return
+        }
+
+        let wireSize = encoded.count
+        if wireSize <= 469 {
+            sendToAll(encoded)
+        } else {
+            let chunks = FragmentCodec.fragment(encoded, maxSize: 469)
+            addLog("Fragmenting \(wireSize)B → \(chunks.count) chunks")
+            for chunk in chunks { sendToAll(chunk) }
+        }
+    }
+
+    private func adaptiveTTL() -> UInt8 {
+        let count = connectedPeerCount
+        switch count { case 0...3: return 5; case 4...6: return 3; default: return 2 }
     }
 
     // MARK: - Internal
@@ -81,16 +117,36 @@ final class BLETestService: NSObject, ObservableObject, @unchecked Sendable {
         }
     }
 
+    /// BitChat receive pipeline: fragment → decode → dedup → relay → deliver.
     private func handleIncoming(_ data: Data, from peerUUID: UUID) {
-        if let text = String(data: data, encoding: .utf8) {
-            let short = peerUUID.uuidString.prefix(8)
-            addLog("RECV [\(short)]: \(text)")
-        } else {
-            addLog("RECV [\(peerUUID.uuidString.prefix(8))]: \(data.count)B binary")
+        // Step 1: Fragment reassembly
+        if FragmentCodec.isFragment(data) {
+            guard let assembled = fragmentAssembly.addFragment(data, from: peerUUID) else { return }
+            handleIncoming(assembled, from: peerUUID)
+            return
         }
+        // Step 2: Decode via BitChat BinaryProtocol
+        guard let packet = BitchatPacket.from(data) else {
+            addLog("ERROR: BinaryProtocol.decode failed (\(data.count)B)")
+            return
+        }
+        // Step 3: Dedup
+        let dedupKey = "\(packet.senderID.hex)-\(packet.timestamp)-\(packet.type)"
+        guard deduplicator.isNew(dedupKey) else { return }
 
-        // Relay: re-broadcast to all other peers (simple flood, no TTL)
-        sendToAll(data, excluding: peerUUID)
+        // Display
+        let sender = packet.senderID.hex.prefix(8)
+        let payloadStr = String(data: packet.payload, encoding: .utf8) ?? "\(packet.payload.count)B"
+        addLog("RECV [\(sender)]: \(payloadStr) (TTL=\(packet.ttl), type=0x\(String(format:"%02x",packet.type)))")
+
+        // Step 4: Flood relay
+        if packet.ttl > 1 {
+            var relayed = packet
+            relayed.ttl = packet.ttl - 1
+            if let encoded = relayed.toBinaryData() {
+                sendToAll(encoded, excluding: peerUUID)
+            }
+        }
     }
 
     private func updatePeerCount() {
@@ -99,8 +155,6 @@ final class BLETestService: NSObject, ObservableObject, @unchecked Sendable {
 }
 
 // MARK: - CBCentralManagerDelegate
-// BLE delegates fire on internal BLE queues. We use @unchecked Sendable + @MainActor
-// to satisfy Swift 6 while keeping UI updates on main.
 extension BLETestService: CBCentralManagerDelegate {
     nonisolated func centralManagerDidUpdateState(_ central: CBCentralManager) {
         Task { @MainActor in
@@ -108,7 +162,7 @@ extension BLETestService: CBCentralManagerDelegate {
                 central.scanForPeripherals(withServices: [serviceUUID], options: [
                     CBCentralManagerScanOptionAllowDuplicatesKey: false
                 ])
-                addLog("Scanning for peers...")
+                addLog("Scanning for BitChat peers...")
             } else {
                 addLog("Central state: \(central.state.rawValue)")
             }
@@ -191,10 +245,8 @@ extension BLETestService: CBPeripheralManagerDelegate {
                 return
             }
             let ch = CBMutableCharacteristic(
-                type: charUUID,
-                properties: [.read, .write, .notify],
-                value: nil,
-                permissions: [.readable, .writeable]
+                type: charUUID, properties: [.read, .write, .notify],
+                value: nil, permissions: [.readable, .writeable]
             )
             let svc = CBMutableService(type: serviceUUID, primary: true)
             svc.characteristics = [ch]
@@ -205,7 +257,7 @@ extension BLETestService: CBPeripheralManagerDelegate {
                 CBAdvertisementDataServiceUUIDsKey: [serviceUUID],
                 CBAdvertisementDataLocalNameKey: name
             ])
-            addLog("Advertising as \(name)")
+            addLog("Advertising as \(name) (BitChat v2)")
         }
     }
 
@@ -237,5 +289,12 @@ extension BLETestService: CBPeripheralManagerDelegate {
                 if let data { handleIncoming(data, from: centralID) }
             }
         }
+    }
+}
+
+// MARK: - Hex helper (local, avoids module dependency)
+private extension Data {
+    var hex: String {
+        map { String(format: "%02x", $0) }.joined()
     }
 }

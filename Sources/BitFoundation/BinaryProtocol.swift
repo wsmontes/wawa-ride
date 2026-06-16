@@ -90,7 +90,7 @@
 
 import struct Foundation.Data
 import class Foundation.NSData
-private import BitLogger
+// BitLogger types are compiled in the same target; no module import needed
 
 /// Implements binary encoding and decoding for BitChat protocol messages.
 /// Provides static methods for converting between BitchatPacket objects and
