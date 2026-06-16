@@ -45,6 +45,14 @@ final class RideState: ObservableObject {
         startAnnouncing()
     }
 
+    func cancelRide() {
+        phase = .idle
+        mesh.stop()
+        announceTimer?.invalidate()
+        pin = ""
+        groupID = ""
+    }
+
     func startRide() {
         phase = .active
         locationTracker.onLocation = { [weak self] loc in
@@ -57,12 +65,13 @@ final class RideState: ObservableObject {
     }
 
     func stopRide() {
-        phase = .completed
+        phase = .idle
         mesh.stop()
         locationTracker.stop()
         announceTimer?.invalidate()
         staleTimer?.invalidate()
         riders.removeAll()
+        connectedPeerCount = 0
     }
 
     // MARK: - Internal

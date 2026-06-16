@@ -11,8 +11,10 @@ struct WawaRideApp: App {
                 CreateRideView(state: state)
             case .proposed:
                 WaitingView(state: state)
-            case .active, .completed:
+            case .active:
                 RideMainView(state: state)
+            case .completed:
+                CreateRideView(state: state)
             }
         }
     }

@@ -45,16 +45,23 @@ struct WaitingView: View {
             .cornerRadius(12)
 
             Button(action: { state.startRide() }) {
-                Text("Partiu! (\(state.connectedPeerCount) riders)")
+                Text(state.connectedPeerCount > 0
+                     ? "Partiu! (\(state.connectedPeerCount) riders)"
+                     : "Iniciar Solo")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(state.connectedPeerCount > 0 ? Color.green : Color.gray)
+                    .background(Color.blue)
                     .foregroundColor(.white)
                     .cornerRadius(12)
             }
-            .disabled(state.connectedPeerCount == 0)
             .padding(.horizontal, 32)
+
+            Button(action: { state.cancelRide() }) {
+                Text("Cancelar")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
 
             Spacer()
         }
