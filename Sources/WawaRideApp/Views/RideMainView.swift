@@ -12,12 +12,9 @@ struct RideMainView: View {
                 riders: $state.riders,
                 routeCoords: $state.routeCoords,
                 speedKmh: $state.speedKmh,
-                isAutoCentered: $isAutoCentered
+                isAutoCentered: $isAutoCentered,
+                onManualPan: { isAutoCentered = false }
             )
-            .onAppear {
-                // Wire manual override callback
-                DispatchQueue.main.async { isAutoCentered = true }
-            }
             .ignoresSafeArea()
 
             // Top HUD
@@ -87,15 +84,6 @@ struct RideMainView: View {
                 .padding(.bottom, 8)
             }
 
-            // Detect manual pan to disable auto-center
-            Color.clear
-                .contentShape(Rectangle())
-                .simultaneousGesture(
-                    DragGesture().onChanged { _ in isAutoCentered = false }
-                )
-                .simultaneousGesture(
-                    MagnificationGesture().onChanged { _ in isAutoCentered = false }
-                )
         }
         .animation(.easeInOut, value: showPIN)
         .animation(.easeInOut, value: isAutoCentered)

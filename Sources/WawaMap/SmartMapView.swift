@@ -12,11 +12,13 @@ public struct SmartMapView: UIViewRepresentable {
     @Binding var routeCoords: [CLLocationCoordinate2D]
     @Binding var speedKmh: Double
     @Binding var isAutoCentered: Bool
+    var onManualPan: (() -> Void)?
 
     public init(riders: Binding<[RiderAnnotation]>,
                 routeCoords: Binding<[CLLocationCoordinate2D]>,
                 speedKmh: Binding<Double>,
-                isAutoCentered: Binding<Bool>) {
+                isAutoCentered: Binding<Bool>,
+                onManualPan: (() -> Void)? = nil) {
         _riders = riders
         _routeCoords = routeCoords
         _speedKmh = speedKmh
@@ -37,6 +39,7 @@ public struct SmartMapView: UIViewRepresentable {
         map.useCache(cache)
         context.coordinator.cache = cache
         context.coordinator.map = map
+        context.coordinator.onManualPan = onManualPan
 
         return map
     }
