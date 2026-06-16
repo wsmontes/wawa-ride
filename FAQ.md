@@ -708,3 +708,19 @@ Nível intermediário: botão **"🟡 Me perdi"** (1 toque). Propaga com alta pr
 | Ação esperada | Resgate | "Esperem / me guiem" | — |
 
 O "Lost" respeita privacidade (não quero que desconhecidos saibam) mas ainda usa toda a rede mesh como prioridade para chegar ao meu time.
+
+---
+
+## Proxy de Internet (Emprestar Conectividade)
+
+### Posso usar a internet de um rider que está passando para atualizar meu time?
+**Sim.** Se um rider com 4G cruza sua mesh por 10 segundos, ele pode servir de proxy: publicar no Nostr as posições de todo o seu grupo. Custo: ~84 bytes/segundo (irrelevante).
+
+### Funciona automaticamente?
+Quase. O mecanismo é o mesmo do carteiro, mas em tempo real. A diferença é que em vez de guardar e entregar depois (store-and-forward), o proxy **publica imediatamente** no Nostr.
+
+### O rider com internet precisa aceitar?
+**Opt-in via announce.** Cada rider anuncia `offersProxy: true/false`. Default: true (generosidade padrão). Se não quiser gastar dados, desliga.
+
+### É exagero?
+Não. É consistente com a filosofia "todo nó é relay, todo recurso é compartilhado". 84 bytes/segundo é menos que carregar uma imagem de WhatsApp. O benefício (grupo inteiro visível no Nostr) supera amplamente o custo.
