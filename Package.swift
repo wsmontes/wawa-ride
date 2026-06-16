@@ -5,6 +5,7 @@ let package = Package(
     name: "WawaRide",
     platforms: [.iOS(.v16)],
     products: [
+        .library(name: "WawaOntology", targets: ["WawaOntology"]),
         .library(name: "WawaMesh", targets: ["WawaMesh"]),
         .library(name: "WawaMap", targets: ["WawaMap"]),
         .library(name: "WawaNavigation", targets: ["WawaNavigation"]),
@@ -29,6 +30,9 @@ let package = Package(
         .package(url: "https://github.com/NordicSemiconductor/IOS-CoreBluetooth-Mock", from: "0.17.0"),
     ],
     targets: [
+        .target(name: "WawaOntology", dependencies: [], path: "Sources/WawaOntology"),
+        .testTarget(name: "WawaOntologyTests", dependencies: ["WawaOntology"], path: "Tests/WawaOntologyTests"),
+
         .target(name: "WawaMesh", dependencies: [
             .product(name: "MultipeerKit", package: "MultipeerKit"),
             .product(name: "SwiftProtobuf", package: "swift-protobuf"),
@@ -48,13 +52,14 @@ let package = Package(
         ], path: "Sources/WawaNavigation"),
 
         .target(name: "WawaPersistence", dependencies: [
+            "WawaOntology",
             .product(name: "GRDB", package: "GRDB.swift"),
             .product(name: "Automerge", package: "automerge-swift"),
         ], path: "Sources/WawaPersistence"),
 
         .executableTarget(
             name: "WawaRideApp",
-            dependencies: ["WawaMesh", "WawaMap", "WawaNavigation", "WawaPersistence"],
+            dependencies: ["WawaOntology", "WawaMesh", "WawaMap", "WawaNavigation", "WawaPersistence"],
             path: "Sources/WawaRideApp",
             resources: [.process("Resources")]
         ),
